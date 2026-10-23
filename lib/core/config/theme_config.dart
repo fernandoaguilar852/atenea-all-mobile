@@ -90,14 +90,14 @@ class AppTheme {
         color: AppColors.white,
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
     ),
 
     // Card
     cardTheme: CardTheme(
       elevation: 2,
-      shadowColor: AppColors.black.withOpacity(0.1),
+      shadowColor: AppColors.black.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -157,7 +157,7 @@ class AppTheme {
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          fontFamily: 'Inter',
+          // fontFamily: 'Inter',
         ),
       ),
     ),
@@ -170,7 +170,7 @@ class AppTheme {
         textStyle: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          fontFamily: 'Inter',
+          // fontFamily: 'Inter',
         ),
       ),
     ),
@@ -187,7 +187,7 @@ class AppTheme {
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          fontFamily: 'Inter',
+          // fontFamily: 'Inter',
         ),
       ),
     ),
@@ -208,12 +208,12 @@ class AppTheme {
       selectedLabelStyle: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       unselectedLabelStyle: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w500,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       type: BottomNavigationBarType.fixed,
     ),
@@ -236,107 +236,107 @@ class AppTheme {
         color: AppColors.textPrimary,
         fontSize: 20,
         fontWeight: FontWeight.w600,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       contentTextStyle: const TextStyle(
         color: AppColors.textSecondary,
         fontSize: 14,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
     ),
 
     // Typography
-    fontFamily: 'Inter',
+    // fontFamily: 'Inter',
     textTheme: const TextTheme(
       displayLarge: TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       displayMedium: TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       displaySmall: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       headlineLarge: TextStyle(
         fontSize: 22,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       headlineMedium: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       headlineSmall: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       titleLarge: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       titleMedium: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       titleSmall: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       bodyLarge: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       bodyMedium: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: AppColors.textSecondary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       bodySmall: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w400,
         color: AppColors.textMuted,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       labelLarge: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w500,
         color: AppColors.textPrimary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       labelMedium: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: AppColors.textSecondary,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       labelSmall: TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w500,
         color: AppColors.textMuted,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
     ),
 
@@ -377,7 +377,7 @@ class AppTheme {
       contentTextStyle: const TextStyle(
         color: AppColors.white,
         fontSize: 14,
-        fontFamily: 'Inter',
+        // fontFamily: 'Inter',
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -405,7 +405,7 @@ class AppTheme {
     scaffoldBackgroundColor: AppColors.grey900,
 
     // Se puede expandir con más configuraciones para dark theme
-    fontFamily: 'Inter',
+    // fontFamily: 'Inter',
   );
 }
 
@@ -438,7 +438,7 @@ class AppShadows {
 
   static List<BoxShadow> sm = [
     BoxShadow(
-      color: AppColors.black.withOpacity(0.06),
+      color: AppColors.black.withValues(alpha: 0.06),
       offset: const Offset(0, 1),
       blurRadius: 3,
     ),
@@ -446,7 +446,7 @@ class AppShadows {
 
   static List<BoxShadow> md = [
     BoxShadow(
-      color: AppColors.black.withOpacity(0.1),
+      color: AppColors.black.withValues(alpha: 0.1),
       offset: const Offset(0, 4),
       blurRadius: 12,
     ),
@@ -454,7 +454,7 @@ class AppShadows {
 
   static List<BoxShadow> lg = [
     BoxShadow(
-      color: AppColors.black.withOpacity(0.15),
+      color: AppColors.black.withValues(alpha: 0.15),
       offset: const Offset(0, 16),
       blurRadius: 40,
     ),

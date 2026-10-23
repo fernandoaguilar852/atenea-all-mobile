@@ -41,6 +41,12 @@ class ApiConstants {
 
   // Reportes
   static const String consultaEstadisticas = '/reportes/consulta-estadisticas';
+  static const String reporteVentas = '/reportes/ventas';
+  static const String reporteVentaDetalle = '/reportes/venta-detalle';
+  static const String reporteInventarioConsumido = '/reportes/inventario-consumido';
+  static const String reporteArqueoCaja = '/reportes/arqueo-caja';
+  static const String reporteStockProductos = '/reportes/stock-productos';
+  static const String reporteCostoBeneficio = '/reportes/costo-beneficio';
 
   // Headers
   static const String headerMessageUuid = 'message-uuid';

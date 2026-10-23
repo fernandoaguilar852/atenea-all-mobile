@@ -98,7 +98,7 @@ class _ChatDialogState extends ConsumerState<ChatDialog> {
                   Container(
                     padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
-                      color: AppColors.white.withOpacity(0.2),
+                      color: AppColors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -123,7 +123,7 @@ class _ChatDialogState extends ConsumerState<ChatDialog> {
                         Text(
                           'Asistente virtual',
                           style: TextStyle(
-                            color: AppColors.white.withOpacity(0.8),
+                            color: AppColors.white.withValues(alpha: 0.8),
                             fontSize: 12.sp,
                           ),
                         ),
@@ -294,7 +294,7 @@ class _MessageBubble extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(8.w),
               decoration: BoxDecoration(
-                color: AppColors.secondary.withOpacity(0.1),
+                color: AppColors.secondary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -326,7 +326,7 @@ class _MessageBubble extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(8.w),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(

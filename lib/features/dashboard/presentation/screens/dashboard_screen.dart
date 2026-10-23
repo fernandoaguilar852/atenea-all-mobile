@@ -161,7 +161,7 @@ class _WelcomeCard extends StatelessWidget {
             '¡Bienvenido!',
             style: TextStyle(
               fontSize: 16.sp,
-              color: AppColors.white.withOpacity(0.9),
+              color: AppColors.white.withValues(alpha: 0.9),
             ),
           ),
           SizedBox(height: 4.h),
@@ -178,7 +178,7 @@ class _WelcomeCard extends StatelessWidget {
             DateTime.now().toString().split(' ')[0],
             style: TextStyle(
               fontSize: 14.sp,
-              color: AppColors.white.withOpacity(0.8),
+              color: AppColors.white.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -270,7 +270,7 @@ class _KPICard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -390,7 +390,7 @@ class _QuickAction extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -460,7 +460,7 @@ class _ActivityItem extends StatelessWidget {
       leading: Container(
         padding: EdgeInsets.all(8.w),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
+          color: iconColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
