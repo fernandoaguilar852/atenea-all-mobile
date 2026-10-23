@@ -39,6 +39,9 @@ class ApiConstants {
   // Chat IA
   static const String chatQuery = '/chat/query';
 
+  // Reportes
+  static const String consultaEstadisticas = '/reportes/consulta-estadisticas';
+
   // Headers
   static const String headerMessageUuid = 'message-uuid';
   static const String headerRequestAppId = 'request-app-id';

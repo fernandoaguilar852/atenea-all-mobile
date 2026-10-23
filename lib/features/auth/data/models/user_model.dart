@@ -16,6 +16,9 @@ class UserModel {
   final String prefijo;
   final String estadoPlan;
   final int diasActivos;
+  final String? sessionId;
+  final int? iat; // Issued At - timestamp de emisión del token
+  final int? exp; // Expiration - timestamp de expiración del token
 
   UserModel({
     required this.usuarioId,
@@ -29,6 +32,9 @@ class UserModel {
     required this.prefijo,
     required this.estadoPlan,
     required this.diasActivos,
+    this.sessionId,
+    this.iat,
+    this.exp,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
@@ -48,7 +54,14 @@ class UserModel {
       prefijo: prefijo,
       estadoPlan: estadoPlan,
       diasActivos: diasActivos,
+      sessionId: sessionId,
       createdAt: createdAt != null ? DateTime.tryParse(createdAt!) : null,
+      tokenIssuedAt: iat != null
+          ? DateTime.fromMillisecondsSinceEpoch(iat! * 1000)
+          : null,
+      tokenExpiresAt: exp != null
+          ? DateTime.fromMillisecondsSinceEpoch(exp! * 1000)
+          : null,
     );
   }
 
@@ -64,7 +77,14 @@ class UserModel {
       prefijo: user.prefijo,
       estadoPlan: user.estadoPlan,
       diasActivos: user.diasActivos,
+      sessionId: user.sessionId,
       createdAt: user.createdAt?.toIso8601String(),
+      iat: user.tokenIssuedAt != null
+          ? (user.tokenIssuedAt!.millisecondsSinceEpoch / 1000).round()
+          : null,
+      exp: user.tokenExpiresAt != null
+          ? (user.tokenExpiresAt!.millisecondsSinceEpoch / 1000).round()
+          : null,
     );
   }
 }

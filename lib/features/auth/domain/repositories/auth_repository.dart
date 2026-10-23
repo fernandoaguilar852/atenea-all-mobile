@@ -8,9 +8,7 @@ abstract class AuthRepository {
 
   Future<void> logout();
 
-  Future<({String accessToken, String refreshToken})> refreshToken(
-    String refreshToken,
-  );
+  Future<String> refreshToken(String refreshToken);
 
   Future<void> forgotPassword(String email);
 

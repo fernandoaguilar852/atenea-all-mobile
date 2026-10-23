@@ -47,15 +47,13 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<({String accessToken, String refreshToken})> refreshToken(
-    String refreshToken,
-  ) async {
-    final tokens = await _remoteDataSource.refreshToken(refreshToken);
+  Future<String> refreshToken(String refreshToken) async {
+    final newAccessToken = await _remoteDataSource.refreshToken(refreshToken);
 
-    return (
-      accessToken: tokens['accessToken']!,
-      refreshToken: tokens['refreshToken']!,
-    );
+    // Guardar el nuevo accessToken
+    await _localDataSource.saveAccessToken(newAccessToken);
+
+    return newAccessToken;
   }
 
   @override

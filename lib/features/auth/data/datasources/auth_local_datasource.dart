@@ -23,6 +23,11 @@ class AuthLocalDataSource {
       'prefijo': user.prefijo,
       'estadoPlan': user.estadoPlan,
       'diasActivos': user.diasActivos.toString(),
+      'activo': user.activo.toString(),
+      'sessionId': user.sessionId ?? '',
+      'createdAt': user.createdAt?.toIso8601String() ?? '',
+      'tokenIssuedAt': user.tokenIssuedAt?.toIso8601String() ?? '',
+      'tokenExpiresAt': user.tokenExpiresAt?.toIso8601String() ?? '',
     });
   }
 
@@ -42,11 +47,23 @@ class AuthLocalDataSource {
       rolId: int.tryParse(userData['rolId'] ?? '0') ?? 0,
       nombre: userData['nombre'] ?? '',
       email: userData['email'] ?? '',
-      activo: true,
+      activo: userData['activo'] == 'true',
       nombreRol: userData['nombreRol'] ?? '',
       prefijo: userData['prefijo'] ?? '',
       estadoPlan: userData['estadoPlan'] ?? '',
       diasActivos: int.tryParse(userData['diasActivos'] ?? '0') ?? 0,
+      sessionId: userData['sessionId']?.isNotEmpty == true
+          ? userData['sessionId']
+          : null,
+      createdAt: userData['createdAt']?.isNotEmpty == true
+          ? DateTime.tryParse(userData['createdAt']!)
+          : null,
+      tokenIssuedAt: userData['tokenIssuedAt']?.isNotEmpty == true
+          ? DateTime.tryParse(userData['tokenIssuedAt']!)
+          : null,
+      tokenExpiresAt: userData['tokenExpiresAt']?.isNotEmpty == true
+          ? DateTime.tryParse(userData['tokenExpiresAt']!)
+          : null,
     );
   }
 
@@ -66,5 +83,9 @@ class AuthLocalDataSource {
 
   Future<String?> getRefreshToken() async {
     return await _secureStorage.getRefreshToken();
+  }
+
+  Future<void> saveAccessToken(String token) async {
+    await _secureStorage.saveAccessToken(token);
   }
 }

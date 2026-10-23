@@ -44,7 +44,7 @@ class AuthRemoteDataSource {
     }
   }
 
-  Future<Map<String, String>> refreshToken(String refreshToken) async {
+  Future<String> refreshToken(String refreshToken) async {
     try {
       final response = await _dio.post(
         ApiConstants.buildUrl(ApiConstants.refresh),
@@ -52,10 +52,9 @@ class AuthRemoteDataSource {
       );
 
       if (response.statusCode == 200 && response.data['data'] != null) {
-        return {
-          'accessToken': response.data['data']['accessToken'],
-          'refreshToken': response.data['data']['refreshToken'],
-        };
+        // Solo devuelve el nuevo accessToken
+        // El refreshToken se mantiene igual
+        return response.data['data']['accessToken'] as String;
       } else {
         throw Exception('Error al refrescar token');
       }

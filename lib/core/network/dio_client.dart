@@ -133,13 +133,10 @@ class DioClient {
 
       if (response.statusCode == 200 && response.data['data'] != null) {
         final newAccessToken = response.data['data']['accessToken'] as String?;
-        final newRefreshToken = response.data['data']['refreshToken'] as String?;
 
         if (newAccessToken != null) {
           await _secureStorage.saveAccessToken(newAccessToken);
-          if (newRefreshToken != null) {
-            await _secureStorage.saveRefreshToken(newRefreshToken);
-          }
+          // El refreshToken se mantiene igual, no viene en el response
           return true;
         }
       }

@@ -60,7 +60,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
       );
 
       if (response.statusCode == 200 && response.data['data'] != null) {
-        final aiResponse = response.data['data']['response'] as String;
+        final aiResponse = response.data['data']['answer'] as String;
 
         // Agregar respuesta de la IA
         final aiMessage = ChatMessage(

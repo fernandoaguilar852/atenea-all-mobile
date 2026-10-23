@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../chat/widgets/chat_widget.dart';
+import '../../data/models/dashboard_stats.dart';
+import '../../providers/dashboard_provider.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Cargar estadísticas al iniciar
+    Future.microtask(() => ref.read(dashboardProvider.notifier).loadStats());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
+    final dashboardState = ref.watch(dashboardProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -51,9 +67,7 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () async {
-          // TODO: Refresh dashboard data
-        },
+        onRefresh: () => ref.read(dashboardProvider.notifier).refresh(),
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
           child: Column(
@@ -65,7 +79,9 @@ class DashboardScreen extends ConsumerWidget {
               SizedBox(height: 20.h),
 
               // KPIs Grid
-              _KPIsGrid(),
+              dashboardState.isLoading && dashboardState.stats == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : _KPIsGrid(stats: dashboardState.stats),
 
               SizedBox(height: 20.h),
 
@@ -172,8 +188,19 @@ class _WelcomeCard extends StatelessWidget {
 }
 
 class _KPIsGrid extends StatelessWidget {
+  final DashboardStats? stats;
+
+  const _KPIsGrid({this.stats});
+
+  String _formatCurrency(double value) {
+    final format = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
+    return format.format(value);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final data = stats ?? DashboardStats.empty();
+
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -184,27 +211,27 @@ class _KPIsGrid extends StatelessWidget {
       children: [
         _KPICard(
           title: 'Ventas Hoy',
-          value: '\$0.00',
+          value: _formatCurrency(data.ventasDia),
           icon: Icons.trending_up,
           color: AppColors.success,
         ),
         _KPICard(
-          title: 'Ventas Mes',
-          value: '\$0.00',
-          icon: Icons.calendar_today,
+          title: 'Facturas Hoy',
+          value: '${data.cantidadFacturas}',
+          icon: Icons.receipt_long,
           color: AppColors.primary,
         ),
         _KPICard(
-          title: 'Productos',
-          value: '0',
-          icon: Icons.inventory_2_outlined,
-          color: AppColors.warning,
+          title: 'Ingresos',
+          value: _formatCurrency(data.totalIngresos),
+          icon: Icons.attach_money,
+          color: AppColors.info,
         ),
         _KPICard(
-          title: 'Clientes',
-          value: '0',
-          icon: Icons.people_outline,
-          color: AppColors.info,
+          title: 'Alertas',
+          value: '${data.cantidadAlertas}',
+          icon: Icons.notifications_active,
+          color: data.cantidadAlertas > 0 ? AppColors.warning : AppColors.grey400,
         ),
       ],
     );
