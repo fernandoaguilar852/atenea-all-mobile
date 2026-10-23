@@ -59,4 +59,12 @@ class AuthLocalDataSource {
     final token = await _secureStorage.getAccessToken();
     return token != null && token.isNotEmpty;
   }
+
+  Future<String?> getAccessToken() async {
+    return await _secureStorage.getAccessToken();
+  }
+
+  Future<String?> getRefreshToken() async {
+    return await _secureStorage.getRefreshToken();
+  }
 }

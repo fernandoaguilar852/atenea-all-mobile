@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../chat/widgets/chat_widget.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -97,12 +98,26 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Navigate to POS
-        },
-        icon: const Icon(Icons.point_of_sale),
-        label: const Text('Nueva Venta'),
+      floatingActionButton: Stack(
+        children: [
+          // Chat IA Button
+          const ChatFloatingButton(),
+
+          // Nueva Venta Button
+          Positioned(
+            right: 0,
+            bottom: 80.h,
+            child: FloatingActionButton.extended(
+              heroTag: 'nueva_venta_fab',
+              onPressed: () {
+                // TODO: Navigate to POS
+              },
+              icon: const Icon(Icons.point_of_sale),
+              label: const Text('Nueva Venta'),
+              backgroundColor: AppColors.primary,
+            ),
+          ),
+        ],
       ),
     );
   }

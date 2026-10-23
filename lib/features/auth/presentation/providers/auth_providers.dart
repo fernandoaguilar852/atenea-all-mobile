@@ -123,8 +123,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _authRepository.forgotPassword(email);
   }
 
-  Future<void> resetPassword(String code, String newPassword) async {
+  Future<void> resetPassword(
+    String email,
+    String code,
+    String newPassword,
+  ) async {
     await _authRepository.resetPassword(
+      email: email,
       code: code,
       newPassword: newPassword,
     );

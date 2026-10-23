@@ -34,8 +34,13 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> logout() async {
+    // Obtener refreshToken antes de limpiar
+    final refreshToken = await _localDataSource.getRefreshToken();
+
     // Llamar al backend para invalidar el token
-    await _remoteDataSource.logout();
+    if (refreshToken != null) {
+      await _remoteDataSource.logout(refreshToken);
+    }
 
     // Limpiar datos locales
     await _localDataSource.clearAuthData();
@@ -60,10 +65,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> resetPassword({
+    required String email,
     required String code,
     required String newPassword,
   }) async {
     await _remoteDataSource.resetPassword(
+      email: email,
       code: code,
       newPassword: newPassword,
     );
@@ -71,10 +78,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> changePassword({
+    required String email,
     required String currentPassword,
     required String newPassword,
   }) async {
     await _remoteDataSource.changePassword(
+      email: email,
       currentPassword: currentPassword,
       newPassword: newPassword,
     );
@@ -82,7 +91,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<bool> validateToken() async {
-    return await _remoteDataSource.validateToken();
+    final token = await _localDataSource.getAccessToken();
+    if (token == null) return false;
+    return await _remoteDataSource.validateToken(token);
   }
 
   @override

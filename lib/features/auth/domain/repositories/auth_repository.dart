@@ -15,11 +15,13 @@ abstract class AuthRepository {
   Future<void> forgotPassword(String email);
 
   Future<void> resetPassword({
+    required String email,
     required String code,
     required String newPassword,
   });
 
   Future<void> changePassword({
+    required String email,
     required String currentPassword,
     required String newPassword,
   });

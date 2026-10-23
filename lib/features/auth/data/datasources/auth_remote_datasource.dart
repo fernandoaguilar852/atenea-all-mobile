@@ -33,9 +33,12 @@ class AuthRemoteDataSource {
     }
   }
 
-  Future<void> logout() async {
+  Future<void> logout(String refreshToken) async {
     try {
-      await _dio.post(ApiConstants.buildUrl(ApiConstants.logout));
+      await _dio.post(
+        ApiConstants.buildUrl(ApiConstants.logout),
+        data: {'refreshToken': refreshToken},
+      );
     } catch (e) {
       // Ignorar errores en logout (offline, etc.)
     }
@@ -85,6 +88,7 @@ class AuthRemoteDataSource {
   }
 
   Future<void> resetPassword({
+    required String email,
     required String code,
     required String newPassword,
   }) async {
@@ -92,6 +96,7 @@ class AuthRemoteDataSource {
       final response = await _dio.post(
         ApiConstants.buildUrl(ApiConstants.resetPassword),
         data: {
+          'email': email,
           'code': code,
           'newPassword': newPassword,
         },
@@ -114,6 +119,7 @@ class AuthRemoteDataSource {
   }
 
   Future<void> changePassword({
+    required String email,
     required String currentPassword,
     required String newPassword,
   }) async {
@@ -121,6 +127,7 @@ class AuthRemoteDataSource {
       final response = await _dio.post(
         ApiConstants.buildUrl(ApiConstants.cambiarPassword),
         data: {
+          'email': email,
           'currentPassword': currentPassword,
           'newPassword': newPassword,
         },
@@ -142,10 +149,11 @@ class AuthRemoteDataSource {
     }
   }
 
-  Future<bool> validateToken() async {
+  Future<bool> validateToken(String token) async {
     try {
-      final response = await _dio.get(
+      final response = await _dio.post(
         ApiConstants.buildUrl(ApiConstants.validarToken),
+        data: {'token': token},
       );
 
       return response.statusCode == 200;
