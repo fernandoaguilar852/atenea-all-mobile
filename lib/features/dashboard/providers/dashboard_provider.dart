@@ -1,11 +1,33 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../core/constants/api_constants.dart';
 import '../../../core/providers/dio_provider.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../data/datasources/dashboard_remote_datasource.dart';
 import '../data/models/dashboard_stats.dart';
+import '../data/repositories/dashboard_repository_impl.dart';
+import '../domain/repositories/dashboard_repository.dart';
+
+// ============================================================================
+// PROVIDERS DE REPOSITORIO Y DATASOURCE
+// ============================================================================
+
+/// Provider del datasource remoto
+final dashboardRemoteDatasourceProvider =
+    Provider<DashboardRemoteDatasource>((ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return DashboardRemoteDatasource(dioClient.dio);
+});
+
+/// Provider del repositorio de dashboard
+final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
+  final remoteDatasource = ref.watch(dashboardRemoteDatasourceProvider);
+  return DashboardRepositoryImpl(remoteDatasource);
+});
+
+// ============================================================================
+// STATE CLASS
+// ============================================================================
 
 class DashboardState {
   final DashboardStats? stats;
@@ -31,11 +53,15 @@ class DashboardState {
   }
 }
 
+// ============================================================================
+// NOTIFIER
+// ============================================================================
+
 class DashboardNotifier extends StateNotifier<DashboardState> {
-  final Dio _dio;
+  final DashboardRepository _repository;
   final Ref _ref;
 
-  DashboardNotifier(this._dio, this._ref) : super(DashboardState());
+  DashboardNotifier(this._repository, this._ref) : super(DashboardState());
 
   Future<void> loadStats() async {
     state = state.copyWith(isLoading: true, error: null);
@@ -57,22 +83,14 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       final startDateStr = dateFormat.format(startDate);
       final endDateStr = dateFormat.format(endDate);
 
-      // Llamar al API
-      final response = await _dio.get(
-        ApiConstants.buildUrl(ApiConstants.consultaEstadisticas),
-        queryParameters: {
-          'clienteId': user.clienteId,
-          'startDate': startDateStr,
-          'endDate': endDateStr,
-        },
+      // Llamar al repositorio
+      final stats = await _repository.getStats(
+        clienteId: user.clienteId,
+        startDate: startDateStr,
+        endDate: endDateStr,
       );
 
-      if (response.statusCode == 200 && response.data['data'] != null) {
-        final stats = DashboardStats.fromJson(response.data['data']);
-        state = state.copyWith(stats: stats, isLoading: false);
-      } else {
-        throw Exception('Error al obtener estadísticas');
-      }
+      state = state.copyWith(stats: stats, isLoading: false);
     } catch (e) {
       debugPrint('Error loading dashboard stats: $e');
       state = state.copyWith(
@@ -88,8 +106,12 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
   }
 }
 
+// ============================================================================
+// PROVIDER
+// ============================================================================
+
 final dashboardProvider =
     StateNotifierProvider<DashboardNotifier, DashboardState>((ref) {
-  final dioClient = ref.watch(dioClientProvider);
-  return DashboardNotifier(dioClient.dio, ref);
+  final repository = ref.watch(dashboardRepositoryProvider);
+  return DashboardNotifier(repository, ref);
 });
