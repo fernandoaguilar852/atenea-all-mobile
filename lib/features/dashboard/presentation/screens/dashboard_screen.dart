@@ -228,6 +228,12 @@ class _KPIsGrid extends StatelessWidget {
           color: AppColors.info,
         ),
         _KPICard(
+          title: 'Gastos',
+          value: _formatCurrency(data.totalGastos),
+          icon: Icons.money_off,
+          color: AppColors.danger,
+        ),
+        _KPICard(
           title: 'Alertas',
           value: '${data.cantidadAlertas}',
           icon: Icons.notifications_active,
