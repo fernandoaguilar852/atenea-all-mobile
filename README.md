@@ -129,11 +129,16 @@ Ver `lib/core/config/theme_config.dart` para más detalles.
 
 ## API Backend
 
-La aplicación se conecta al backend de ATENEA POS vía AWS API Gateway:
+La aplicación se conecta al backend de ATENEA POS vía AWS API Gateway Global (Balanceador):
 
-**Base URL**: `https://0kdi3on5i8.execute-api.us-east-1.amazonaws.com/Prod`
+**Base URL**: `https://wzoknle6j7.execute-api.us-east-1.amazonaws.com/Prod`
 **API Version**: `v1`
 **Prefix**: `pos`
+
+**Ejemplo de endpoint completo**:
+```
+https://wzoknle6j7.execute-api.us-east-1.amazonaws.com/Prod/v1/pos/monedas?pageNumber=1&pageSize=10
+```
 
 Ver `lib/core/constants/api_constants.dart` para endpoints disponibles.
 

@@ -11,11 +11,11 @@ class EnvConfig {
   static bool get isProduction => environment == 'production';
   static bool get isStaging => environment == 'staging';
 
-  // API Configuration
+  // API Configuration - API Gateway Global (Balanceador)
   static const String apiUrl = String.fromEnvironment(
     'API_URL',
     defaultValue:
-        'https://0kdi3on5i8.execute-api.us-east-1.amazonaws.com/Prod',
+        'https://wzoknle6j7.execute-api.us-east-1.amazonaws.com/Prod',
   );
 
   // Features Flags

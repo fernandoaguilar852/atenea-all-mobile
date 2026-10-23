@@ -1,9 +1,9 @@
 class ApiConstants {
   ApiConstants._();
 
-  // Base URL
+  // Base URL - API Gateway Global (Balanceador)
   static const String baseUrl =
-      'https://0kdi3on5i8.execute-api.us-east-1.amazonaws.com/Prod';
+      'https://wzoknle6j7.execute-api.us-east-1.amazonaws.com/Prod';
 
   // API Version
   static const String apiVersion = 'v1';
