@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../core/models/tipo_producto.dart';
+import '../../../../core/providers/catalogs_providers.dart';
 import '../../providers/reportes_provider.dart';
 
 class StockReporteTab extends ConsumerStatefulWidget {
@@ -20,7 +22,7 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
   // Filtros opcionales
   bool _showAdvancedFilters = false;
   final _nombreProductoController = TextEditingController();
-  final _tipoProductoIdController = TextEditingController();
+  TipoProducto? _tipoProductoSelected;
   bool _stockBajo = false;
 
   @override
@@ -32,7 +34,6 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
   @override
   void dispose() {
     _nombreProductoController.dispose();
-    _tipoProductoIdController.dispose();
     super.dispose();
   }
 
@@ -43,9 +44,7 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
               ? null
               : _nombreProductoController.text,
           stockBajo: _stockBajo ? true : null,
-          tipoProductoId: _tipoProductoIdController.text.isEmpty
-              ? null
-              : int.tryParse(_tipoProductoIdController.text),
+          tipoProductoId: _tipoProductoSelected?.tipoProductoId,
           pageNumber: _currentPage,
           pageSize: _pageSize,
         );
@@ -124,23 +123,76 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                   style: TextStyle(fontSize: 14.sp),
                 ),
                 SizedBox(height: 8.h),
-                TextField(
-                  controller: _tipoProductoIdController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'ID Tipo Producto',
-                    hintText: 'Filtrar por tipo',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    filled: true,
-                    fillColor: AppColors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 12.h,
-                    ),
-                  ),
-                  style: TextStyle(fontSize: 14.sp),
+                Consumer(
+                  builder: (context, ref, child) {
+                    final tiposProductoAsync = ref.watch(tiposProductoProvider);
+
+                    return tiposProductoAsync.when(
+                      data: (tiposProducto) => DropdownButtonFormField<TipoProducto>(
+                        value: _tipoProductoSelected,
+                        decoration: InputDecoration(
+                          labelText: 'Tipo de Producto',
+                          hintText: 'Seleccionar tipo',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
+                        ),
+                        items: tiposProducto
+                            .map(
+                              (tipo) => DropdownMenuItem(
+                                value: tipo,
+                                child: Text(tipo.nombre),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _tipoProductoSelected = value;
+                          });
+                        },
+                      ),
+                      loading: () => DropdownButtonFormField<TipoProducto>(
+                        decoration: InputDecoration(
+                          labelText: 'Tipo de Producto',
+                          hintText: 'Cargando...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
+                        ),
+                        items: const [],
+                        onChanged: null,
+                      ),
+                      error: (error, stack) => DropdownButtonFormField<TipoProducto>(
+                        decoration: InputDecoration(
+                          labelText: 'Tipo de Producto',
+                          hintText: 'Error al cargar',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
+                        ),
+                        items: const [],
+                        onChanged: null,
+                      ),
+                    );
+                  },
                 ),
                 SizedBox(height: 8.h),
                 CheckboxListTile(
