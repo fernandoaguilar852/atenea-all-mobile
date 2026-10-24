@@ -173,7 +173,7 @@ class VentaDetalleNotifier
 }
 
 final ventaDetalleReporteProvider = StateNotifierProvider<VentaDetalleNotifier,
-    ReporteState<VentaDetalleReporte>>((ref) {
+    ReporteState<VentaDetalleEntity>>((ref) {
   final repository = ref.watch(reportesRepositoryProvider);
   return VentaDetalleNotifier(repository, ref);
 });
@@ -229,7 +229,7 @@ class InventarioNotifier
 }
 
 final inventarioReporteProvider = StateNotifierProvider<InventarioNotifier,
-    ReporteState<InventarioReporte>>((ref) {
+    ReporteState<InventarioEntity>>((ref) {
   final repository = ref.watch(reportesRepositoryProvider);
   return InventarioNotifier(repository, ref);
 });
@@ -393,7 +393,7 @@ class CostoBeneficioNotifier
 }
 
 final costoBeneficioReporteProvider = StateNotifierProvider<
-    CostoBeneficioNotifier, ReporteState<CostoBeneficioReporte>>((ref) {
+    CostoBeneficioNotifier, ReporteState<CostoBeneficioEntity>>((ref) {
   final repository = ref.watch(reportesRepositoryProvider);
   return CostoBeneficioNotifier(repository, ref);
 });
