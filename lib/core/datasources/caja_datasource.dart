@@ -26,7 +26,7 @@ class CajaDatasource {
     }
 
     final response = await _dio.get(
-      ApiConstants.buildUrl('/v1/pos/cajas'),
+      ApiConstants.buildUrl('/cajas'),
       queryParameters: queryParams,
     );
 

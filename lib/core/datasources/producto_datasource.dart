@@ -16,7 +16,7 @@ class ProductoDatasource {
     int pageSize = 20,
   }) async {
     final response = await _dio.get(
-      ApiConstants.buildUrl('/v1/pos/products'),
+      ApiConstants.buildUrl('/products'),
       queryParameters: {
         'clienteId': clienteId,
         'search': search,

@@ -164,6 +164,22 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                       });
                     },
                   ),
+                  if (_showAdvancedFilters)
+                    IconButton(
+                      icon: const Icon(Icons.clear_all),
+                      tooltip: 'Limpiar filtros',
+                      onPressed: () {
+                        setState(() {
+                          _productoSelected = null;
+                          _productoSearchController.clear();
+                          _searchTerm = '';
+                          _categoriaSelected = null;
+                          _cajaSelected = null;
+                          _incluirAnuladas = false;
+                        });
+                        _loadData();
+                      },
+                    ),
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     onPressed: _loadData,

@@ -127,6 +127,18 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                       });
                     },
                   ),
+                  if (_showAdvancedFilters)
+                    IconButton(
+                      icon: const Icon(Icons.clear_all),
+                      tooltip: 'Limpiar filtros',
+                      onPressed: () {
+                        setState(() {
+                          _tipoPagoFilter = null;
+                          _cajaSelected = null;
+                        });
+                        _loadData();
+                      },
+                    ),
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     onPressed: _loadData,

@@ -16,7 +16,7 @@ class ConsumidorDatasource {
     int pageSize = 20,
   }) async {
     final response = await _dio.get(
-      ApiConstants.buildUrl('/v1/pos/consumidores'),
+      ApiConstants.buildUrl('/consumidores'),
       queryParameters: {
         'clienteId': clienteId,
         'search': search,

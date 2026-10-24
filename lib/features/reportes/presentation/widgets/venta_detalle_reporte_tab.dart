@@ -183,6 +183,23 @@ class _VentaDetalleReporteTabState
                       });
                     },
                   ),
+                  if (_showAdvancedFilters)
+                    IconButton(
+                      icon: const Icon(Icons.clear_all),
+                      tooltip: 'Limpiar filtros',
+                      onPressed: () {
+                        setState(() {
+                          _consumidorSelected = null;
+                          _consumidorSearchController.clear();
+                          _consumidorSearchTerm = '';
+                          _productoSelected = null;
+                          _productoSearchController.clear();
+                          _productoSearchTerm = '';
+                          _selectedEstado = null;
+                        });
+                        _loadData();
+                      },
+                    ),
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     onPressed: _loadData,
