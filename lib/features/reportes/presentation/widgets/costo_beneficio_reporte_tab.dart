@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../core/models/producto.dart';
+import '../../../../core/models/tipo_producto.dart';
+import '../../../../core/providers/catalogs_providers.dart';
 import '../../providers/reportes_provider.dart';
 
 class CostoBeneficioReporteTab extends ConsumerStatefulWidget {
@@ -22,9 +26,12 @@ class _CostoBeneficioReporteTabState
 
   // Filtros opcionales
   bool _showAdvancedFilters = false;
-  final _productoIdController = TextEditingController();
-  final _categoriaIdController = TextEditingController();
-  bool _activo = false;
+  final _productoSearchController = TextEditingController();
+  Producto? _productoSelected;
+  String _searchTerm = '';
+  Timer? _debounce;
+  TipoProducto? _categoriaSelected;
+  bool? _activoSelected;
 
   @override
   void initState() {
@@ -37,8 +44,8 @@ class _CostoBeneficioReporteTabState
 
   @override
   void dispose() {
-    _productoIdController.dispose();
-    _categoriaIdController.dispose();
+    _productoSearchController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -49,16 +56,27 @@ class _CostoBeneficioReporteTabState
     ref.read(costoBeneficioReporteProvider.notifier).loadReporte(
           startDate: dateFormat.format(_startDate!),
           endDate: dateFormat.format(_endDate!),
-          productoId: _productoIdController.text.isEmpty
-              ? null
-              : int.tryParse(_productoIdController.text),
-          categoriaId: _categoriaIdController.text.isEmpty
-              ? null
-              : int.tryParse(_categoriaIdController.text),
-          activo: _activo ? true : null,
+          productoId: _productoSelected?.productoId,
+          categoriaId: _categoriaSelected?.tipoProductoId,
+          activo: _activoSelected,
           pageNumber: _currentPage,
           pageSize: _pageSize,
         );
+  }
+
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (value.length >= 3) {
+        setState(() {
+          _searchTerm = value;
+        });
+      } else {
+        setState(() {
+          _searchTerm = '';
+        });
+      }
+    });
   }
 
   Future<void> _selectDateRange() async {
@@ -155,68 +173,273 @@ class _CostoBeneficioReporteTabState
               ),
               if (_showAdvancedFilters) ...[
                 SizedBox(height: 12.h),
-                Row(
+                Consumer(
+                  builder: (context, ref, child) {
+                    final tiposProductoAsync = ref.watch(tiposProductoProvider);
+
+                    return tiposProductoAsync.when(
+                      data: (tiposProducto) => DropdownButtonFormField<TipoProducto>(
+                        value: _categoriaSelected,
+                        decoration: InputDecoration(
+                          labelText: 'Categoría',
+                          hintText: 'Seleccionar categoría',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
+                        ),
+                        style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
+                        items: tiposProducto.map((tipo) {
+                          return DropdownMenuItem<TipoProducto>(
+                            value: tipo,
+                            child: Text(tipo.nombre),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _categoriaSelected = value;
+                            // Si se selecciona categoría, limpiar el producto seleccionado
+                            if (value != null) {
+                              _productoSelected = null;
+                              _productoSearchController.clear();
+                              _searchTerm = '';
+                            }
+                          });
+                        },
+                      ),
+                      loading: () => Container(
+                        padding: EdgeInsets.all(12.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.grey300),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 16.w,
+                              height: 16.h,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text('Cargando categorías...', style: TextStyle(fontSize: 14.sp)),
+                          ],
+                        ),
+                      ),
+                      error: (error, stack) => Container(
+                        padding: EdgeInsets.all(12.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.danger),
+                        ),
+                        child: Text('Error al cargar categorías', style: TextStyle(fontSize: 14.sp, color: AppColors.danger)),
+                      ),
+                    );
+                  },
+                ),
+                SizedBox(height: 8.h),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _productoIdController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'ID Producto',
-                          hintText: 'Filtrar por producto',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.white,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 12.h,
-                          ),
+                    TextField(
+                      controller: _productoSearchController,
+                      enabled: _categoriaSelected == null,
+                      onChanged: _categoriaSelected == null ? _onSearchChanged : null,
+                      decoration: InputDecoration(
+                        labelText: 'Buscar Producto',
+                        hintText: _categoriaSelected == null
+                            ? 'Escribir 3+ caracteres para buscar'
+                            : 'Deshabilitado (categoría seleccionada)',
+                        prefixIcon: _productoSelected != null
+                            ? IconButton(
+                                icon: Icon(Icons.clear, size: 20.sp),
+                                onPressed: () {
+                                  setState(() {
+                                    _productoSelected = null;
+                                    _productoSearchController.clear();
+                                    _searchTerm = '';
+                                  });
+                                },
+                              )
+                            : Icon(Icons.search, size: 20.sp),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
-                        style: TextStyle(fontSize: 14.sp),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: TextField(
-                        controller: _categoriaIdController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'ID Categoría',
-                          hintText: 'Filtrar por categoría',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.white,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 12.h,
-                          ),
+                        filled: true,
+                        fillColor: _categoriaSelected == null
+                            ? AppColors.white
+                            : AppColors.grey100,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 12.h,
                         ),
-                        style: TextStyle(fontSize: 14.sp),
                       ),
+                      style: TextStyle(fontSize: 14.sp),
                     ),
+                    if (_productoSelected != null)
+                      Container(
+                        margin: EdgeInsets.only(top: 4.h),
+                        padding: EdgeInsets.all(8.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.primary),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.check_circle, size: 16.sp, color: AppColors.primary),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                'Seleccionado: ${_productoSelected!.displayName}',
+                                style: TextStyle(fontSize: 12.sp, color: AppColors.primary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (_searchTerm.isNotEmpty && _productoSelected == null)
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final productosAsync = ref.watch(productosSearchProvider(_searchTerm));
+
+                          return productosAsync.when(
+                            data: (productos) {
+                              if (productos.isEmpty) {
+                                return Container(
+                                  margin: EdgeInsets.only(top: 4.h),
+                                  padding: EdgeInsets.all(12.w),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.white,
+                                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                                    border: Border.all(color: AppColors.grey300),
+                                  ),
+                                  child: Text(
+                                    'No se encontraron productos',
+                                    style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+                                  ),
+                                );
+                              }
+
+                              return Container(
+                                margin: EdgeInsets.only(top: 4.h),
+                                constraints: BoxConstraints(maxHeight: 200.h),
+                                decoration: BoxDecoration(
+                                  color: AppColors.white,
+                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                  border: Border.all(color: AppColors.grey300),
+                                ),
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  itemCount: productos.length,
+                                  separatorBuilder: (context, index) => Divider(height: 1.h),
+                                  itemBuilder: (context, index) {
+                                    final producto = productos[index];
+                                    return ListTile(
+                                      dense: true,
+                                      title: Text(
+                                        producto.nombre,
+                                        style: TextStyle(fontSize: 13.sp),
+                                      ),
+                                      subtitle: Text(
+                                        'ID: ${producto.productoId} - \$${producto.precio.toStringAsFixed(0)}',
+                                        style: TextStyle(fontSize: 11.sp),
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          _productoSelected = producto;
+                                          _productoSearchController.text = producto.nombre;
+                                          _searchTerm = '';
+                                        });
+                                      },
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                            loading: () => Container(
+                              margin: EdgeInsets.only(top: 4.h),
+                              padding: EdgeInsets.all(12.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                border: Border.all(color: AppColors.grey300),
+                              ),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 16.w,
+                                    height: 16.h,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    'Buscando productos...',
+                                    style: TextStyle(fontSize: 12.sp),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            error: (error, stack) => Container(
+                              margin: EdgeInsets.only(top: 4.h),
+                              padding: EdgeInsets.all(12.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.danger.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                border: Border.all(color: AppColors.danger),
+                              ),
+                              child: Text(
+                                'Error al buscar productos',
+                                style: TextStyle(fontSize: 12.sp, color: AppColors.danger),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                   ],
                 ),
                 SizedBox(height: 8.h),
-                CheckboxListTile(
-                  title: Text(
-                    'Productos Activos',
-                    style: TextStyle(fontSize: 14.sp),
+                DropdownButtonFormField<bool?>(
+                  value: _activoSelected,
+                  decoration: InputDecoration(
+                    labelText: 'Estado',
+                    hintText: 'Seleccionar estado',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 12.h,
+                    ),
                   ),
-                  value: _activo,
+                  style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
+                  items: const [
+                    DropdownMenuItem<bool?>(
+                      value: null,
+                      child: Text('Todos'),
+                    ),
+                    DropdownMenuItem<bool?>(
+                      value: true,
+                      child: Text('Activos'),
+                    ),
+                    DropdownMenuItem<bool?>(
+                      value: false,
+                      child: Text('Inactivos'),
+                    ),
+                  ],
                   onChanged: (value) {
                     setState(() {
-                      _activo = value ?? false;
+                      _activoSelected = value;
                     });
                   },
-                  tileColor: AppColors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    side: BorderSide(color: AppColors.grey300),
-                  ),
                 ),
               ],
             ],
