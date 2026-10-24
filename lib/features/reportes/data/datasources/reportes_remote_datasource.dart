@@ -62,7 +62,12 @@ class ReportesRemoteDatasource {
     );
 
     if (response.statusCode == 200 && response.data['data'] != null) {
-      return VentasReporte.fromJson(response.data['data']);
+      final dataWithPagination = <String, dynamic>{
+        ...response.data['data'] as Map<String, dynamic>,
+        if (response.data['pagination'] != null)
+          'pagination': response.data['pagination'],
+      };
+      return VentasReporte.fromJson(dataWithPagination);
     } else {
       throw DioException(
         requestOptions: response.requestOptions,
@@ -111,7 +116,12 @@ class ReportesRemoteDatasource {
     );
 
     if (response.statusCode == 200 && response.data['data'] != null) {
-      return VentaDetalleReporte.fromJson(response.data['data']);
+      final dataWithPagination = <String, dynamic>{
+        ...response.data['data'] as Map<String, dynamic>,
+        if (response.data['pagination'] != null)
+          'pagination': response.data['pagination'],
+      };
+      return VentaDetalleReporte.fromJson(dataWithPagination);
     } else {
       throw DioException(
         requestOptions: response.requestOptions,
@@ -152,7 +162,12 @@ class ReportesRemoteDatasource {
     );
 
     if (response.statusCode == 200 && response.data['data'] != null) {
-      return InventarioReporte.fromJson(response.data['data']);
+      final dataWithPagination = <String, dynamic>{
+        ...response.data['data'] as Map<String, dynamic>,
+        if (response.data['pagination'] != null)
+          'pagination': response.data['pagination'],
+      };
+      return InventarioReporte.fromJson(dataWithPagination);
     } else {
       throw DioException(
         requestOptions: response.requestOptions,
@@ -234,7 +249,12 @@ class ReportesRemoteDatasource {
     );
 
     if (response.statusCode == 200 && response.data['data'] != null) {
-      return StockReporte.fromJson(response.data['data']);
+      final dataWithPagination = <String, dynamic>{
+        ...response.data['data'] as Map<String, dynamic>,
+        if (response.data['pagination'] != null)
+          'pagination': response.data['pagination'],
+      };
+      return StockReporte.fromJson(dataWithPagination);
     } else {
       throw DioException(
         requestOptions: response.requestOptions,
@@ -279,7 +299,12 @@ class ReportesRemoteDatasource {
     );
 
     if (response.statusCode == 200 && response.data['data'] != null) {
-      return CostoBeneficioReporte.fromJson(response.data['data']);
+      final dataWithPagination = <String, dynamic>{
+        ...response.data['data'] as Map<String, dynamic>,
+        if (response.data['pagination'] != null)
+          'pagination': response.data['pagination'],
+      };
+      return CostoBeneficioReporte.fromJson(dataWithPagination);
     } else {
       throw DioException(
         requestOptions: response.requestOptions,
