@@ -18,7 +18,7 @@ class CostoBeneficioEntity {
 
 class CostoBeneficioRowEntity {
   final int productoId;
-  final String codigoBarras;
+  final String? codigoBarras;
   final String nombreProducto;
   final int categoriaId;
   final String nombreCategoria;

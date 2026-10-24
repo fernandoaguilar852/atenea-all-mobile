@@ -26,7 +26,7 @@ class StockReporte {
 @JsonSerializable()
 class StockRow {
   final int productoId;
-  final String codigoBarras;
+  final String? codigoBarras;
   final String nombreProducto;
   final int categoriaId;
   final String nombreCategoria;
@@ -41,7 +41,7 @@ class StockRow {
 
   StockRow({
     required this.productoId,
-    required this.codigoBarras,
+    this.codigoBarras,
     required this.nombreProducto,
     required this.categoriaId,
     required this.nombreCategoria,

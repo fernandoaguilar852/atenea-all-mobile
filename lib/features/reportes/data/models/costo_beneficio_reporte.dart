@@ -28,7 +28,7 @@ class CostoBeneficioReporte {
 @JsonSerializable()
 class CostoBeneficioRow {
   final int productoId;
-  final String codigoBarras;
+  final String? codigoBarras;
   final String nombreProducto;
   final int categoriaId;
   final String nombreCategoria;
@@ -42,7 +42,7 @@ class CostoBeneficioRow {
 
   CostoBeneficioRow({
     required this.productoId,
-    required this.codigoBarras,
+    this.codigoBarras,
     required this.nombreProducto,
     required this.categoriaId,
     required this.nombreCategoria,

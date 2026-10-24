@@ -100,8 +100,9 @@ class VentasNotifier extends StateNotifier<ReporteState<VentasEntity>> {
       );
 
       state = state.copyWith(data: reporte, isLoading: false);
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error loading ventas reporte: $e');
+      debugPrint('Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         error: 'Error al cargar reporte de ventas',
@@ -158,8 +159,9 @@ class VentaDetalleNotifier
       );
 
       state = state.copyWith(data: reporte, isLoading: false);
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error loading venta detalle reporte: $e');
+      debugPrint('Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         error: 'Error al cargar reporte de venta detallada',
@@ -214,8 +216,9 @@ class InventarioNotifier
       );
 
       state = state.copyWith(data: reporte, isLoading: false);
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error loading inventario reporte: $e');
+      debugPrint('Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         error: 'Error al cargar reporte de inventario',
@@ -265,8 +268,9 @@ class ArqueoNotifier extends StateNotifier<ReporteState<ArqueoEntity>> {
       );
 
       state = state.copyWith(data: reporte, isLoading: false);
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error loading arqueo reporte: $e');
+      debugPrint('Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         error: 'Error al cargar arqueo de caja',
@@ -320,8 +324,9 @@ class StockNotifier extends StateNotifier<ReporteState<StockEntity>> {
       );
 
       state = state.copyWith(data: reporte, isLoading: false);
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error loading stock reporte: $e');
+      debugPrint('Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         error: 'Error al cargar reporte de stock',
@@ -378,8 +383,9 @@ class CostoBeneficioNotifier
       );
 
       state = state.copyWith(data: reporte, isLoading: false);
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error loading costo-beneficio reporte: $e');
+      debugPrint('Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         error: 'Error al cargar reporte de costo-beneficio',

@@ -23,10 +23,10 @@ class ArqueoDetalleEntity {
 }
 
 class ArqueoCajaEntity {
-  final double saldoInicial;
-  final double totalIngresos;
-  final double totalEgresos;
-  final double saldoFinal;
+  final double? saldoInicial;
+  final double? totalIngresos;
+  final double? totalEgresos;
+  final double? saldoFinal;
   final List<ArqueoTransaccionEntity> transacciones;
 
   const ArqueoCajaEntity({
@@ -39,10 +39,10 @@ class ArqueoCajaEntity {
 }
 
 class ArqueoBancoEntity {
-  final double saldoInicial;
-  final double totalIngresos;
-  final double totalEgresos;
-  final double saldoFinal;
+  final double? saldoInicial;
+  final double? totalIngresos;
+  final double? totalEgresos;
+  final double? saldoFinal;
   final List<ArqueoTransaccionEntity> transacciones;
 
   const ArqueoBancoEntity({

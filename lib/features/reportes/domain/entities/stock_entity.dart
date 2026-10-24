@@ -16,7 +16,7 @@ class StockEntity {
 
 class StockRowEntity {
   final int productoId;
-  final String codigoBarras;
+  final String? codigoBarras;
   final String nombreProducto;
   final int categoriaId;
   final String nombreCategoria;

@@ -39,17 +39,17 @@ class ArqueoDetalle {
 
 @JsonSerializable()
 class ArqueoCaja {
-  final double saldoInicial;
-  final double totalIngresos;
-  final double totalEgresos;
-  final double saldoFinal;
+  final double? saldoInicial;
+  final double? totalIngresos;
+  final double? totalEgresos;
+  final double? saldoFinal;
   final List<ArqueoTransaccion> transacciones;
 
   ArqueoCaja({
-    required this.saldoInicial,
-    required this.totalIngresos,
-    required this.totalEgresos,
-    required this.saldoFinal,
+    this.saldoInicial,
+    this.totalIngresos,
+    this.totalEgresos,
+    this.saldoFinal,
     required this.transacciones,
   });
 
@@ -61,17 +61,17 @@ class ArqueoCaja {
 
 @JsonSerializable()
 class ArqueoBanco {
-  final double saldoInicial;
-  final double totalIngresos;
-  final double totalEgresos;
-  final double saldoFinal;
+  final double? saldoInicial;
+  final double? totalIngresos;
+  final double? totalEgresos;
+  final double? saldoFinal;
   final List<ArqueoTransaccion> transacciones;
 
   ArqueoBanco({
-    required this.saldoInicial,
-    required this.totalIngresos,
-    required this.totalEgresos,
-    required this.saldoFinal,
+    this.saldoInicial,
+    this.totalIngresos,
+    this.totalEgresos,
+    this.saldoFinal,
     required this.transacciones,
   });
 

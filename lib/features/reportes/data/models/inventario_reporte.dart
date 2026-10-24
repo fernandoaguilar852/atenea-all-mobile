@@ -26,7 +26,7 @@ class InventarioReporte {
 @JsonSerializable()
 class InventarioRow {
   final int productoId;
-  final String codigoBarras;
+  final String? codigoBarras;
   final String nombreProducto;
   final int categoriaId;
   final String nombreCategoria;
@@ -39,7 +39,7 @@ class InventarioRow {
 
   InventarioRow({
     required this.productoId,
-    required this.codigoBarras,
+    this.codigoBarras,
     required this.nombreProducto,
     required this.categoriaId,
     required this.nombreCategoria,

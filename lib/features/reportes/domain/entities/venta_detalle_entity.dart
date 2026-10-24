@@ -19,9 +19,9 @@ class VentaDetalleRowEntity {
   final String fechaVenta;
   final String numeroFactura;
   final String nombreCliente;
-  final String documentoCliente;
-  final String emailCliente;
-  final String telefonoCliente;
+  final String? documentoCliente;
+  final String? emailCliente;
+  final String? telefonoCliente;
   final String nombreCajero;
   final String nombreCaja;
   final double subtotal;
@@ -55,7 +55,7 @@ class VentaDetalleRowEntity {
 class VentaDetalleLineaEntity {
   final int productoId;
   final String nombreProducto;
-  final String codigoBarras;
+  final String? codigoBarras;
   final int cantidad;
   final double precioUnitario;
   final double descuento;

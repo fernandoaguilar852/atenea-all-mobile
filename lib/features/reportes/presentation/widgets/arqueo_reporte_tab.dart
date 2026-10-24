@@ -267,10 +267,10 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                               ),
                               SizedBox(height: 12.h),
                               _ArqueoCard(
-                                saldoInicial: reporte.reporteArqueo.caja.saldoInicial,
-                                totalIngresos: reporte.reporteArqueo.caja.totalIngresos,
-                                totalEgresos: reporte.reporteArqueo.caja.totalEgresos,
-                                saldoFinal: reporte.reporteArqueo.caja.saldoFinal,
+                                saldoInicial: reporte.reporteArqueo.caja.saldoInicial ?? 0.0,
+                                totalIngresos: reporte.reporteArqueo.caja.totalIngresos ?? 0.0,
+                                totalEgresos: reporte.reporteArqueo.caja.totalEgresos ?? 0.0,
+                                saldoFinal: reporte.reporteArqueo.caja.saldoFinal ?? 0.0,
                               ),
                               SizedBox(height: 20.h),
                               Text(
@@ -282,10 +282,10 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                               ),
                               SizedBox(height: 12.h),
                               _ArqueoCard(
-                                saldoInicial: reporte.reporteArqueo.banco.saldoInicial,
-                                totalIngresos: reporte.reporteArqueo.banco.totalIngresos,
-                                totalEgresos: reporte.reporteArqueo.banco.totalEgresos,
-                                saldoFinal: reporte.reporteArqueo.banco.saldoFinal,
+                                saldoInicial: reporte.reporteArqueo.banco.saldoInicial ?? 0.0,
+                                totalIngresos: reporte.reporteArqueo.banco.totalIngresos ?? 0.0,
+                                totalEgresos: reporte.reporteArqueo.banco.totalEgresos ?? 0.0,
+                                saldoFinal: reporte.reporteArqueo.banco.saldoFinal ?? 0.0,
                               ),
                               SizedBox(height: 20.h),
                               Card(

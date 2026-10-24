@@ -29,9 +29,9 @@ class VentaDetalleRow {
   final String fechaVenta;
   final String numeroFactura;
   final String nombreCliente;
-  final String documentoCliente;
-  final String emailCliente;
-  final String telefonoCliente;
+  final String? documentoCliente;
+  final String? emailCliente;
+  final String? telefonoCliente;
   final String nombreCajero;
   final String nombreCaja;
   final double subtotal;
@@ -47,9 +47,9 @@ class VentaDetalleRow {
     required this.fechaVenta,
     required this.numeroFactura,
     required this.nombreCliente,
-    required this.documentoCliente,
-    required this.emailCliente,
-    required this.telefonoCliente,
+    this.documentoCliente,
+    this.emailCliente,
+    this.telefonoCliente,
     required this.nombreCajero,
     required this.nombreCaja,
     required this.subtotal,
@@ -71,7 +71,7 @@ class VentaDetalleRow {
 class VentaDetalleLinea {
   final int productoId;
   final String nombreProducto;
-  final String codigoBarras;
+  final String? codigoBarras;
   final int cantidad;
   final double precioUnitario;
   final double descuento;
@@ -82,7 +82,7 @@ class VentaDetalleLinea {
   VentaDetalleLinea({
     required this.productoId,
     required this.nombreProducto,
-    required this.codigoBarras,
+    this.codigoBarras,
     required this.cantidad,
     required this.precioUnitario,
     required this.descuento,
