@@ -42,16 +42,43 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen>
           controller: _tabController,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
-          indicatorColor: AppColors.primary,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
+          indicatorColor: AppColors.white,
+          indicatorWeight: 3,
+          labelColor: AppColors.white,
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+          unselectedLabelColor: AppColors.white.withValues(alpha: 0.6),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.normal,
+            fontSize: 14,
+          ),
           tabs: const [
-            Tab(text: 'Ventas'),
-            Tab(text: 'Venta Detallada'),
-            Tab(text: 'Inventario'),
-            Tab(text: 'Arqueo Caja'),
-            Tab(text: 'Stock'),
-            Tab(text: 'Costo-Beneficio'),
+            Tab(
+              icon: Icon(Icons.shopping_cart, size: 20),
+              text: 'Ventas',
+            ),
+            Tab(
+              icon: Icon(Icons.receipt_long, size: 20),
+              text: 'Venta Detallada',
+            ),
+            Tab(
+              icon: Icon(Icons.inventory, size: 20),
+              text: 'Inventario',
+            ),
+            Tab(
+              icon: Icon(Icons.account_balance_wallet, size: 20),
+              text: 'Arqueo Caja',
+            ),
+            Tab(
+              icon: Icon(Icons.warehouse, size: 20),
+              text: 'Stock',
+            ),
+            Tab(
+              icon: Icon(Icons.analytics, size: 20),
+              text: 'Costo-Beneficio',
+            ),
           ],
         ),
       ),

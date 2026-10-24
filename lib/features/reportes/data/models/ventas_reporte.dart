@@ -26,10 +26,15 @@ class VentasReporte {
 @JsonSerializable()
 class VentaRow {
   final int productoId;
+  @JsonKey(name: 'codigoBarras', defaultValue: '')
   final String codigoBarras;
+  @JsonKey(name: 'productoNombre')
   final String nombreProducto;
+  @JsonKey(name: 'categoriaId', defaultValue: 0)
   final int categoriaId;
+  @JsonKey(name: 'categoriaNombre')
   final String nombreCategoria;
+  @JsonKey(name: 'precioPromedio')
   final double precioVentaUnitario;
   final int cantidadVendida;
   final double totalVentas;
@@ -54,7 +59,9 @@ class VentaRow {
 @JsonSerializable()
 class VentasResumen {
   final int totalProductosVendidos;
+  @JsonKey(name: 'totalTransacciones', defaultValue: 0)
   final int totalCantidadVendida;
+  @JsonKey(name: 'totalGeneral')
   final double totalVentas;
 
   VentasResumen({

@@ -16,14 +16,26 @@ class ReporteEncabezado {
   final String email;
   final String? logoUrl;
   final String? sitioWeb;
+  @JsonKey(name: 'responsableIVA', defaultValue: '')
   final String responsableIVA;
   final String tipoNegocio;
+  @JsonKey(name: 'estado', defaultValue: '')
   final String estado;
+  @JsonKey(name: 'plan', defaultValue: '')
   final String plan;
+  @JsonKey(name: 'fechaCreacion', defaultValue: '')
   final String fechaCreacion;
+  @JsonKey(name: 'fechaActualizacion', defaultValue: '')
   final String fechaActualizacion;
   final int ciudadId;
-  final int monedaId;
+  @JsonKey(name: 'codigoCiiu', defaultValue: '')
+  final String? codigoCiiu;
+  @JsonKey(name: 'codigoPostal', defaultValue: '')
+  final String? codigoPostal;
+  @JsonKey(name: 'facturaElectronica', defaultValue: false)
+  final bool? facturaElectronica;
+  @JsonKey(name: 'tipoDocumentoDefault', defaultValue: 'POS')
+  final String? tipoDocumentoDefault;
   final ReporteCiudad ciudad;
   final ReporteMoneda moneda;
 
@@ -47,7 +59,10 @@ class ReporteEncabezado {
     required this.fechaCreacion,
     required this.fechaActualizacion,
     required this.ciudadId,
-    required this.monedaId,
+    this.codigoCiiu,
+    this.codigoPostal,
+    this.facturaElectronica,
+    this.tipoDocumentoDefault,
     required this.ciudad,
     required this.moneda,
   });
@@ -62,12 +77,16 @@ class ReporteEncabezado {
 class ReporteCiudad {
   final int ciudadId;
   final String nombre;
-  final int departamentoId;
+  @JsonKey(name: 'departamento')
+  final String departamentoId;
+  @JsonKey(name: 'pais', defaultValue: '')
+  final String pais;
 
   ReporteCiudad({
     required this.ciudadId,
     required this.nombre,
     required this.departamentoId,
+    required this.pais,
   });
 
   factory ReporteCiudad.fromJson(Map<String, dynamic> json) =>
@@ -79,15 +98,22 @@ class ReporteCiudad {
 @JsonSerializable()
 class ReporteMoneda {
   final int monedaId;
+  @JsonKey(name: 'codigoIso')
   final String codigo;
   final String nombre;
   final String simbolo;
+  @JsonKey(name: 'decimales', defaultValue: 2)
+  final int decimales;
+  @JsonKey(name: 'activo', defaultValue: true)
+  final bool activo;
 
   ReporteMoneda({
     required this.monedaId,
     required this.codigo,
     required this.nombre,
     required this.simbolo,
+    required this.decimales,
+    required this.activo,
   });
 
   factory ReporteMoneda.fromJson(Map<String, dynamic> json) =>
@@ -98,24 +124,26 @@ class ReporteMoneda {
 
 @JsonSerializable()
 class ReportePagination {
+  @JsonKey(name: 'pageNumber')
   final int currentPage;
-  final int totalPages;
   final int pageSize;
+  @JsonKey(name: 'totalElement')
   final int totalCount;
-  final bool hasPrevious;
+  @JsonKey(name: 'hasMoreElements')
   final bool hasNext;
 
   ReportePagination({
     required this.currentPage,
-    required this.totalPages,
     required this.pageSize,
     required this.totalCount,
-    required this.hasPrevious,
     required this.hasNext,
   });
 
   factory ReportePagination.fromJson(Map<String, dynamic> json) =>
       _$ReportePaginationFromJson(json);
+
+  int get totalPages => totalCount > 0 ? ((totalCount - 1) ~/ pageSize) + 1 : 0;
+  bool get hasPrevious => currentPage > 1;
 
   Map<String, dynamic> toJson() => _$ReportePaginationToJson(this);
 }
