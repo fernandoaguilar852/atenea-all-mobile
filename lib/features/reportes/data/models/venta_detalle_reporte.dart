@@ -26,19 +26,33 @@ class VentaDetalleReporte {
 @JsonSerializable()
 class VentaDetalleRow {
   final int ventaId;
+  @JsonKey(name: 'fechaEmision', defaultValue: '')
   final String fechaVenta;
+  @JsonKey(defaultValue: '')
   final String numeroFactura;
+  @JsonKey(name: 'consumidorNombre', defaultValue: '')
   final String nombreCliente;
+  @JsonKey(name: 'consumidorIdentificacion', defaultValue: '')
   final String? documentoCliente;
+  @JsonKey(defaultValue: '')
   final String? emailCliente;
+  @JsonKey(defaultValue: '')
   final String? telefonoCliente;
-  final String nombreCajero;
-  final String nombreCaja;
+  @JsonKey(defaultValue: '')
+  final String? nombreCajero;
+  @JsonKey(defaultValue: '')
+  final String? nombreCaja;
+  @JsonKey(name: 'subtotalSinImpuestos', defaultValue: 0.0)
   final double subtotal;
+  @JsonKey(name: 'totalDescuentos', defaultValue: 0.0)
   final double descuento;
+  @JsonKey(name: 'totalImpuestos', defaultValue: 0.0)
   final double iva;
+  @JsonKey(defaultValue: 0.0)
   final double total;
+  @JsonKey(defaultValue: '')
   final String formaPago;
+  @JsonKey(name: 'estado', defaultValue: '')
   final String estadoVenta;
   final List<VentaDetalleLinea> detalles;
 
@@ -47,11 +61,11 @@ class VentaDetalleRow {
     required this.fechaVenta,
     required this.numeroFactura,
     required this.nombreCliente,
-    this.documentoCliente,
-    this.emailCliente,
-    this.telefonoCliente,
-    required this.nombreCajero,
-    required this.nombreCaja,
+    this.documentoCliente = '',
+    this.emailCliente = '',
+    this.telefonoCliente = '',
+    this.nombreCajero,
+    this.nombreCaja,
     required this.subtotal,
     required this.descuento,
     required this.iva,
@@ -70,19 +84,27 @@ class VentaDetalleRow {
 @JsonSerializable()
 class VentaDetalleLinea {
   final int productoId;
+  @JsonKey(name: 'productoNombre', defaultValue: '')
   final String nombreProducto;
+  @JsonKey(defaultValue: '')
   final String? codigoBarras;
+  @JsonKey(defaultValue: 0)
   final int cantidad;
+  @JsonKey(defaultValue: 0.0)
   final double precioUnitario;
+  @JsonKey(name: 'descuentoValor', defaultValue: 0.0)
   final double descuento;
+  @JsonKey(defaultValue: 0.0)
   final double subtotal;
+  @JsonKey(name: 'valorImpuesto', defaultValue: 0.0)
   final double iva;
+  @JsonKey(name: 'totalLinea', defaultValue: 0.0)
   final double total;
 
   VentaDetalleLinea({
     required this.productoId,
     required this.nombreProducto,
-    this.codigoBarras,
+    this.codigoBarras = '',
     required this.cantidad,
     required this.precioUnitario,
     required this.descuento,
@@ -99,10 +121,15 @@ class VentaDetalleLinea {
 
 @JsonSerializable()
 class VentaDetalleResumen {
+  @JsonKey(defaultValue: 0)
   final int totalVentas;
+  @JsonKey(name: 'subtotalGeneral', defaultValue: 0.0)
   final double totalSubtotal;
+  @JsonKey(name: 'descuentosGeneral', defaultValue: 0.0)
   final double totalDescuento;
+  @JsonKey(name: 'impuestosGeneral', defaultValue: 0.0)
   final double totalIVA;
+  @JsonKey(defaultValue: 0.0)
   final double totalGeneral;
 
   VentaDetalleResumen({

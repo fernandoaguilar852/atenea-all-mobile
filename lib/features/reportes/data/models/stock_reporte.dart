@@ -26,33 +26,36 @@ class StockReporte {
 @JsonSerializable()
 class StockRow {
   final int productoId;
-  final String? codigoBarras;
+  @JsonKey(name: 'nombre', defaultValue: '')
   final String nombreProducto;
-  final int categoriaId;
-  final String nombreCategoria;
+  @JsonKey(defaultValue: '')
+  final String? codigoBarras;
+  @JsonKey(defaultValue: '')
+  final String? unidadMedida;
+  @JsonKey(name: 'stockTotal', defaultValue: 0)
   final int stockActual;
+  @JsonKey(defaultValue: 0)
+  final int? stockDisponible;
+  @JsonKey(defaultValue: 0)
   final int stockMinimo;
-  final int stockMaximo;
+  @JsonKey(name: 'requiereReposicion', defaultValue: false)
   final bool necesitaReposicion;
-  final bool activo;
+  @JsonKey(name: 'precio', defaultValue: 0.0)
   final double precioVenta;
-  final double costoUnitario;
-  final double valorInventario;
+  @JsonKey(defaultValue: false)
+  final bool activo;
 
   StockRow({
     required this.productoId,
-    this.codigoBarras,
     required this.nombreProducto,
-    required this.categoriaId,
-    required this.nombreCategoria,
+    this.codigoBarras,
+    this.unidadMedida,
     required this.stockActual,
+    this.stockDisponible,
     required this.stockMinimo,
-    required this.stockMaximo,
     required this.necesitaReposicion,
-    required this.activo,
     required this.precioVenta,
-    required this.costoUnitario,
-    required this.valorInventario,
+    required this.activo,
   });
 
   factory StockRow.fromJson(Map<String, dynamic> json) =>
@@ -63,19 +66,16 @@ class StockRow {
 
 @JsonSerializable()
 class StockResumen {
+  @JsonKey(defaultValue: 0)
   final int totalProductos;
-  final int productosActivos;
-  final int productosInactivos;
+  @JsonKey(name: 'productosStockBajo', defaultValue: 0)
   final int productosConStockBajo;
-  final int productosAgotados;
+  @JsonKey(name: 'valorInventario', defaultValue: 0.0)
   final double valorTotalInventario;
 
   StockResumen({
     required this.totalProductos,
-    required this.productosActivos,
-    required this.productosInactivos,
     required this.productosConStockBajo,
-    required this.productosAgotados,
     required this.valorTotalInventario,
   });
 

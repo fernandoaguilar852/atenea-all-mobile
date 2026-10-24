@@ -28,26 +28,37 @@ class CostoBeneficioReporte {
 @JsonSerializable()
 class CostoBeneficioRow {
   final int productoId;
+  @JsonKey(defaultValue: '')
   final String? codigoBarras;
+  @JsonKey(name: 'productoNombre', defaultValue: '')
   final String nombreProducto;
-  final int categoriaId;
+  @JsonKey(defaultValue: 0)
+  final int? categoriaId;
+  @JsonKey(name: 'categoriaNombre', defaultValue: '')
   final String nombreCategoria;
+  @JsonKey(defaultValue: 0)
   final int cantidadVendida;
-  final double precioVenta;
+  @JsonKey(defaultValue: 0.0)
+  final double? precioVenta;
+  @JsonKey(name: 'costoUnitarioPromedio', defaultValue: 0.0)
   final double costoUnitario;
+  @JsonKey(name: 'ingresosTotal', defaultValue: 0.0)
   final double ingresoTotal;
+  @JsonKey(defaultValue: 0.0)
   final double costoTotal;
+  @JsonKey(name: 'margenPesos', defaultValue: 0.0)
   final double beneficioNeto;
+  @JsonKey(defaultValue: 0.0)
   final double margenPorcentaje;
 
   CostoBeneficioRow({
     required this.productoId,
-    this.codigoBarras,
+    this.codigoBarras = '',
     required this.nombreProducto,
-    required this.categoriaId,
+    this.categoriaId,
     required this.nombreCategoria,
     required this.cantidadVendida,
-    required this.precioVenta,
+    this.precioVenta,
     required this.costoUnitario,
     required this.ingresoTotal,
     required this.costoTotal,
@@ -63,11 +74,17 @@ class CostoBeneficioRow {
 
 @JsonSerializable()
 class CostoBeneficioResumen {
+  @JsonKey(name: 'totalProductosAnalizados', defaultValue: 0)
   final int totalProductos;
+  @JsonKey(name: 'cantidadTotalVendida', defaultValue: 0)
   final int totalCantidadVendida;
+  @JsonKey(name: 'ingresosTotalGeneral', defaultValue: 0.0)
   final double totalIngresos;
+  @JsonKey(name: 'costoTotalGeneral', defaultValue: 0.0)
   final double totalCostos;
+  @JsonKey(name: 'margenTotalPesos', defaultValue: 0.0)
   final double beneficioNetoTotal;
+  @JsonKey(name: 'margenTotalPorcentaje', defaultValue: 0.0)
   final double margenPromedioGeneral;
 
   CostoBeneficioResumen({
@@ -87,22 +104,14 @@ class CostoBeneficioResumen {
 
 @JsonSerializable()
 class CostoBeneficioMetadatos {
-  final String fechaInicio;
-  final String fechaFin;
-  final int diasAnalisis;
-  final String? productoMasRentable;
-  final double? mayorMargen;
-  final String? productoMenosRentable;
-  final double? menorMargen;
+  @JsonKey(defaultValue: 0)
+  final int ventanaBusquedaMeses;
+  @JsonKey(defaultValue: [])
+  final List<String> advertencias;
 
   CostoBeneficioMetadatos({
-    required this.fechaInicio,
-    required this.fechaFin,
-    required this.diasAnalisis,
-    this.productoMasRentable,
-    this.mayorMargen,
-    this.productoMenosRentable,
-    this.menorMargen,
+    required this.ventanaBusquedaMeses,
+    required this.advertencias,
   });
 
   factory CostoBeneficioMetadatos.fromJson(Map<String, dynamic> json) =>

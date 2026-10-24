@@ -23,75 +23,69 @@ class ArqueoDetalleEntity {
 }
 
 class ArqueoCajaEntity {
-  final double? saldoInicial;
-  final double? totalIngresos;
-  final double? totalEgresos;
-  final double? saldoFinal;
+  final double total;
+  final int numeroTransacciones;
   final List<ArqueoTransaccionEntity> transacciones;
 
   const ArqueoCajaEntity({
-    required this.saldoInicial,
-    required this.totalIngresos,
-    required this.totalEgresos,
-    required this.saldoFinal,
+    required this.total,
+    required this.numeroTransacciones,
     required this.transacciones,
   });
 }
 
 class ArqueoBancoEntity {
-  final double? saldoInicial;
-  final double? totalIngresos;
-  final double? totalEgresos;
-  final double? saldoFinal;
+  final double total;
+  final int numeroTransacciones;
   final List<ArqueoTransaccionEntity> transacciones;
 
   const ArqueoBancoEntity({
-    required this.saldoInicial,
-    required this.totalIngresos,
-    required this.totalEgresos,
-    required this.saldoFinal,
+    required this.total,
+    required this.numeroTransacciones,
     required this.transacciones,
   });
 }
 
 class ArqueoTransaccionEntity {
   final int transaccionId;
-  final String fecha;
   final String tipo;
-  final String concepto;
-  final String? numeroDocumento;
-  final double monto;
+  final String fecha;
+  final int? pagoId;
   final String formaPago;
-  final String? observaciones;
+  final double monto;
 
   const ArqueoTransaccionEntity({
     required this.transaccionId,
-    required this.fecha,
     required this.tipo,
-    required this.concepto,
-    this.numeroDocumento,
-    required this.monto,
+    required this.fecha,
+    this.pagoId,
     required this.formaPago,
-    this.observaciones,
+    required this.monto,
   });
 }
 
 class ArqueoResumenEntity {
-  final double totalIngresosCaja;
-  final double totalEgresosCaja;
-  final double saldoFinalCaja;
-  final double totalIngresosBanco;
-  final double totalEgresosBanco;
-  final double saldoFinalBanco;
   final double totalGeneral;
+  final double totalCaja;
+  final double totalBanco;
+  final int totalTransacciones;
+  final RangoFechasEntity? rangoFechas;
 
   const ArqueoResumenEntity({
-    required this.totalIngresosCaja,
-    required this.totalEgresosCaja,
-    required this.saldoFinalCaja,
-    required this.totalIngresosBanco,
-    required this.totalEgresosBanco,
-    required this.saldoFinalBanco,
     required this.totalGeneral,
+    required this.totalCaja,
+    required this.totalBanco,
+    required this.totalTransacciones,
+    this.rangoFechas,
+  });
+}
+
+class RangoFechasEntity {
+  final String desde;
+  final String hasta;
+
+  const RangoFechasEntity({
+    required this.desde,
+    required this.hasta,
   });
 }

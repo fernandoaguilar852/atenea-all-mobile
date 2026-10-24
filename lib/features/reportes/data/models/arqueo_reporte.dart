@@ -39,17 +39,15 @@ class ArqueoDetalle {
 
 @JsonSerializable()
 class ArqueoCaja {
-  final double? saldoInicial;
-  final double? totalIngresos;
-  final double? totalEgresos;
-  final double? saldoFinal;
+  @JsonKey(defaultValue: 0.0)
+  final double total;
+  @JsonKey(defaultValue: 0)
+  final int numeroTransacciones;
   final List<ArqueoTransaccion> transacciones;
 
   ArqueoCaja({
-    this.saldoInicial,
-    this.totalIngresos,
-    this.totalEgresos,
-    this.saldoFinal,
+    required this.total,
+    required this.numeroTransacciones,
     required this.transacciones,
   });
 
@@ -61,17 +59,15 @@ class ArqueoCaja {
 
 @JsonSerializable()
 class ArqueoBanco {
-  final double? saldoInicial;
-  final double? totalIngresos;
-  final double? totalEgresos;
-  final double? saldoFinal;
+  @JsonKey(defaultValue: 0.0)
+  final double total;
+  @JsonKey(defaultValue: 0)
+  final int numeroTransacciones;
   final List<ArqueoTransaccion> transacciones;
 
   ArqueoBanco({
-    this.saldoInicial,
-    this.totalIngresos,
-    this.totalEgresos,
-    this.saldoFinal,
+    required this.total,
+    required this.numeroTransacciones,
     required this.transacciones,
   });
 
@@ -83,24 +79,26 @@ class ArqueoBanco {
 
 @JsonSerializable()
 class ArqueoTransaccion {
+  @JsonKey(defaultValue: 0)
   final int transaccionId;
-  final String fecha;
+  @JsonKey(name: 'tipoTransaccion', defaultValue: '')
   final String tipo;
-  final String concepto;
-  final String? numeroDocumento;
-  final double monto;
+  @JsonKey(name: 'fechaTransaccion', defaultValue: '')
+  final String fecha;
+  @JsonKey(defaultValue: 0)
+  final int? pagoId;
+  @JsonKey(name: 'metodoPago', defaultValue: '')
   final String formaPago;
-  final String? observaciones;
+  @JsonKey(name: 'valor', defaultValue: 0.0)
+  final double monto;
 
   ArqueoTransaccion({
     required this.transaccionId,
-    required this.fecha,
     required this.tipo,
-    required this.concepto,
-    this.numeroDocumento,
-    required this.monto,
+    required this.fecha,
+    this.pagoId,
     required this.formaPago,
-    this.observaciones,
+    required this.monto,
   });
 
   factory ArqueoTransaccion.fromJson(Map<String, dynamic> json) =>
@@ -111,26 +109,45 @@ class ArqueoTransaccion {
 
 @JsonSerializable()
 class ArqueoResumen {
-  final double totalIngresosCaja;
-  final double totalEgresosCaja;
-  final double saldoFinalCaja;
-  final double totalIngresosBanco;
-  final double totalEgresosBanco;
-  final double saldoFinalBanco;
+  @JsonKey(defaultValue: 0.0)
   final double totalGeneral;
+  @JsonKey(defaultValue: 0.0)
+  final double totalCaja;
+  @JsonKey(defaultValue: 0.0)
+  final double totalBanco;
+  @JsonKey(defaultValue: 0)
+  final int totalTransacciones;
+  @JsonKey(defaultValue: null)
+  final RangoFechas? rangoFechas;
 
   ArqueoResumen({
-    required this.totalIngresosCaja,
-    required this.totalEgresosCaja,
-    required this.saldoFinalCaja,
-    required this.totalIngresosBanco,
-    required this.totalEgresosBanco,
-    required this.saldoFinalBanco,
     required this.totalGeneral,
+    required this.totalCaja,
+    required this.totalBanco,
+    required this.totalTransacciones,
+    this.rangoFechas,
   });
 
   factory ArqueoResumen.fromJson(Map<String, dynamic> json) =>
       _$ArqueoResumenFromJson(json);
 
   Map<String, dynamic> toJson() => _$ArqueoResumenToJson(this);
+}
+
+@JsonSerializable()
+class RangoFechas {
+  @JsonKey(defaultValue: '')
+  final String desde;
+  @JsonKey(defaultValue: '')
+  final String hasta;
+
+  RangoFechas({
+    required this.desde,
+    required this.hasta,
+  });
+
+  factory RangoFechas.fromJson(Map<String, dynamic> json) =>
+      _$RangoFechasFromJson(json);
+
+  Map<String, dynamic> toJson() => _$RangoFechasToJson(this);
 }

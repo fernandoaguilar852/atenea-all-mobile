@@ -26,28 +26,36 @@ class VentasReporte {
 @JsonSerializable()
 class VentaRow {
   final int productoId;
-  @JsonKey(name: 'codigoBarras', defaultValue: '')
-  final String codigoBarras;
-  @JsonKey(name: 'productoNombre')
+  @JsonKey(name: 'productoNombre', defaultValue: '')
   final String nombreProducto;
-  @JsonKey(name: 'categoriaId', defaultValue: 0)
-  final int categoriaId;
-  @JsonKey(name: 'categoriaNombre')
+  @JsonKey(name: 'categoriaNombre', defaultValue: '')
   final String nombreCategoria;
-  @JsonKey(name: 'precioPromedio')
-  final double precioVentaUnitario;
+  @JsonKey(defaultValue: 0)
   final int cantidadVendida;
+  @JsonKey(name: 'precioPromedio', defaultValue: 0.0)
+  final double precioVentaUnitario;
+  @JsonKey(name: 'subtotalVentas', defaultValue: 0.0)
+  final double subtotal;
+  @JsonKey(defaultValue: 0.0)
+  final double? descuentosAplicados;
+  @JsonKey(defaultValue: 0.0)
+  final double? impuestosAplicados;
+  @JsonKey(defaultValue: 0.0)
   final double totalVentas;
+  @JsonKey(defaultValue: 0)
+  final int? numeroTransacciones;
 
   VentaRow({
     required this.productoId,
-    required this.codigoBarras,
     required this.nombreProducto,
-    required this.categoriaId,
     required this.nombreCategoria,
-    required this.precioVentaUnitario,
     required this.cantidadVendida,
+    required this.precioVentaUnitario,
+    required this.subtotal,
+    this.descuentosAplicados,
+    this.impuestosAplicados,
     required this.totalVentas,
+    this.numeroTransacciones,
   });
 
   factory VentaRow.fromJson(Map<String, dynamic> json) =>
@@ -58,16 +66,26 @@ class VentaRow {
 
 @JsonSerializable()
 class VentasResumen {
+  @JsonKey(defaultValue: 0)
   final int totalProductosVendidos;
-  @JsonKey(name: 'totalTransacciones', defaultValue: 0)
-  final int totalCantidadVendida;
-  @JsonKey(name: 'totalGeneral')
-  final double totalVentas;
+  @JsonKey(defaultValue: 0)
+  final int totalTransacciones;
+  @JsonKey(defaultValue: 0.0)
+  final double subtotalGeneral;
+  @JsonKey(defaultValue: 0.0)
+  final double descuentosGeneral;
+  @JsonKey(defaultValue: 0.0)
+  final double impuestosGeneral;
+  @JsonKey(defaultValue: 0.0)
+  final double totalGeneral;
 
   VentasResumen({
     required this.totalProductosVendidos,
-    required this.totalCantidadVendida,
-    required this.totalVentas,
+    required this.totalTransacciones,
+    required this.subtotalGeneral,
+    required this.descuentosGeneral,
+    required this.impuestosGeneral,
+    required this.totalGeneral,
   });
 
   factory VentasResumen.fromJson(Map<String, dynamic> json) =>

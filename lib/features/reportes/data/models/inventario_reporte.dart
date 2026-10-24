@@ -26,29 +26,30 @@ class InventarioReporte {
 @JsonSerializable()
 class InventarioRow {
   final int productoId;
-  final String? codigoBarras;
+  @JsonKey(name: 'productoNombre', defaultValue: '')
   final String nombreProducto;
-  final int categoriaId;
-  final String nombreCategoria;
+  @JsonKey(defaultValue: 0)
   final int cantidadConsumida;
+  @JsonKey(defaultValue: '')
+  final String? unidadMedida;
+  @JsonKey(defaultValue: 0)
   final int stockActual;
+  @JsonKey(defaultValue: 0)
   final int stockMinimo;
+  @JsonKey(name: 'requiereReposicion', defaultValue: false)
   final bool necesitaReposicion;
-  final double costoUnitario;
-  final double costoTotal;
+  @JsonKey(defaultValue: 0)
+  final int? numeroMovimientos;
 
   InventarioRow({
     required this.productoId,
-    this.codigoBarras,
     required this.nombreProducto,
-    required this.categoriaId,
-    required this.nombreCategoria,
     required this.cantidadConsumida,
+    this.unidadMedida,
     required this.stockActual,
     required this.stockMinimo,
     required this.necesitaReposicion,
-    required this.costoUnitario,
-    required this.costoTotal,
+    this.numeroMovimientos,
   });
 
   factory InventarioRow.fromJson(Map<String, dynamic> json) =>
@@ -59,15 +60,16 @@ class InventarioRow {
 
 @JsonSerializable()
 class InventarioResumen {
+  @JsonKey(name: 'totalProductosConsumidos', defaultValue: 0)
   final int totalProductos;
-  final int totalCantidadConsumida;
-  final double costoTotalInventario;
+  @JsonKey(defaultValue: 0)
+  final int? totalMovimientos;
+  @JsonKey(name: 'itemsRequierenReposicion', defaultValue: 0)
   final int productosConStockBajo;
 
   InventarioResumen({
     required this.totalProductos,
-    required this.totalCantidadConsumida,
-    required this.costoTotalInventario,
+    this.totalMovimientos,
     required this.productosConStockBajo,
   });
 

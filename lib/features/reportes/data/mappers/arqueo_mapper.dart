@@ -24,10 +24,8 @@ extension ArqueoDetalleMapper on ArqueoDetalle {
 extension ArqueoCajaMapper on ArqueoCaja {
   ArqueoCajaEntity toEntity() {
     return ArqueoCajaEntity(
-      saldoInicial: saldoInicial,
-      totalIngresos: totalIngresos,
-      totalEgresos: totalEgresos,
-      saldoFinal: saldoFinal,
+      total: total,
+      numeroTransacciones: numeroTransacciones,
       transacciones: transacciones.map((item) => item.toEntity()).toList(),
     );
   }
@@ -36,10 +34,8 @@ extension ArqueoCajaMapper on ArqueoCaja {
 extension ArqueoBancoMapper on ArqueoBanco {
   ArqueoBancoEntity toEntity() {
     return ArqueoBancoEntity(
-      saldoInicial: saldoInicial,
-      totalIngresos: totalIngresos,
-      totalEgresos: totalEgresos,
-      saldoFinal: saldoFinal,
+      total: total,
+      numeroTransacciones: numeroTransacciones,
       transacciones: transacciones.map((item) => item.toEntity()).toList(),
     );
   }
@@ -49,13 +45,11 @@ extension ArqueoTransaccionMapper on ArqueoTransaccion {
   ArqueoTransaccionEntity toEntity() {
     return ArqueoTransaccionEntity(
       transaccionId: transaccionId,
-      fecha: fecha,
       tipo: tipo,
-      concepto: concepto,
-      numeroDocumento: numeroDocumento,
-      monto: monto,
+      fecha: fecha,
+      pagoId: pagoId,
       formaPago: formaPago,
-      observaciones: observaciones,
+      monto: monto,
     );
   }
 }
@@ -63,13 +57,20 @@ extension ArqueoTransaccionMapper on ArqueoTransaccion {
 extension ArqueoResumenMapper on ArqueoResumen {
   ArqueoResumenEntity toEntity() {
     return ArqueoResumenEntity(
-      totalIngresosCaja: totalIngresosCaja,
-      totalEgresosCaja: totalEgresosCaja,
-      saldoFinalCaja: saldoFinalCaja,
-      totalIngresosBanco: totalIngresosBanco,
-      totalEgresosBanco: totalEgresosBanco,
-      saldoFinalBanco: saldoFinalBanco,
       totalGeneral: totalGeneral,
+      totalCaja: totalCaja,
+      totalBanco: totalBanco,
+      totalTransacciones: totalTransacciones,
+      rangoFechas: rangoFechas?.toEntity(),
+    );
+  }
+}
+
+extension RangoFechasMapper on RangoFechas {
+  RangoFechasEntity toEntity() {
+    return RangoFechasEntity(
+      desde: desde,
+      hasta: hasta,
     );
   }
 }

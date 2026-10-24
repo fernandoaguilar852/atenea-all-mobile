@@ -129,20 +129,30 @@ class AppDrawer extends ConsumerWidget {
             textColor: AppColors.danger,
             iconColor: AppColors.danger,
             onTap: () async {
+              // Guardar referencias antes de cerrar el drawer
+              final router = GoRouter.of(context);
+              final authNotifier = ref.read(authProvider.notifier);
+
               Navigator.pop(context); // Cerrar drawer
 
               final confirm = await showDialog<bool>(
                 context: context,
-                builder: (context) => AlertDialog(
+                builder: (dialogContext) => AlertDialog(
                   title: const Text('Cerrar Sesión'),
                   content: const Text('¿Estás seguro que deseas salir?'),
                   actions: [
                     TextButton(
-                      onPressed: () => Navigator.pop(context, false),
+                      onPressed: () {
+                        debugPrint('🔴 Logout cancelado');
+                        Navigator.of(dialogContext).pop(false);
+                      },
                       child: const Text('Cancelar'),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.pop(context, true),
+                      onPressed: () {
+                        debugPrint('🟢 Logout confirmado');
+                        Navigator.of(dialogContext).pop(true);
+                      },
                       child: Text(
                         'Salir',
                         style: TextStyle(color: AppColors.danger),
@@ -152,11 +162,15 @@ class AppDrawer extends ConsumerWidget {
                 ),
               );
 
-              if (confirm == true && context.mounted) {
-                await ref.read(authProvider.notifier).logout();
-                if (context.mounted) {
-                  context.go('/login');
-                }
+              debugPrint('🔵 Confirm value: $confirm');
+
+              if (confirm == true) {
+                debugPrint('✅ Ejecutando logout...');
+                await authNotifier.logout();
+                debugPrint('✅ Logout completado, redirigiendo a login...');
+                router.go('/login');
+              } else {
+                debugPrint('❌ Logout cancelado por el usuario');
               }
             },
           ),
