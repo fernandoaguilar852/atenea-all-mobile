@@ -1,15 +1,15 @@
-import '../../data/models/arqueo_reporte.dart';
-import '../../data/models/costo_beneficio_reporte.dart';
-import '../../data/models/inventario_reporte.dart';
-import '../../data/models/stock_reporte.dart';
-import '../../data/models/venta_detalle_reporte.dart';
-import '../../data/models/ventas_reporte.dart';
+import '../entities/arqueo_entity.dart';
+import '../entities/costo_beneficio_entity.dart';
+import '../entities/inventario_entity.dart';
+import '../entities/stock_entity.dart';
+import '../entities/venta_detalle_entity.dart';
+import '../entities/ventas_entity.dart';
 
 /// Repository interface para reportes
 /// Define el contrato para acceso a datos de reportes
 abstract class ReportesRepository {
   /// Obtiene reporte de ventas
-  Future<VentasReporte> getVentasReporte({
+  Future<VentasEntity> getVentasReporte({
     required int clienteId,
     required String startDate,
     required String endDate,
@@ -24,7 +24,7 @@ abstract class ReportesRepository {
   });
 
   /// Obtiene reporte de venta detallada
-  Future<VentaDetalleReporte> getVentaDetalleReporte({
+  Future<VentaDetalleEntity> getVentaDetalleReporte({
     required int clienteId,
     String? startDate,
     String? endDate,
@@ -36,7 +36,7 @@ abstract class ReportesRepository {
   });
 
   /// Obtiene reporte de inventario consumido
-  Future<InventarioReporte> getInventarioReporte({
+  Future<InventarioEntity> getInventarioReporte({
     required int clienteId,
     required String startDate,
     required String endDate,
@@ -48,7 +48,7 @@ abstract class ReportesRepository {
 
   /// Obtiene reporte de arqueo de caja
   /// Este reporte NO tiene paginación
-  Future<ArqueoReporte> getArqueoReporte({
+  Future<ArqueoEntity> getArqueoReporte({
     required int clienteId,
     required String startDate,
     required String endDate,
@@ -57,7 +57,7 @@ abstract class ReportesRepository {
   });
 
   /// Obtiene reporte de stock de productos
-  Future<StockReporte> getStockReporte({
+  Future<StockEntity> getStockReporte({
     required int clienteId,
     String? nombreProducto,
     bool? stockBajo,
@@ -68,7 +68,7 @@ abstract class ReportesRepository {
   });
 
   /// Obtiene reporte de costo-beneficio
-  Future<CostoBeneficioReporte> getCostoBeneficioReporte({
+  Future<CostoBeneficioEntity> getCostoBeneficioReporte({
     required int clienteId,
     required String startDate,
     required String endDate,

@@ -6,7 +6,9 @@ import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../../core/models/producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/reportes_provider.dart';
+import '../../domain/entities/inventario_entity.dart';
 
 class InventarioReporteTab extends ConsumerStatefulWidget {
   const InventarioReporteTab({super.key});
@@ -223,7 +225,12 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
                     if (_searchTerm.isNotEmpty && _productoSelected == null)
                       Consumer(
                         builder: (context, ref, child) {
-                          final productosAsync = ref.watch(productosSearchProvider(_searchTerm));
+                          final user = ref.watch(currentUserProvider);
+                          if (user == null) return const SizedBox();
+
+                          final productosAsync = ref.watch(productosSearchProvider(
+                            ProductosSearchParams(clienteId: user.clienteId, searchTerm: _searchTerm)
+                          ));
 
                           return productosAsync.when(
                             data: (productos) {

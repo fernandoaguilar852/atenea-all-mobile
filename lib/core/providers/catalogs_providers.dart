@@ -8,7 +8,6 @@ import '../models/consumidor.dart';
 import '../models/producto.dart';
 import '../models/tipo_producto.dart';
 import 'dio_provider.dart';
-import '../../features/auth/presentation/providers/auth_providers.dart';
 
 // ============================================================================
 // DATASOURCE PROVIDERS
@@ -38,57 +37,159 @@ final consumidorDatasourceProvider = Provider<ConsumidorDatasource>((ref) {
 // STATE PROVIDERS
 // ============================================================================
 
+/// Parámetros para provider de tipos de producto
+class TiposProductoParams {
+  final int clienteId;
+  final int pageSize;
+
+  const TiposProductoParams({
+    required this.clienteId,
+    this.pageSize = 100,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TiposProductoParams &&
+          runtimeType == other.runtimeType &&
+          clienteId == other.clienteId &&
+          pageSize == other.pageSize;
+
+  @override
+  int get hashCode => clienteId.hashCode ^ pageSize.hashCode;
+}
+
+/// Parámetros para provider de cajas
+class CajasParams {
+  final int clienteId;
+  final String? estado;
+  final int pageSize;
+
+  const CajasParams({
+    required this.clienteId,
+    this.estado,
+    this.pageSize = 100,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CajasParams &&
+          runtimeType == other.runtimeType &&
+          clienteId == other.clienteId &&
+          estado == other.estado &&
+          pageSize == other.pageSize;
+
+  @override
+  int get hashCode => clienteId.hashCode ^ estado.hashCode ^ pageSize.hashCode;
+}
+
+/// Parámetros para búsqueda de productos
+class ProductosSearchParams {
+  final int clienteId;
+  final String searchTerm;
+  final int pageSize;
+
+  const ProductosSearchParams({
+    required this.clienteId,
+    required this.searchTerm,
+    this.pageSize = 20,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProductosSearchParams &&
+          runtimeType == other.runtimeType &&
+          clienteId == other.clienteId &&
+          searchTerm == other.searchTerm &&
+          pageSize == other.pageSize;
+
+  @override
+  int get hashCode =>
+      clienteId.hashCode ^ searchTerm.hashCode ^ pageSize.hashCode;
+}
+
+/// Parámetros para búsqueda de consumidores
+class ConsumidoresSearchParams {
+  final int clienteId;
+  final String searchTerm;
+  final int pageSize;
+
+  const ConsumidoresSearchParams({
+    required this.clienteId,
+    required this.searchTerm,
+    this.pageSize = 20,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ConsumidoresSearchParams &&
+          runtimeType == other.runtimeType &&
+          clienteId == other.clienteId &&
+          searchTerm == other.searchTerm &&
+          pageSize == other.pageSize;
+
+  @override
+  int get hashCode =>
+      clienteId.hashCode ^ searchTerm.hashCode ^ pageSize.hashCode;
+}
+
 /// Provider para obtener lista de tipos de producto
-final tiposProductoProvider = FutureProvider<List<TipoProducto>>((ref) async {
-  final datasource = ref.watch(tipoProductoDatasourceProvider);
-  final user = ref.watch(currentUserProvider);
-
-  if (user == null) return [];
-
-  return await datasource.getTiposProducto(
-    clienteId: user.clienteId,
-    pageSize: 100,
-  );
-});
+/// Recibe clienteId como parámetro en lugar de depender de auth
+final tiposProductoProvider =
+    FutureProvider.family<List<TipoProducto>, TiposProductoParams>(
+  (ref, params) async {
+    final datasource = ref.watch(tipoProductoDatasourceProvider);
+    return await datasource.getTiposProducto(
+      clienteId: params.clienteId,
+      pageSize: params.pageSize,
+    );
+  },
+);
 
 /// Provider para obtener lista de cajas
-final cajasProvider = FutureProvider.family<List<Caja>, String?>((ref, estado) async {
-  final datasource = ref.watch(cajaDatasourceProvider);
-  final user = ref.watch(currentUserProvider);
-
-  if (user == null) return [];
-
-  return await datasource.getCajas(
-    clienteId: user.clienteId,
-    estado: estado,
-    pageSize: 100,
-  );
-});
+/// Recibe clienteId y estado como parámetros
+final cajasProvider = FutureProvider.family<List<Caja>, CajasParams>(
+  (ref, params) async {
+    final datasource = ref.watch(cajaDatasourceProvider);
+    return await datasource.getCajas(
+      clienteId: params.clienteId,
+      estado: params.estado,
+      pageSize: params.pageSize,
+    );
+  },
+);
 
 /// Provider para buscar productos por nombre
-final productosSearchProvider = FutureProvider.family<List<Producto>, String>((ref, searchTerm) async {
-  final datasource = ref.watch(productoDatasourceProvider);
-  final user = ref.watch(currentUserProvider);
+/// Recibe clienteId y searchTerm como parámetros
+final productosSearchProvider =
+    FutureProvider.family<List<Producto>, ProductosSearchParams>(
+  (ref, params) async {
+    if (params.searchTerm.length < 3) return [];
 
-  if (user == null || searchTerm.length < 3) return [];
-
-  return await datasource.searchProductos(
-    clienteId: user.clienteId,
-    search: searchTerm,
-    pageSize: 20,
-  );
-});
+    final datasource = ref.watch(productoDatasourceProvider);
+    return await datasource.searchProductos(
+      clienteId: params.clienteId,
+      search: params.searchTerm,
+      pageSize: params.pageSize,
+    );
+  },
+);
 
 /// Provider para buscar consumidores por nombre
-final consumidoresSearchProvider = FutureProvider.family<List<Consumidor>, String>((ref, searchTerm) async {
-  final datasource = ref.watch(consumidorDatasourceProvider);
-  final user = ref.watch(currentUserProvider);
+/// Recibe clienteId y searchTerm como parámetros
+final consumidoresSearchProvider =
+    FutureProvider.family<List<Consumidor>, ConsumidoresSearchParams>(
+  (ref, params) async {
+    if (params.searchTerm.length < 3) return [];
 
-  if (user == null || searchTerm.length < 3) return [];
-
-  return await datasource.searchConsumidores(
-    clienteId: user.clienteId,
-    search: searchTerm,
-    pageSize: 20,
-  );
-});
+    final datasource = ref.watch(consumidorDatasourceProvider);
+    return await datasource.searchConsumidores(
+      clienteId: params.clienteId,
+      search: params.searchTerm,
+      pageSize: params.pageSize,
+    );
+  },
+);

@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/dio_provider.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/datasources/reportes_remote_datasource.dart';
-import '../data/models/arqueo_reporte.dart';
-import '../data/models/costo_beneficio_reporte.dart';
-import '../data/models/inventario_reporte.dart';
-import '../data/models/stock_reporte.dart';
-import '../data/models/venta_detalle_reporte.dart';
-import '../data/models/ventas_reporte.dart';
 import '../data/repositories/reportes_repository_impl.dart';
+import '../domain/entities/arqueo_entity.dart';
+import '../domain/entities/costo_beneficio_entity.dart';
+import '../domain/entities/inventario_entity.dart';
+import '../domain/entities/stock_entity.dart';
+import '../domain/entities/venta_detalle_entity.dart';
+import '../domain/entities/ventas_entity.dart';
 import '../domain/repositories/reportes_repository.dart';
 
 // ============================================================================
@@ -61,7 +61,7 @@ class ReporteState<T> {
 // REPORTE VENTAS
 // ============================================================================
 
-class VentasNotifier extends StateNotifier<ReporteState<VentasReporte>> {
+class VentasNotifier extends StateNotifier<ReporteState<VentasEntity>> {
   final ReportesRepository _repository;
   final Ref _ref;
 
@@ -115,7 +115,7 @@ class VentasNotifier extends StateNotifier<ReporteState<VentasReporte>> {
 }
 
 final ventasReporteProvider =
-    StateNotifierProvider<VentasNotifier, ReporteState<VentasReporte>>((ref) {
+    StateNotifierProvider<VentasNotifier, ReporteState<VentasEntity>>((ref) {
   final repository = ref.watch(reportesRepositoryProvider);
   return VentasNotifier(repository, ref);
 });
@@ -125,7 +125,7 @@ final ventasReporteProvider =
 // ============================================================================
 
 class VentaDetalleNotifier
-    extends StateNotifier<ReporteState<VentaDetalleReporte>> {
+    extends StateNotifier<ReporteState<VentaDetalleEntity>> {
   final ReportesRepository _repository;
   final Ref _ref;
 
@@ -183,7 +183,7 @@ final ventaDetalleReporteProvider = StateNotifierProvider<VentaDetalleNotifier,
 // ============================================================================
 
 class InventarioNotifier
-    extends StateNotifier<ReporteState<InventarioReporte>> {
+    extends StateNotifier<ReporteState<InventarioEntity>> {
   final ReportesRepository _repository;
   final Ref _ref;
 
@@ -238,7 +238,7 @@ final inventarioReporteProvider = StateNotifierProvider<InventarioNotifier,
 // REPORTE ARQUEO CAJA
 // ============================================================================
 
-class ArqueoNotifier extends StateNotifier<ReporteState<ArqueoReporte>> {
+class ArqueoNotifier extends StateNotifier<ReporteState<ArqueoEntity>> {
   final ReportesRepository _repository;
   final Ref _ref;
 
@@ -280,7 +280,7 @@ class ArqueoNotifier extends StateNotifier<ReporteState<ArqueoReporte>> {
 }
 
 final arqueoReporteProvider =
-    StateNotifierProvider<ArqueoNotifier, ReporteState<ArqueoReporte>>((ref) {
+    StateNotifierProvider<ArqueoNotifier, ReporteState<ArqueoEntity>>((ref) {
   final repository = ref.watch(reportesRepositoryProvider);
   return ArqueoNotifier(repository, ref);
 });
@@ -289,7 +289,7 @@ final arqueoReporteProvider =
 // REPORTE STOCK PRODUCTOS
 // ============================================================================
 
-class StockNotifier extends StateNotifier<ReporteState<StockReporte>> {
+class StockNotifier extends StateNotifier<ReporteState<StockEntity>> {
   final ReportesRepository _repository;
   final Ref _ref;
 
@@ -335,7 +335,7 @@ class StockNotifier extends StateNotifier<ReporteState<StockReporte>> {
 }
 
 final stockReporteProvider =
-    StateNotifierProvider<StockNotifier, ReporteState<StockReporte>>((ref) {
+    StateNotifierProvider<StockNotifier, ReporteState<StockEntity>>((ref) {
   final repository = ref.watch(reportesRepositoryProvider);
   return StockNotifier(repository, ref);
 });
@@ -345,7 +345,7 @@ final stockReporteProvider =
 // ============================================================================
 
 class CostoBeneficioNotifier
-    extends StateNotifier<ReporteState<CostoBeneficioReporte>> {
+    extends StateNotifier<ReporteState<CostoBeneficioEntity>> {
   final ReportesRepository _repository;
   final Ref _ref;
 

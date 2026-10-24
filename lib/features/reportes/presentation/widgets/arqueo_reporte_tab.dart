@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../../core/models/caja.dart';
 import '../../../../core/providers/catalogs_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/reportes_provider.dart';
+import '../../domain/entities/arqueo_entity.dart';
 
 class ArqueoReporteTab extends ConsumerStatefulWidget {
   const ArqueoReporteTab({super.key});
@@ -167,7 +169,12 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                 SizedBox(height: 8.h),
                 Consumer(
                   builder: (context, ref, child) {
-                    final cajasAsync = ref.watch(cajasProvider(null));
+                    final user = ref.watch(currentUserProvider);
+                    if (user == null) return const SizedBox();
+
+                    final cajasAsync = ref.watch(cajasProvider(
+                      CajasParams(clienteId: user.clienteId, estado: null)
+                    ));
 
                     return cajasAsync.when(
                       data: (cajas) => DropdownButtonFormField<Caja>(

@@ -1,11 +1,17 @@
 import '../../domain/repositories/reportes_repository.dart';
+import '../../domain/entities/arqueo_entity.dart';
+import '../../domain/entities/costo_beneficio_entity.dart';
+import '../../domain/entities/inventario_entity.dart';
+import '../../domain/entities/stock_entity.dart';
+import '../../domain/entities/venta_detalle_entity.dart';
+import '../../domain/entities/ventas_entity.dart';
 import '../datasources/reportes_remote_datasource.dart';
-import '../models/arqueo_reporte.dart';
-import '../models/costo_beneficio_reporte.dart';
-import '../models/inventario_reporte.dart';
-import '../models/stock_reporte.dart';
-import '../models/venta_detalle_reporte.dart';
-import '../models/ventas_reporte.dart';
+import '../mappers/arqueo_mapper.dart';
+import '../mappers/costo_beneficio_mapper.dart';
+import '../mappers/inventario_mapper.dart';
+import '../mappers/stock_mapper.dart';
+import '../mappers/venta_detalle_mapper.dart';
+import '../mappers/ventas_mapper.dart';
 
 /// Implementación del repositorio de reportes
 /// Coordina el acceso a datos desde datasources
@@ -15,7 +21,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
   ReportesRepositoryImpl(this._remoteDatasource);
 
   @override
-  Future<VentasReporte> getVentasReporte({
+  Future<VentasEntity> getVentasReporte({
     required int clienteId,
     required String startDate,
     required String endDate,
@@ -29,7 +35,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
     int pageSize = 10,
   }) async {
     try {
-      return await _remoteDatasource.getVentasReporte(
+      final dto = await _remoteDatasource.getVentasReporte(
         clienteId: clienteId,
         startDate: startDate,
         endDate: endDate,
@@ -42,13 +48,14 @@ class ReportesRepositoryImpl implements ReportesRepository {
         pageNumber: pageNumber,
         pageSize: pageSize,
       );
+      return dto.toEntity();
     } catch (e) {
       rethrow;
     }
   }
 
   @override
-  Future<VentaDetalleReporte> getVentaDetalleReporte({
+  Future<VentaDetalleEntity> getVentaDetalleReporte({
     required int clienteId,
     String? startDate,
     String? endDate,
@@ -59,7 +66,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
     int pageSize = 10,
   }) async {
     try {
-      return await _remoteDatasource.getVentaDetalleReporte(
+      final dto = await _remoteDatasource.getVentaDetalleReporte(
         clienteId: clienteId,
         startDate: startDate,
         endDate: endDate,
@@ -69,13 +76,14 @@ class ReportesRepositoryImpl implements ReportesRepository {
         pageNumber: pageNumber,
         pageSize: pageSize,
       );
+      return dto.toEntity();
     } catch (e) {
       rethrow;
     }
   }
 
   @override
-  Future<InventarioReporte> getInventarioReporte({
+  Future<InventarioEntity> getInventarioReporte({
     required int clienteId,
     required String startDate,
     required String endDate,
@@ -85,7 +93,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
     int pageSize = 10,
   }) async {
     try {
-      return await _remoteDatasource.getInventarioReporte(
+      final dto = await _remoteDatasource.getInventarioReporte(
         clienteId: clienteId,
         startDate: startDate,
         endDate: endDate,
@@ -94,13 +102,14 @@ class ReportesRepositoryImpl implements ReportesRepository {
         pageNumber: pageNumber,
         pageSize: pageSize,
       );
+      return dto.toEntity();
     } catch (e) {
       rethrow;
     }
   }
 
   @override
-  Future<ArqueoReporte> getArqueoReporte({
+  Future<ArqueoEntity> getArqueoReporte({
     required int clienteId,
     required String startDate,
     required String endDate,
@@ -108,20 +117,21 @@ class ReportesRepositoryImpl implements ReportesRepository {
     String? tipoPago,
   }) async {
     try {
-      return await _remoteDatasource.getArqueoReporte(
+      final dto = await _remoteDatasource.getArqueoReporte(
         clienteId: clienteId,
         startDate: startDate,
         endDate: endDate,
         cajaId: cajaId,
         tipoPago: tipoPago,
       );
+      return dto.toEntity();
     } catch (e) {
       rethrow;
     }
   }
 
   @override
-  Future<StockReporte> getStockReporte({
+  Future<StockEntity> getStockReporte({
     required int clienteId,
     String? nombreProducto,
     bool? stockBajo,
@@ -131,7 +141,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
     int pageSize = 10,
   }) async {
     try {
-      return await _remoteDatasource.getStockReporte(
+      final dto = await _remoteDatasource.getStockReporte(
         clienteId: clienteId,
         nombreProducto: nombreProducto,
         stockBajo: stockBajo,
@@ -140,13 +150,14 @@ class ReportesRepositoryImpl implements ReportesRepository {
         pageNumber: pageNumber,
         pageSize: pageSize,
       );
+      return dto.toEntity();
     } catch (e) {
       rethrow;
     }
   }
 
   @override
-  Future<CostoBeneficioReporte> getCostoBeneficioReporte({
+  Future<CostoBeneficioEntity> getCostoBeneficioReporte({
     required int clienteId,
     required String startDate,
     required String endDate,
@@ -157,7 +168,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
     int pageSize = 10,
   }) async {
     try {
-      return await _remoteDatasource.getCostoBeneficioReporte(
+      final dto = await _remoteDatasource.getCostoBeneficioReporte(
         clienteId: clienteId,
         startDate: startDate,
         endDate: endDate,
@@ -167,6 +178,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
         pageNumber: pageNumber,
         pageSize: pageSize,
       );
+      return dto.toEntity();
     } catch (e) {
       rethrow;
     }

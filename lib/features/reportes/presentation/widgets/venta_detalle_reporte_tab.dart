@@ -7,7 +7,9 @@ import '../../../../core/config/theme_config.dart';
 import '../../../../core/models/consumidor.dart';
 import '../../../../core/models/producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/reportes_provider.dart';
+import '../../domain/entities/venta_detalle_entity.dart';
 
 class VentaDetalleReporteTab extends ConsumerStatefulWidget {
   const VentaDetalleReporteTab({super.key});
@@ -456,7 +458,12 @@ class _VentaDetalleReporteTabState
         if (_consumidorSearchTerm.isNotEmpty && _consumidorSelected == null)
           Consumer(
             builder: (context, ref, child) {
-              final consumidoresAsync = ref.watch(consumidoresSearchProvider(_consumidorSearchTerm));
+              final user = ref.watch(currentUserProvider);
+              if (user == null) return const SizedBox();
+
+              final consumidoresAsync = ref.watch(consumidoresSearchProvider(
+                ConsumidoresSearchParams(clienteId: user.clienteId, searchTerm: _consumidorSearchTerm)
+              ));
 
               return consumidoresAsync.when(
                 data: (consumidores) {
@@ -614,7 +621,12 @@ class _VentaDetalleReporteTabState
         if (_productoSearchTerm.isNotEmpty && _productoSelected == null)
           Consumer(
             builder: (context, ref, child) {
-              final productosAsync = ref.watch(productosSearchProvider(_productoSearchTerm));
+              final user = ref.watch(currentUserProvider);
+              if (user == null) return const SizedBox();
+
+              final productosAsync = ref.watch(productosSearchProvider(
+                ProductosSearchParams(clienteId: user.clienteId, searchTerm: _productoSearchTerm)
+              ));
 
               return productosAsync.when(
                 data: (productos) {

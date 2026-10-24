@@ -8,7 +8,9 @@ import '../../../../core/models/caja.dart';
 import '../../../../core/models/producto.dart';
 import '../../../../core/models/tipo_producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/reportes_provider.dart';
+import '../../domain/entities/ventas_entity.dart';
 
 class VentasReporteTab extends ConsumerStatefulWidget {
   const VentasReporteTab({super.key});
@@ -229,7 +231,12 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                     if (_searchTerm.isNotEmpty && _productoSelected == null)
                       Consumer(
                         builder: (context, ref, child) {
-                          final productosAsync = ref.watch(productosSearchProvider(_searchTerm));
+                          final user = ref.watch(currentUserProvider);
+                          if (user == null) return const SizedBox();
+
+                          final productosAsync = ref.watch(productosSearchProvider(
+                            ProductosSearchParams(clienteId: user.clienteId, searchTerm: _searchTerm)
+                          ));
 
                           return productosAsync.when(
                             data: (productos) {
@@ -329,7 +336,12 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                 SizedBox(height: 8.h),
                 Consumer(
                   builder: (context, ref, child) {
-                    final tiposProductoAsync = ref.watch(tiposProductoProvider);
+                    final user = ref.watch(currentUserProvider);
+                    if (user == null) return const SizedBox();
+
+                    final tiposProductoAsync = ref.watch(tiposProductoProvider(
+                      TiposProductoParams(clienteId: user.clienteId)
+                    ));
 
                     return tiposProductoAsync.when(
                       data: (tiposProducto) => DropdownButtonFormField<TipoProducto>(
@@ -394,7 +406,12 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                 SizedBox(height: 8.h),
                 Consumer(
                   builder: (context, ref, child) {
-                    final cajasAsync = ref.watch(cajasProvider('abierta'));
+                    final user = ref.watch(currentUserProvider);
+                    if (user == null) return const SizedBox();
+
+                    final cajasAsync = ref.watch(cajasProvider(
+                      CajasParams(clienteId: user.clienteId, estado: 'abierta')
+                    ));
 
                     return cajasAsync.when(
                       data: (cajas) => DropdownButtonFormField<Caja>(

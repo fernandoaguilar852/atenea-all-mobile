@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../../core/models/tipo_producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/reportes_provider.dart';
+import '../../domain/entities/stock_entity.dart';
 
 class StockReporteTab extends ConsumerStatefulWidget {
   const StockReporteTab({super.key});
@@ -125,7 +127,12 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                 SizedBox(height: 8.h),
                 Consumer(
                   builder: (context, ref, child) {
-                    final tiposProductoAsync = ref.watch(tiposProductoProvider);
+                    final user = ref.watch(currentUserProvider);
+                    if (user == null) return const SizedBox();
+
+                    final tiposProductoAsync = ref.watch(tiposProductoProvider(
+                      TiposProductoParams(clienteId: user.clienteId)
+                    ));
 
                     return tiposProductoAsync.when(
                       data: (tiposProducto) => DropdownButtonFormField<TipoProducto>(

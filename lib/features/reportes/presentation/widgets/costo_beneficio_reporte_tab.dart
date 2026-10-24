@@ -7,7 +7,9 @@ import '../../../../core/config/theme_config.dart';
 import '../../../../core/models/producto.dart';
 import '../../../../core/models/tipo_producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/reportes_provider.dart';
+import '../../domain/entities/costo_beneficio_entity.dart';
 
 class CostoBeneficioReporteTab extends ConsumerStatefulWidget {
   const CostoBeneficioReporteTab({super.key});
@@ -175,7 +177,12 @@ class _CostoBeneficioReporteTabState
                 SizedBox(height: 12.h),
                 Consumer(
                   builder: (context, ref, child) {
-                    final tiposProductoAsync = ref.watch(tiposProductoProvider);
+                    final user = ref.watch(currentUserProvider);
+                    if (user == null) return const SizedBox();
+
+                    final tiposProductoAsync = ref.watch(tiposProductoProvider(
+                      TiposProductoParams(clienteId: user.clienteId)
+                    ));
 
                     return tiposProductoAsync.when(
                       data: (tiposProducto) => DropdownButtonFormField<TipoProducto>(
@@ -307,7 +314,12 @@ class _CostoBeneficioReporteTabState
                     if (_searchTerm.isNotEmpty && _productoSelected == null)
                       Consumer(
                         builder: (context, ref, child) {
-                          final productosAsync = ref.watch(productosSearchProvider(_searchTerm));
+                          final user = ref.watch(currentUserProvider);
+                          if (user == null) return const SizedBox();
+
+                          final productosAsync = ref.watch(productosSearchProvider(
+                            ProductosSearchParams(clienteId: user.clienteId, searchTerm: _searchTerm)
+                          ));
 
                           return productosAsync.when(
                             data: (productos) {
