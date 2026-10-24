@@ -49,13 +49,8 @@ extension CostoBeneficioResumenMapper on CostoBeneficioResumen {
 extension CostoBeneficioMetadatosMapper on CostoBeneficioMetadatos {
   CostoBeneficioMetadatosEntity toEntity() {
     return CostoBeneficioMetadatosEntity(
-      fechaInicio: fechaInicio,
-      fechaFin: fechaFin,
-      diasAnalisis: diasAnalisis,
-      productoMasRentable: productoMasRentable,
-      mayorMargen: mayorMargen,
-      productoMenosRentable: productoMenosRentable,
-      menorMargen: menorMargen,
+      ventanaBusquedaMeses: ventanaBusquedaMeses,
+      advertencias: advertencias,
     );
   }
 }

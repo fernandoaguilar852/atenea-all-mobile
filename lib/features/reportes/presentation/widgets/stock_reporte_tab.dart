@@ -288,10 +288,11 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      '${producto.nombreCategoria} • ${producto.codigoBarras}',
-                                      style: TextStyle(fontSize: 12.sp),
-                                    ),
+                                    if (producto.unidadMedida != null || producto.codigoBarras != null)
+                                      Text(
+                                        '${producto.unidadMedida ?? ''} ${producto.codigoBarras != null ? '• ${producto.codigoBarras}' : ''}',
+                                        style: TextStyle(fontSize: 12.sp),
+                                      ),
                                     SizedBox(height: 4.h),
                                     Row(
                                       children: [
@@ -324,7 +325,7 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                                   children: [
                                     Text(
                                       _formatCurrency(
-                                          producto.valorInventario),
+                                          producto.precioVenta),
                                       style: TextStyle(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 14.sp,

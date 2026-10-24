@@ -20,10 +20,10 @@ class CostoBeneficioRowEntity {
   final int productoId;
   final String? codigoBarras;
   final String nombreProducto;
-  final int categoriaId;
+  final int? categoriaId;
   final String nombreCategoria;
   final int cantidadVendida;
-  final double precioVenta;
+  final double? precioVenta;
   final double costoUnitario;
   final double ingresoTotal;
   final double costoTotal;
@@ -32,12 +32,12 @@ class CostoBeneficioRowEntity {
 
   const CostoBeneficioRowEntity({
     required this.productoId,
-    required this.codigoBarras,
+    this.codigoBarras,
     required this.nombreProducto,
-    required this.categoriaId,
+    this.categoriaId,
     required this.nombreCategoria,
     required this.cantidadVendida,
-    required this.precioVenta,
+    this.precioVenta,
     required this.costoUnitario,
     required this.ingresoTotal,
     required this.costoTotal,
@@ -65,21 +65,11 @@ class CostoBeneficioResumenEntity {
 }
 
 class CostoBeneficioMetadatosEntity {
-  final String fechaInicio;
-  final String fechaFin;
-  final int diasAnalisis;
-  final String? productoMasRentable;
-  final double? mayorMargen;
-  final String? productoMenosRentable;
-  final double? menorMargen;
+  final int ventanaBusquedaMeses;
+  final List<String> advertencias;
 
   const CostoBeneficioMetadatosEntity({
-    required this.fechaInicio,
-    required this.fechaFin,
-    required this.diasAnalisis,
-    this.productoMasRentable,
-    this.mayorMargen,
-    this.productoMenosRentable,
-    this.menorMargen,
+    required this.ventanaBusquedaMeses,
+    required this.advertencias,
   });
 }

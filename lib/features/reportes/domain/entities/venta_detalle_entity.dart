@@ -22,8 +22,8 @@ class VentaDetalleRowEntity {
   final String? documentoCliente;
   final String? emailCliente;
   final String? telefonoCliente;
-  final String nombreCajero;
-  final String nombreCaja;
+  final String? nombreCajero;
+  final String? nombreCaja;
   final double subtotal;
   final double descuento;
   final double iva;
@@ -37,11 +37,11 @@ class VentaDetalleRowEntity {
     required this.fechaVenta,
     required this.numeroFactura,
     required this.nombreCliente,
-    required this.documentoCliente,
-    required this.emailCliente,
-    required this.telefonoCliente,
-    required this.nombreCajero,
-    required this.nombreCaja,
+    this.documentoCliente,
+    this.emailCliente,
+    this.telefonoCliente,
+    this.nombreCajero,
+    this.nombreCaja,
     required this.subtotal,
     required this.descuento,
     required this.iva,
@@ -66,7 +66,7 @@ class VentaDetalleLineaEntity {
   const VentaDetalleLineaEntity({
     required this.productoId,
     required this.nombreProducto,
-    required this.codigoBarras,
+    this.codigoBarras,
     required this.cantidad,
     required this.precioUnitario,
     required this.descuento,

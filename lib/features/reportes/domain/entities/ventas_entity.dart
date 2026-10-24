@@ -18,35 +18,45 @@ class VentasEntity {
 /// Fila de venta por producto
 class VentaRowEntity {
   final int productoId;
-  final String codigoBarras;
   final String nombreProducto;
-  final int categoriaId;
   final String nombreCategoria;
-  final double precioVentaUnitario;
   final int cantidadVendida;
+  final double precioVentaUnitario;
+  final double subtotal;
+  final double? descuentosAplicados;
+  final double? impuestosAplicados;
   final double totalVentas;
+  final int? numeroTransacciones;
 
   const VentaRowEntity({
     required this.productoId,
-    required this.codigoBarras,
     required this.nombreProducto,
-    required this.categoriaId,
     required this.nombreCategoria,
-    required this.precioVentaUnitario,
     required this.cantidadVendida,
+    required this.precioVentaUnitario,
+    required this.subtotal,
+    this.descuentosAplicados,
+    this.impuestosAplicados,
     required this.totalVentas,
+    this.numeroTransacciones,
   });
 }
 
 /// Resumen del reporte de ventas
 class VentasResumenEntity {
   final int totalProductosVendidos;
-  final int totalCantidadVendida;
-  final double totalVentas;
+  final int totalTransacciones;
+  final double subtotalGeneral;
+  final double descuentosGeneral;
+  final double impuestosGeneral;
+  final double totalGeneral;
 
   const VentasResumenEntity({
     required this.totalProductosVendidos,
-    required this.totalCantidadVendida,
-    required this.totalVentas,
+    required this.totalTransacciones,
+    required this.subtotalGeneral,
+    required this.descuentosGeneral,
+    required this.impuestosGeneral,
+    required this.totalGeneral,
   });
 }

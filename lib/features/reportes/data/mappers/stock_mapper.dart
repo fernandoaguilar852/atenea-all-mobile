@@ -17,18 +17,15 @@ extension StockRowMapper on StockRow {
   StockRowEntity toEntity() {
     return StockRowEntity(
       productoId: productoId,
-      codigoBarras: codigoBarras,
       nombreProducto: nombreProducto,
-      categoriaId: categoriaId,
-      nombreCategoria: nombreCategoria,
+      codigoBarras: codigoBarras,
+      unidadMedida: unidadMedida,
       stockActual: stockActual,
+      stockDisponible: stockDisponible,
       stockMinimo: stockMinimo,
-      stockMaximo: stockMaximo,
       necesitaReposicion: necesitaReposicion,
-      activo: activo,
       precioVenta: precioVenta,
-      costoUnitario: costoUnitario,
-      valorInventario: valorInventario,
+      activo: activo,
     );
   }
 }
@@ -37,10 +34,7 @@ extension StockResumenMapper on StockResumen {
   StockResumenEntity toEntity() {
     return StockResumenEntity(
       totalProductos: totalProductos,
-      productosActivos: productosActivos,
-      productosInactivos: productosInactivos,
       productosConStockBajo: productosConStockBajo,
-      productosAgotados: productosAgotados,
       valorTotalInventario: valorTotalInventario,
     );
   }

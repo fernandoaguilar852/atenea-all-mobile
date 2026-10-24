@@ -16,50 +16,38 @@ class StockEntity {
 
 class StockRowEntity {
   final int productoId;
-  final String? codigoBarras;
   final String nombreProducto;
-  final int categoriaId;
-  final String nombreCategoria;
+  final String? codigoBarras;
+  final String? unidadMedida;
   final int stockActual;
+  final int? stockDisponible;
   final int stockMinimo;
-  final int stockMaximo;
   final bool necesitaReposicion;
-  final bool activo;
   final double precioVenta;
-  final double costoUnitario;
-  final double valorInventario;
+  final bool activo;
 
   const StockRowEntity({
     required this.productoId,
-    required this.codigoBarras,
     required this.nombreProducto,
-    required this.categoriaId,
-    required this.nombreCategoria,
+    this.codigoBarras,
+    this.unidadMedida,
     required this.stockActual,
+    this.stockDisponible,
     required this.stockMinimo,
-    required this.stockMaximo,
     required this.necesitaReposicion,
-    required this.activo,
     required this.precioVenta,
-    required this.costoUnitario,
-    required this.valorInventario,
+    required this.activo,
   });
 }
 
 class StockResumenEntity {
   final int totalProductos;
-  final int productosActivos;
-  final int productosInactivos;
   final int productosConStockBajo;
-  final int productosAgotados;
   final double valorTotalInventario;
 
   const StockResumenEntity({
     required this.totalProductos,
-    required this.productosActivos,
-    required this.productosInactivos,
     required this.productosConStockBajo,
-    required this.productosAgotados,
     required this.valorTotalInventario,
   });
 }

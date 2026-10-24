@@ -16,42 +16,34 @@ class InventarioEntity {
 
 class InventarioRowEntity {
   final int productoId;
-  final String? codigoBarras;
   final String nombreProducto;
-  final int categoriaId;
-  final String nombreCategoria;
   final int cantidadConsumida;
+  final String? unidadMedida;
   final int stockActual;
   final int stockMinimo;
   final bool necesitaReposicion;
-  final double costoUnitario;
-  final double costoTotal;
+  final int? numeroMovimientos;
 
   const InventarioRowEntity({
     required this.productoId,
-    required this.codigoBarras,
     required this.nombreProducto,
-    required this.categoriaId,
-    required this.nombreCategoria,
     required this.cantidadConsumida,
+    this.unidadMedida,
     required this.stockActual,
     required this.stockMinimo,
     required this.necesitaReposicion,
-    required this.costoUnitario,
-    required this.costoTotal,
+    this.numeroMovimientos,
   });
 }
 
 class InventarioResumenEntity {
   final int totalProductos;
-  final int totalCantidadConsumida;
-  final double costoTotalInventario;
+  final int? totalMovimientos;
   final int productosConStockBajo;
 
   const InventarioResumenEntity({
     required this.totalProductos,
-    required this.totalCantidadConsumida,
-    required this.costoTotalInventario,
+    this.totalMovimientos,
     required this.productosConStockBajo,
   });
 }

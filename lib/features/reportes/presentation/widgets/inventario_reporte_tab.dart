@@ -374,12 +374,12 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
                   value: '${reporte.resumen.totalProductos}',
                 ),
                 _ResumenItem(
-                  label: 'Consumido',
-                  value: '${reporte.resumen.totalCantidadConsumida}',
+                  label: 'Movimientos',
+                  value: '${reporte.resumen.totalMovimientos ?? 0}',
                 ),
                 _ResumenItem(
-                  label: 'Costo',
-                  value: _formatCurrency(reporte.resumen.costoTotalInventario),
+                  label: 'Stock Bajo',
+                  value: '${reporte.resumen.productosConStockBajo}',
                 ),
               ],
             ),
@@ -409,10 +409,11 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      '${producto.nombreCategoria} • ${producto.codigoBarras}',
-                                      style: TextStyle(fontSize: 12.sp),
-                                    ),
+                                    if (producto.unidadMedida != null)
+                                      Text(
+                                        producto.unidadMedida!,
+                                        style: TextStyle(fontSize: 12.sp),
+                                      ),
                                     SizedBox(height: 4.h),
                                     Row(
                                       children: [
@@ -439,7 +440,7 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      _formatCurrency(producto.costoTotal),
+                                      'Min: ${producto.stockMinimo}',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 14.sp,

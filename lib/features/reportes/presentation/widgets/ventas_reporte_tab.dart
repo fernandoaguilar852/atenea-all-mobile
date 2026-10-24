@@ -508,12 +508,12 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                   value: '${reporte.resumen.totalProductosVendidos}',
                 ),
                 _ResumenItem(
-                  label: 'Cantidad',
-                  value: '${reporte.resumen.totalCantidadVendida}',
+                  label: 'Transacciones',
+                  value: '${reporte.resumen.totalTransacciones}',
                 ),
                 _ResumenItem(
                   label: 'Total',
-                  value: _formatCurrency(reporte.resumen.totalVentas),
+                  value: _formatCurrency(reporte.resumen.totalGeneral),
                 ),
               ],
             ),
@@ -532,18 +532,17 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                           child: SingleChildScrollView(
                             child: DataTable(
                               columns: const [
-                                DataColumn(label: Text('Código')),
                                 DataColumn(label: Text('Producto')),
                                 DataColumn(label: Text('Categoría')),
                                 DataColumn(label: Text('Precio Unit.')),
                                 DataColumn(label: Text('Cantidad')),
+                                DataColumn(label: Text('Subtotal')),
                                 DataColumn(label: Text('Total')),
                               ],
                               rows: reporte.reporteVentas
                                   .map(
                                     (row) => DataRow(
                                       cells: [
-                                        DataCell(Text(row.codigoBarras)),
                                         DataCell(
                                           SizedBox(
                                             width: 150.w,
@@ -557,6 +556,7 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                                         DataCell(Text(
                                             _formatCurrency(row.precioVentaUnitario))),
                                         DataCell(Text('${row.cantidadVendida}')),
+                                        DataCell(Text(_formatCurrency(row.subtotal))),
                                         DataCell(Text(
                                             _formatCurrency(row.totalVentas))),
                                       ],

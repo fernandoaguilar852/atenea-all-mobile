@@ -17,16 +17,13 @@ extension InventarioRowMapper on InventarioRow {
   InventarioRowEntity toEntity() {
     return InventarioRowEntity(
       productoId: productoId,
-      codigoBarras: codigoBarras,
       nombreProducto: nombreProducto,
-      categoriaId: categoriaId,
-      nombreCategoria: nombreCategoria,
       cantidadConsumida: cantidadConsumida,
+      unidadMedida: unidadMedida,
       stockActual: stockActual,
       stockMinimo: stockMinimo,
       necesitaReposicion: necesitaReposicion,
-      costoUnitario: costoUnitario,
-      costoTotal: costoTotal,
+      numeroMovimientos: numeroMovimientos,
     );
   }
 }
@@ -35,8 +32,7 @@ extension InventarioResumenMapper on InventarioResumen {
   InventarioResumenEntity toEntity() {
     return InventarioResumenEntity(
       totalProductos: totalProductos,
-      totalCantidadConsumida: totalCantidadConsumida,
-      costoTotalInventario: costoTotalInventario,
+      totalMovimientos: totalMovimientos,
       productosConStockBajo: productosConStockBajo,
     );
   }

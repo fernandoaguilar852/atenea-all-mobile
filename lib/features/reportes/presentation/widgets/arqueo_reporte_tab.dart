@@ -267,10 +267,8 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                               ),
                               SizedBox(height: 12.h),
                               _ArqueoCard(
-                                saldoInicial: reporte.reporteArqueo.caja.saldoInicial ?? 0.0,
-                                totalIngresos: reporte.reporteArqueo.caja.totalIngresos ?? 0.0,
-                                totalEgresos: reporte.reporteArqueo.caja.totalEgresos ?? 0.0,
-                                saldoFinal: reporte.reporteArqueo.caja.saldoFinal ?? 0.0,
+                                total: reporte.reporteArqueo.caja.total,
+                                numeroTransacciones: reporte.reporteArqueo.caja.numeroTransacciones,
                               ),
                               SizedBox(height: 20.h),
                               Text(
@@ -282,10 +280,8 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                               ),
                               SizedBox(height: 12.h),
                               _ArqueoCard(
-                                saldoInicial: reporte.reporteArqueo.banco.saldoInicial ?? 0.0,
-                                totalIngresos: reporte.reporteArqueo.banco.totalIngresos ?? 0.0,
-                                totalEgresos: reporte.reporteArqueo.banco.totalEgresos ?? 0.0,
-                                saldoFinal: reporte.reporteArqueo.banco.saldoFinal ?? 0.0,
+                                total: reporte.reporteArqueo.banco.total,
+                                numeroTransacciones: reporte.reporteArqueo.banco.numeroTransacciones,
                               ),
                               SizedBox(height: 20.h),
                               Card(
@@ -326,16 +322,12 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
 }
 
 class _ArqueoCard extends StatelessWidget {
-  final double saldoInicial;
-  final double totalIngresos;
-  final double totalEgresos;
-  final double saldoFinal;
+  final double total;
+  final int numeroTransacciones;
 
   const _ArqueoCard({
-    required this.saldoInicial,
-    required this.totalIngresos,
-    required this.totalEgresos,
-    required this.saldoFinal,
+    required this.total,
+    required this.numeroTransacciones,
   });
 
   @override
@@ -345,14 +337,28 @@ class _ArqueoCard extends StatelessWidget {
         padding: EdgeInsets.all(16.w),
         child: Column(
           children: [
-            _ArqueoRow('Saldo Inicial', saldoInicial, AppColors.grey600),
+            _ArqueoRow('Total', total, AppColors.primary, isBold: true),
             Divider(height: 16.h),
-            _ArqueoRow('Ingresos', totalIngresos, AppColors.success),
-            Divider(height: 16.h),
-            _ArqueoRow('Egresos', totalEgresos, AppColors.danger),
-            Divider(height: 16.h),
-            _ArqueoRow('Saldo Final', saldoFinal, AppColors.primary,
-                isBold: true),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Transacciones',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  '$numeroTransacciones',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.grey600,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

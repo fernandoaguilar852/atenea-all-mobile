@@ -17,13 +17,15 @@ extension VentaRowMapper on VentaRow {
   VentaRowEntity toEntity() {
     return VentaRowEntity(
       productoId: productoId,
-      codigoBarras: codigoBarras,
       nombreProducto: nombreProducto,
-      categoriaId: categoriaId,
       nombreCategoria: nombreCategoria,
-      precioVentaUnitario: precioVentaUnitario,
       cantidadVendida: cantidadVendida,
+      precioVentaUnitario: precioVentaUnitario,
+      subtotal: subtotal,
+      descuentosAplicados: descuentosAplicados,
+      impuestosAplicados: impuestosAplicados,
       totalVentas: totalVentas,
+      numeroTransacciones: numeroTransacciones,
     );
   }
 }
@@ -32,8 +34,11 @@ extension VentasResumenMapper on VentasResumen {
   VentasResumenEntity toEntity() {
     return VentasResumenEntity(
       totalProductosVendidos: totalProductosVendidos,
-      totalCantidadVendida: totalCantidadVendida,
-      totalVentas: totalVentas,
+      totalTransacciones: totalTransacciones,
+      subtotalGeneral: subtotalGeneral,
+      descuentosGeneral: descuentosGeneral,
+      impuestosGeneral: impuestosGeneral,
+      totalGeneral: totalGeneral,
     );
   }
 }

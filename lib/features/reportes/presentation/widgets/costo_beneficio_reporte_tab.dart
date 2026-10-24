@@ -562,7 +562,7 @@ class _CostoBeneficioReporteTabState
                                         SizedBox(height: 8.h),
                                         _DetailRow(
                                           'Precio Venta Unit.',
-                                          _formatCurrency(producto.precioVenta),
+                                          _formatCurrency(producto.precioVenta ?? 0.0),
                                           AppColors.textPrimary,
                                         ),
                                         SizedBox(height: 8.h),
