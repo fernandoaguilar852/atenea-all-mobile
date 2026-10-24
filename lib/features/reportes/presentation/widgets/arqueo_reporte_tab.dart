@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../core/models/caja.dart';
+import '../../../../core/providers/catalogs_providers.dart';
 import '../../providers/reportes_provider.dart';
 
 class ArqueoReporteTab extends ConsumerStatefulWidget {
@@ -19,6 +21,7 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
   // Filtros opcionales
   bool _showAdvancedFilters = false;
   String? _tipoPagoFilter;
+  Caja? _cajaSelected;
 
   @override
   void initState() {
@@ -37,6 +40,7 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
           startDate: dateFormat.format(_startDate!),
           endDate: dateFormat.format(_endDate!),
           tipoPago: _tipoPagoFilter,
+          cajaId: _cajaSelected?.cajaId,
         );
   }
 
@@ -158,6 +162,78 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                     setState(() {
                       _tipoPagoFilter = value;
                     });
+                  },
+                ),
+                SizedBox(height: 8.h),
+                Consumer(
+                  builder: (context, ref, child) {
+                    final cajasAsync = ref.watch(cajasProvider(null));
+
+                    return cajasAsync.when(
+                      data: (cajas) => DropdownButtonFormField<Caja>(
+                        value: _cajaSelected,
+                        decoration: InputDecoration(
+                          labelText: 'Caja',
+                          hintText: 'Seleccionar caja',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
+                        ),
+                        items: cajas
+                            .map(
+                              (caja) => DropdownMenuItem(
+                                value: caja,
+                                child: Text(caja.displayName),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _cajaSelected = value;
+                          });
+                        },
+                      ),
+                      loading: () => DropdownButtonFormField<Caja>(
+                        decoration: InputDecoration(
+                          labelText: 'Caja',
+                          hintText: 'Cargando...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
+                        ),
+                        items: const [],
+                        onChanged: null,
+                      ),
+                      error: (error, stack) => DropdownButtonFormField<Caja>(
+                        decoration: InputDecoration(
+                          labelText: 'Caja',
+                          hintText: 'Error al cargar',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
+                        ),
+                        items: const [],
+                        onChanged: null,
+                      ),
+                    );
                   },
                 ),
               ],
