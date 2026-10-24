@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../core/models/caja.dart';
+import '../../../../core/models/tipo_producto.dart';
+import '../../../../core/providers/catalogs_providers.dart';
 import '../../providers/reportes_provider.dart';
 
 class VentasReporteTab extends ConsumerStatefulWidget {
@@ -21,8 +24,8 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
   // Filtros opcionales
   bool _showAdvancedFilters = false;
   final _nombreProductoController = TextEditingController();
-  final _categoriaIdController = TextEditingController();
-  final _cajaIdController = TextEditingController();
+  TipoProducto? _categoriaSelected;
+  Caja? _cajaSelected;
   bool _incluirAnuladas = false;
 
   @override
@@ -38,8 +41,6 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
   @override
   void dispose() {
     _nombreProductoController.dispose();
-    _categoriaIdController.dispose();
-    _cajaIdController.dispose();
     super.dispose();
   }
 
@@ -53,12 +54,8 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
           nombreProducto: _nombreProductoController.text.isEmpty
               ? null
               : _nombreProductoController.text,
-          categoriaId: _categoriaIdController.text.isEmpty
-              ? null
-              : int.tryParse(_categoriaIdController.text),
-          cajaId: _cajaIdController.text.isEmpty
-              ? null
-              : int.tryParse(_cajaIdController.text),
+          categoriaId: _categoriaSelected?.tipoProductoId,
+          cajaId: _cajaSelected?.cajaId,
           incluirAnuladas: _incluirAnuladas,
           pageNumber: _currentPage,
           pageSize: _pageSize,
@@ -173,15 +170,16 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                   style: TextStyle(fontSize: 14.sp),
                 ),
                 SizedBox(height: 8.h),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _categoriaIdController,
-                        keyboardType: TextInputType.number,
+                Consumer(
+                  builder: (context, ref, child) {
+                    final tiposProductoAsync = ref.watch(tiposProductoProvider);
+
+                    return tiposProductoAsync.when(
+                      data: (tiposProducto) => DropdownButtonFormField<TipoProducto>(
+                        value: _categoriaSelected,
                         decoration: InputDecoration(
-                          labelText: 'ID Categoría',
-                          hintText: 'Filtrar por categoría',
+                          labelText: 'Categoría',
+                          hintText: 'Seleccionar categoría',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
@@ -192,17 +190,61 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                             vertical: 12.h,
                           ),
                         ),
-                        style: TextStyle(fontSize: 14.sp),
+                        style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
+                        items: tiposProducto.map((tipo) {
+                          return DropdownMenuItem<TipoProducto>(
+                            value: tipo,
+                            child: Text(tipo.nombre),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _categoriaSelected = value;
+                          });
+                        },
                       ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: TextField(
-                        controller: _cajaIdController,
-                        keyboardType: TextInputType.number,
+                      loading: () => Container(
+                        padding: EdgeInsets.all(12.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.grey300),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 16.w,
+                              height: 16.h,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text('Cargando categorías...', style: TextStyle(fontSize: 14.sp)),
+                          ],
+                        ),
+                      ),
+                      error: (error, stack) => Container(
+                        padding: EdgeInsets.all(12.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.danger),
+                        ),
+                        child: Text('Error al cargar categorías', style: TextStyle(fontSize: 14.sp, color: AppColors.danger)),
+                      ),
+                    );
+                  },
+                ),
+                SizedBox(height: 8.h),
+                Consumer(
+                  builder: (context, ref, child) {
+                    final cajasAsync = ref.watch(cajasProvider('abierta'));
+
+                    return cajasAsync.when(
+                      data: (cajas) => DropdownButtonFormField<Caja>(
+                        value: _cajaSelected,
                         decoration: InputDecoration(
-                          labelText: 'ID Caja',
-                          hintText: 'Filtrar por caja',
+                          labelText: 'Caja',
+                          hintText: 'Seleccionar caja',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
@@ -213,10 +255,49 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                             vertical: 12.h,
                           ),
                         ),
-                        style: TextStyle(fontSize: 14.sp),
+                        style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
+                        items: cajas.map((caja) {
+                          return DropdownMenuItem<Caja>(
+                            value: caja,
+                            child: Text(caja.displayName),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _cajaSelected = value;
+                          });
+                        },
                       ),
-                    ),
-                  ],
+                      loading: () => Container(
+                        padding: EdgeInsets.all(12.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.grey300),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 16.w,
+                              height: 16.h,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text('Cargando cajas...', style: TextStyle(fontSize: 14.sp)),
+                          ],
+                        ),
+                      ),
+                      error: (error, stack) => Container(
+                        padding: EdgeInsets.all(12.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.danger),
+                        ),
+                        child: Text('Error al cargar cajas', style: TextStyle(fontSize: 14.sp, color: AppColors.danger)),
+                      ),
+                    );
+                  },
                 ),
                 SizedBox(height: 8.h),
                 CheckboxListTile(
