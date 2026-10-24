@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../chat/widgets/chat_widget.dart';
 import '../../data/models/dashboard_stats.dart';
@@ -29,6 +31,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final dashboardState = ref.watch(dashboardProvider);
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
@@ -36,32 +39,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
               // TODO: Navigate to notifications
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Cerrar Sesión'),
-                  content: const Text('¿Estás seguro que deseas salir?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancelar'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Salir'),
-                    ),
-                  ],
-                ),
-              );
-
-              if (confirm == true && context.mounted) {
-                await ref.read(authProvider.notifier).logout();
-              }
             },
           ),
         ],
@@ -347,7 +324,7 @@ class _QuickActionsGrid extends StatelessWidget {
         icon: Icons.bar_chart,
         color: AppColors.warning,
         onTap: () {
-          // TODO: Navigate to Reports
+          context.push('/reportes');
         },
       ),
     ];

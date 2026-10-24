@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../shared/widgets/app_drawer.dart';
 import '../widgets/arqueo_reporte_tab.dart';
 import '../widgets/costo_beneficio_reporte_tab.dart';
 import '../widgets/inventario_reporte_tab.dart';
@@ -34,6 +35,7 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Reportes'),
         bottom: TabBar(
