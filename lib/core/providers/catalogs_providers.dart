@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../datasources/caja_datasource.dart';
+import '../datasources/consumidor_datasource.dart';
 import '../datasources/producto_datasource.dart';
 import '../datasources/tipo_producto_datasource.dart';
 import '../models/caja.dart';
+import '../models/consumidor.dart';
 import '../models/producto.dart';
 import '../models/tipo_producto.dart';
 import 'dio_provider.dart';
@@ -25,6 +27,11 @@ final cajaDatasourceProvider = Provider<CajaDatasource>((ref) {
 final productoDatasourceProvider = Provider<ProductoDatasource>((ref) {
   final dioClient = ref.watch(dioClientProvider);
   return ProductoDatasource(dioClient.dio);
+});
+
+final consumidorDatasourceProvider = Provider<ConsumidorDatasource>((ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return ConsumidorDatasource(dioClient.dio);
 });
 
 // ============================================================================
@@ -66,6 +73,20 @@ final productosSearchProvider = FutureProvider.family<List<Producto>, String>((r
   if (user == null || searchTerm.length < 3) return [];
 
   return await datasource.searchProductos(
+    clienteId: user.clienteId,
+    search: searchTerm,
+    pageSize: 20,
+  );
+});
+
+/// Provider para buscar consumidores por nombre
+final consumidoresSearchProvider = FutureProvider.family<List<Consumidor>, String>((ref, searchTerm) async {
+  final datasource = ref.watch(consumidorDatasourceProvider);
+  final user = ref.watch(currentUserProvider);
+
+  if (user == null || searchTerm.length < 3) return [];
+
+  return await datasource.searchConsumidores(
     clienteId: user.clienteId,
     search: searchTerm,
     pageSize: 20,
