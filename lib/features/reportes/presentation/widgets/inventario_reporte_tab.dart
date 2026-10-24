@@ -8,7 +8,6 @@ import '../../../../core/models/producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/reportes_provider.dart';
-import '../../domain/entities/inventario_entity.dart';
 
 class InventarioReporteTab extends ConsumerStatefulWidget {
   const InventarioReporteTab({super.key});

@@ -1,5 +1,5 @@
-/// Entidades comunes compartidas entre todos los reportes
-/// Estas son las versiones Domain de los modelos de Data
+// Entidades comunes compartidas entre todos los reportes
+// Estas son las versiones Domain de los modelos de Data
 
 /// Encabezado del reporte con información del cliente
 class EncabezadoEntity {

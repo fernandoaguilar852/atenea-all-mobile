@@ -9,7 +9,6 @@ import '../../../../core/models/tipo_producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../providers/reportes_provider.dart';
-import '../../domain/entities/costo_beneficio_entity.dart';
 
 class CostoBeneficioReporteTab extends ConsumerStatefulWidget {
   const CostoBeneficioReporteTab({super.key});
