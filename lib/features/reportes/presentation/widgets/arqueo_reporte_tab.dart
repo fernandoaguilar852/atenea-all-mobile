@@ -27,9 +27,10 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
   @override
   void initState() {
     super.initState();
+    // Fecha actual por defecto
     final now = DateTime.now();
-    _startDate = DateTime(now.year, now.month, 1);
-    _endDate = DateTime(now.year, now.month + 1, 0);
+    _startDate = now;
+    _endDate = now;
     _loadData();
   }
 
