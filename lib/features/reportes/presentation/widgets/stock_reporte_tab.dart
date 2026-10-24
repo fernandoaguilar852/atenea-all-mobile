@@ -17,15 +17,35 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
   final int _pageSize = 10;
   bool? _filtroActivo = true;
 
+  // Filtros opcionales
+  bool _showAdvancedFilters = false;
+  final _nombreProductoController = TextEditingController();
+  final _tipoProductoIdController = TextEditingController();
+  bool _stockBajo = false;
+
   @override
   void initState() {
     super.initState();
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _nombreProductoController.dispose();
+    _tipoProductoIdController.dispose();
+    super.dispose();
+  }
+
   void _loadData() {
     ref.read(stockReporteProvider.notifier).loadReporte(
           activo: _filtroActivo,
+          nombreProducto: _nombreProductoController.text.isEmpty
+              ? null
+              : _nombreProductoController.text,
+          stockBajo: _stockBajo ? true : null,
+          tipoProductoId: _tipoProductoIdController.text.isEmpty
+              ? null
+              : int.tryParse(_tipoProductoIdController.text),
           pageNumber: _currentPage,
           pageSize: _pageSize,
         );
@@ -43,32 +63,104 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
 
     return Column(
       children: [
+        // Filtros
         Container(
           padding: EdgeInsets.all(16.w),
           color: AppColors.grey100,
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: SegmentedButton<bool?>(
-                  segments: const [
-                    ButtonSegment(value: true, label: Text('Activos')),
-                    ButtonSegment(value: false, label: Text('Inactivos')),
-                    ButtonSegment(value: null, label: Text('Todos')),
-                  ],
-                  selected: {_filtroActivo},
-                  onSelectionChanged: (Set<bool?> selection) {
-                    setState(() {
-                      _filtroActivo = selection.first;
-                      _currentPage = 1;
-                    });
-                    _loadData();
-                  },
+              Row(
+                children: [
+                  Expanded(
+                    child: SegmentedButton<bool?>(
+                      segments: const [
+                        ButtonSegment(value: true, label: Text('Activos')),
+                        ButtonSegment(value: false, label: Text('Inactivos')),
+                        ButtonSegment(value: null, label: Text('Todos')),
+                      ],
+                      selected: {_filtroActivo},
+                      onSelectionChanged: (Set<bool?> selection) {
+                        setState(() {
+                          _filtroActivo = selection.first;
+                          _currentPage = 1;
+                        });
+                        _loadData();
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(_showAdvancedFilters
+                        ? Icons.filter_alt
+                        : Icons.filter_alt_outlined),
+                    onPressed: () {
+                      setState(() {
+                        _showAdvancedFilters = !_showAdvancedFilters;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _loadData,
+                  ),
+                ],
+              ),
+              if (_showAdvancedFilters) ...[
+                SizedBox(height: 12.h),
+                TextField(
+                  controller: _nombreProductoController,
+                  decoration: InputDecoration(
+                    labelText: 'Nombre del Producto',
+                    hintText: 'Buscar por nombre',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 12.h,
+                    ),
+                  ),
+                  style: TextStyle(fontSize: 14.sp),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _loadData,
-              ),
+                SizedBox(height: 8.h),
+                TextField(
+                  controller: _tipoProductoIdController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'ID Tipo Producto',
+                    hintText: 'Filtrar por tipo',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 12.h,
+                    ),
+                  ),
+                  style: TextStyle(fontSize: 14.sp),
+                ),
+                SizedBox(height: 8.h),
+                CheckboxListTile(
+                  title: Text(
+                    'Stock Bajo',
+                    style: TextStyle(fontSize: 14.sp),
+                  ),
+                  value: _stockBajo,
+                  onChanged: (value) {
+                    setState(() {
+                      _stockBajo = value ?? false;
+                    });
+                  },
+                  tileColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    side: BorderSide(color: AppColors.grey300),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

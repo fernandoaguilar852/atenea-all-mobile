@@ -19,6 +19,11 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
   int _currentPage = 1;
   final int _pageSize = 10;
 
+  // Filtros opcionales
+  bool _showAdvancedFilters = false;
+  final _productoIdController = TextEditingController();
+  String? _tipoMovimientoSelected;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +33,12 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _productoIdController.dispose();
+    super.dispose();
+  }
+
   void _loadData() {
     if (_startDate == null || _endDate == null) return;
 
@@ -35,6 +46,10 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
     ref.read(inventarioReporteProvider.notifier).loadReporte(
           startDate: dateFormat.format(_startDate!),
           endDate: dateFormat.format(_endDate!),
+          productoId: _productoIdController.text.isEmpty
+              ? null
+              : int.tryParse(_productoIdController.text),
+          tipoMovimiento: _tipoMovimientoSelected,
           pageNumber: _currentPage,
           pageSize: _pageSize,
         );
@@ -73,46 +88,118 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
 
     return Column(
       children: [
+        // Filtros
         Container(
           padding: EdgeInsets.all(16.w),
           color: AppColors.grey100,
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: InkWell(
-                  onTap: _selectDateRange,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: _selectDateRange,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 12.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.grey300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.date_range, size: 20.sp),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                _startDate != null && _endDate != null
+                                    ? '${DateFormat('dd/MM/yyyy').format(_startDate!)} - ${DateFormat('dd/MM/yyyy').format(_endDate!)}'
+                                    : 'Seleccionar rango',
+                                style: TextStyle(fontSize: 14.sp),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  IconButton(
+                    icon: Icon(_showAdvancedFilters
+                        ? Icons.filter_alt
+                        : Icons.filter_alt_outlined),
+                    onPressed: () {
+                      setState(() {
+                        _showAdvancedFilters = !_showAdvancedFilters;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _loadData,
+                  ),
+                ],
+              ),
+              if (_showAdvancedFilters) ...[
+                SizedBox(height: 12.h),
+                TextField(
+                  controller: _productoIdController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'ID Producto',
+                    hintText: 'Filtrar por producto',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.white,
+                    contentPadding: EdgeInsets.symmetric(
                       horizontal: 12.w,
                       vertical: 12.h,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
+                  ),
+                  style: TextStyle(fontSize: 14.sp),
+                ),
+                SizedBox(height: 8.h),
+                DropdownButtonFormField<String>(
+                  value: _tipoMovimientoSelected,
+                  decoration: InputDecoration(
+                    labelText: 'Tipo de Movimiento',
+                    hintText: 'Seleccionar tipo',
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
-                      border: Border.all(color: AppColors.grey300),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.date_range, size: 20.sp),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: Text(
-                            _startDate != null && _endDate != null
-                                ? '${DateFormat('dd/MM/yyyy').format(_startDate!)} - ${DateFormat('dd/MM/yyyy').format(_endDate!)}'
-                                : 'Seleccionar rango',
-                            style: TextStyle(fontSize: 14.sp),
-                          ),
-                        ),
-                      ],
+                    filled: true,
+                    fillColor: AppColors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 12.h,
                     ),
                   ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'venta',
+                      child: Text('Venta'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'salida',
+                      child: Text('Salida'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'merma',
+                      child: Text('Merma'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _tipoMovimientoSelected = value;
+                    });
+                  },
                 ),
-              ),
-              SizedBox(width: 8.w),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _loadData,
-              ),
+              ],
             ],
           ),
         ),

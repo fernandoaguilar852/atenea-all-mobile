@@ -13,9 +13,12 @@ abstract class ReportesRepository {
     required int clienteId,
     required String startDate,
     required String endDate,
+    int? productoId,
     String? nombreProducto,
+    int? consumidorId,
     int? categoriaId,
     int? cajaId,
+    bool? incluirAnuladas,
     int pageNumber = 1,
     int pageSize = 10,
   });
@@ -23,8 +26,11 @@ abstract class ReportesRepository {
   /// Obtiene reporte de venta detallada
   Future<VentaDetalleReporte> getVentaDetalleReporte({
     required int clienteId,
-    required String startDate,
-    required String endDate,
+    String? startDate,
+    String? endDate,
+    int? consumidorId,
+    String? estado,
+    int? productoId,
     int pageNumber = 1,
     int pageSize = 10,
   });
@@ -34,6 +40,8 @@ abstract class ReportesRepository {
     required int clienteId,
     required String startDate,
     required String endDate,
+    int? productoId,
+    String? tipoMovimiento,
     int pageNumber = 1,
     int pageSize = 10,
   });
@@ -45,12 +53,16 @@ abstract class ReportesRepository {
     required String startDate,
     required String endDate,
     int? cajaId,
+    String? tipoPago,
   });
 
   /// Obtiene reporte de stock de productos
   Future<StockReporte> getStockReporte({
     required int clienteId,
+    String? nombreProducto,
+    bool? stockBajo,
     bool? activo,
+    int? tipoProductoId,
     int pageNumber = 1,
     int pageSize = 10,
   });
@@ -60,6 +72,9 @@ abstract class ReportesRepository {
     required int clienteId,
     required String startDate,
     required String endDate,
+    int? productoId,
+    int? categoriaId,
+    bool? activo,
     int pageNumber = 1,
     int pageSize = 10,
   });

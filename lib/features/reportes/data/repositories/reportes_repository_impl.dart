@@ -19,9 +19,12 @@ class ReportesRepositoryImpl implements ReportesRepository {
     required int clienteId,
     required String startDate,
     required String endDate,
+    int? productoId,
     String? nombreProducto,
+    int? consumidorId,
     int? categoriaId,
     int? cajaId,
+    bool? incluirAnuladas,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
@@ -30,9 +33,12 @@ class ReportesRepositoryImpl implements ReportesRepository {
         clienteId: clienteId,
         startDate: startDate,
         endDate: endDate,
+        productoId: productoId,
         nombreProducto: nombreProducto,
+        consumidorId: consumidorId,
         categoriaId: categoriaId,
         cajaId: cajaId,
+        incluirAnuladas: incluirAnuladas,
         pageNumber: pageNumber,
         pageSize: pageSize,
       );
@@ -44,8 +50,11 @@ class ReportesRepositoryImpl implements ReportesRepository {
   @override
   Future<VentaDetalleReporte> getVentaDetalleReporte({
     required int clienteId,
-    required String startDate,
-    required String endDate,
+    String? startDate,
+    String? endDate,
+    int? consumidorId,
+    String? estado,
+    int? productoId,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
@@ -54,6 +63,9 @@ class ReportesRepositoryImpl implements ReportesRepository {
         clienteId: clienteId,
         startDate: startDate,
         endDate: endDate,
+        consumidorId: consumidorId,
+        estado: estado,
+        productoId: productoId,
         pageNumber: pageNumber,
         pageSize: pageSize,
       );
@@ -67,6 +79,8 @@ class ReportesRepositoryImpl implements ReportesRepository {
     required int clienteId,
     required String startDate,
     required String endDate,
+    int? productoId,
+    String? tipoMovimiento,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
@@ -75,6 +89,8 @@ class ReportesRepositoryImpl implements ReportesRepository {
         clienteId: clienteId,
         startDate: startDate,
         endDate: endDate,
+        productoId: productoId,
+        tipoMovimiento: tipoMovimiento,
         pageNumber: pageNumber,
         pageSize: pageSize,
       );
@@ -89,6 +105,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
     required String startDate,
     required String endDate,
     int? cajaId,
+    String? tipoPago,
   }) async {
     try {
       return await _remoteDatasource.getArqueoReporte(
@@ -96,6 +113,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
         startDate: startDate,
         endDate: endDate,
         cajaId: cajaId,
+        tipoPago: tipoPago,
       );
     } catch (e) {
       rethrow;
@@ -105,14 +123,20 @@ class ReportesRepositoryImpl implements ReportesRepository {
   @override
   Future<StockReporte> getStockReporte({
     required int clienteId,
+    String? nombreProducto,
+    bool? stockBajo,
     bool? activo,
+    int? tipoProductoId,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
     try {
       return await _remoteDatasource.getStockReporte(
         clienteId: clienteId,
+        nombreProducto: nombreProducto,
+        stockBajo: stockBajo,
         activo: activo,
+        tipoProductoId: tipoProductoId,
         pageNumber: pageNumber,
         pageSize: pageSize,
       );
@@ -126,6 +150,9 @@ class ReportesRepositoryImpl implements ReportesRepository {
     required int clienteId,
     required String startDate,
     required String endDate,
+    int? productoId,
+    int? categoriaId,
+    bool? activo,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
@@ -134,6 +161,9 @@ class ReportesRepositoryImpl implements ReportesRepository {
         clienteId: clienteId,
         startDate: startDate,
         endDate: endDate,
+        productoId: productoId,
+        categoriaId: categoriaId,
+        activo: activo,
         pageNumber: pageNumber,
         pageSize: pageSize,
       );

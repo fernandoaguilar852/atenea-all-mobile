@@ -19,9 +19,12 @@ class ReportesRemoteDatasource {
     required int clienteId,
     required String startDate,
     required String endDate,
+    int? productoId,
     String? nombreProducto,
+    int? consumidorId,
     int? categoriaId,
     int? cajaId,
+    bool? incluirAnuladas,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
@@ -33,14 +36,23 @@ class ReportesRemoteDatasource {
       'pageSize': pageSize,
     };
 
+    if (productoId != null) {
+      queryParams['productoId'] = productoId;
+    }
     if (nombreProducto != null && nombreProducto.isNotEmpty) {
       queryParams['nombreProducto'] = nombreProducto;
+    }
+    if (consumidorId != null) {
+      queryParams['consumidorId'] = consumidorId;
     }
     if (categoriaId != null) {
       queryParams['categoriaId'] = categoriaId;
     }
     if (cajaId != null) {
       queryParams['cajaId'] = cajaId;
+    }
+    if (incluirAnuladas != null) {
+      queryParams['incluirAnuladas'] = incluirAnuladas;
     }
 
     final response = await _dio.get(
@@ -62,20 +74,39 @@ class ReportesRemoteDatasource {
   /// Obtiene reporte de venta detallada desde el API
   Future<VentaDetalleReporte> getVentaDetalleReporte({
     required int clienteId,
-    required String startDate,
-    required String endDate,
+    String? startDate,
+    String? endDate,
+    int? consumidorId,
+    String? estado,
+    int? productoId,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
+    final queryParams = <String, dynamic>{
+      'clienteId': clienteId,
+      'pageNumber': pageNumber,
+      'pageSize': pageSize,
+    };
+
+    if (startDate != null && startDate.isNotEmpty) {
+      queryParams['startDate'] = startDate;
+    }
+    if (endDate != null && endDate.isNotEmpty) {
+      queryParams['endDate'] = endDate;
+    }
+    if (consumidorId != null) {
+      queryParams['consumidorId'] = consumidorId;
+    }
+    if (estado != null && estado.isNotEmpty) {
+      queryParams['estado'] = estado;
+    }
+    if (productoId != null) {
+      queryParams['productoId'] = productoId;
+    }
+
     final response = await _dio.get(
       ApiConstants.buildUrl(ApiConstants.reporteVentaDetalle),
-      queryParameters: {
-        'clienteId': clienteId,
-        'startDate': startDate,
-        'endDate': endDate,
-        'pageNumber': pageNumber,
-        'pageSize': pageSize,
-      },
+      queryParameters: queryParams,
     );
 
     if (response.statusCode == 200 && response.data['data'] != null) {
@@ -94,18 +125,29 @@ class ReportesRemoteDatasource {
     required int clienteId,
     required String startDate,
     required String endDate,
+    int? productoId,
+    String? tipoMovimiento,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
+    final queryParams = <String, dynamic>{
+      'clienteId': clienteId,
+      'startDate': startDate,
+      'endDate': endDate,
+      'pageNumber': pageNumber,
+      'pageSize': pageSize,
+    };
+
+    if (productoId != null) {
+      queryParams['productoId'] = productoId;
+    }
+    if (tipoMovimiento != null && tipoMovimiento.isNotEmpty) {
+      queryParams['tipoMovimiento'] = tipoMovimiento;
+    }
+
     final response = await _dio.get(
       ApiConstants.buildUrl(ApiConstants.reporteInventarioConsumido),
-      queryParameters: {
-        'clienteId': clienteId,
-        'startDate': startDate,
-        'endDate': endDate,
-        'pageNumber': pageNumber,
-        'pageSize': pageSize,
-      },
+      queryParameters: queryParams,
     );
 
     if (response.statusCode == 200 && response.data['data'] != null) {
@@ -125,6 +167,7 @@ class ReportesRemoteDatasource {
     required String startDate,
     required String endDate,
     int? cajaId,
+    String? tipoPago,
   }) async {
     final queryParams = <String, dynamic>{
       'clienteId': clienteId,
@@ -134,6 +177,9 @@ class ReportesRemoteDatasource {
 
     if (cajaId != null) {
       queryParams['cajaId'] = cajaId;
+    }
+    if (tipoPago != null && tipoPago.isNotEmpty) {
+      queryParams['tipoPago'] = tipoPago;
     }
 
     final response = await _dio.get(
@@ -155,7 +201,10 @@ class ReportesRemoteDatasource {
   /// Obtiene reporte de stock de productos desde el API
   Future<StockReporte> getStockReporte({
     required int clienteId,
+    String? nombreProducto,
+    bool? stockBajo,
     bool? activo,
+    int? tipoProductoId,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
@@ -165,8 +214,17 @@ class ReportesRemoteDatasource {
       'pageSize': pageSize,
     };
 
+    if (nombreProducto != null && nombreProducto.isNotEmpty) {
+      queryParams['nombreProducto'] = nombreProducto;
+    }
+    if (stockBajo != null) {
+      queryParams['stockBajo'] = stockBajo;
+    }
     if (activo != null) {
       queryParams['activo'] = activo;
+    }
+    if (tipoProductoId != null) {
+      queryParams['tipoProductoId'] = tipoProductoId;
     }
 
     final response = await _dio.get(
@@ -190,18 +248,33 @@ class ReportesRemoteDatasource {
     required int clienteId,
     required String startDate,
     required String endDate,
+    int? productoId,
+    int? categoriaId,
+    bool? activo,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
+    final queryParams = <String, dynamic>{
+      'clienteId': clienteId,
+      'startDate': startDate,
+      'endDate': endDate,
+      'pageNumber': pageNumber,
+      'pageSize': pageSize,
+    };
+
+    if (productoId != null) {
+      queryParams['productoId'] = productoId;
+    }
+    if (categoriaId != null) {
+      queryParams['categoriaId'] = categoriaId;
+    }
+    if (activo != null) {
+      queryParams['activo'] = activo;
+    }
+
     final response = await _dio.get(
       ApiConstants.buildUrl(ApiConstants.reporteCostoBeneficio),
-      queryParameters: {
-        'clienteId': clienteId,
-        'startDate': startDate,
-        'endDate': endDate,
-        'pageNumber': pageNumber,
-        'pageSize': pageSize,
-      },
+      queryParameters: queryParams,
     );
 
     if (response.statusCode == 200 && response.data['data'] != null) {

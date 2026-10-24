@@ -20,6 +20,12 @@ class _CostoBeneficioReporteTabState
   int _currentPage = 1;
   final int _pageSize = 10;
 
+  // Filtros opcionales
+  bool _showAdvancedFilters = false;
+  final _productoIdController = TextEditingController();
+  final _categoriaIdController = TextEditingController();
+  bool _activo = false;
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +35,13 @@ class _CostoBeneficioReporteTabState
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _productoIdController.dispose();
+    _categoriaIdController.dispose();
+    super.dispose();
+  }
+
   void _loadData() {
     if (_startDate == null || _endDate == null) return;
 
@@ -36,6 +49,13 @@ class _CostoBeneficioReporteTabState
     ref.read(costoBeneficioReporteProvider.notifier).loadReporte(
           startDate: dateFormat.format(_startDate!),
           endDate: dateFormat.format(_endDate!),
+          productoId: _productoIdController.text.isEmpty
+              ? null
+              : int.tryParse(_productoIdController.text),
+          categoriaId: _categoriaIdController.text.isEmpty
+              ? null
+              : int.tryParse(_categoriaIdController.text),
+          activo: _activo ? true : null,
           pageNumber: _currentPage,
           pageSize: _pageSize,
         );
@@ -78,46 +98,127 @@ class _CostoBeneficioReporteTabState
 
     return Column(
       children: [
+        // Filtros
         Container(
           padding: EdgeInsets.all(16.w),
           color: AppColors.grey100,
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: InkWell(
-                  onTap: _selectDateRange,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 12.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      border: Border.all(color: AppColors.grey300),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.date_range, size: 20.sp),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: Text(
-                            _startDate != null && _endDate != null
-                                ? '${DateFormat('dd/MM/yyyy').format(_startDate!)} - ${DateFormat('dd/MM/yyyy').format(_endDate!)}'
-                                : 'Seleccionar rango',
-                            style: TextStyle(fontSize: 14.sp),
-                          ),
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: _selectDateRange,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 12.h,
                         ),
-                      ],
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.grey300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.date_range, size: 20.sp),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                _startDate != null && _endDate != null
+                                    ? '${DateFormat('dd/MM/yyyy').format(_startDate!)} - ${DateFormat('dd/MM/yyyy').format(_endDate!)}'
+                                    : 'Seleccionar rango',
+                                style: TextStyle(fontSize: 14.sp),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
+                  SizedBox(width: 8.w),
+                  IconButton(
+                    icon: Icon(_showAdvancedFilters
+                        ? Icons.filter_alt
+                        : Icons.filter_alt_outlined),
+                    onPressed: () {
+                      setState(() {
+                        _showAdvancedFilters = !_showAdvancedFilters;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _loadData,
+                  ),
+                ],
+              ),
+              if (_showAdvancedFilters) ...[
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _productoIdController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'ID Producto',
+                          hintText: 'Filtrar por producto',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
+                        ),
+                        style: TextStyle(fontSize: 14.sp),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: TextField(
+                        controller: _categoriaIdController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'ID Categoría',
+                          hintText: 'Filtrar por categoría',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
+                        ),
+                        style: TextStyle(fontSize: 14.sp),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              SizedBox(width: 8.w),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _loadData,
-              ),
+                SizedBox(height: 8.h),
+                CheckboxListTile(
+                  title: Text(
+                    'Productos Activos',
+                    style: TextStyle(fontSize: 14.sp),
+                  ),
+                  value: _activo,
+                  onChanged: (value) {
+                    setState(() {
+                      _activo = value ?? false;
+                    });
+                  },
+                  tileColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    side: BorderSide(color: AppColors.grey300),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

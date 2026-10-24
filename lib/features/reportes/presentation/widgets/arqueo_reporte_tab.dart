@@ -16,6 +16,10 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
   DateTime? _startDate;
   DateTime? _endDate;
 
+  // Filtros opcionales
+  bool _showAdvancedFilters = false;
+  String? _tipoPagoFilter;
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +36,7 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
     ref.read(arqueoReporteProvider.notifier).loadReporte(
           startDate: dateFormat.format(_startDate!),
           endDate: dateFormat.format(_endDate!),
+          tipoPago: _tipoPagoFilter,
         );
   }
 
@@ -67,46 +72,95 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
 
     return Column(
       children: [
+        // Filtros
         Container(
           padding: EdgeInsets.all(16.w),
           color: AppColors.grey100,
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: InkWell(
-                  onTap: _selectDateRange,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: _selectDateRange,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 12.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.grey300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.date_range, size: 20.sp),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                _startDate != null && _endDate != null
+                                    ? '${DateFormat('dd/MM/yyyy').format(_startDate!)} - ${DateFormat('dd/MM/yyyy').format(_endDate!)}'
+                                    : 'Seleccionar rango',
+                                style: TextStyle(fontSize: 14.sp),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  IconButton(
+                    icon: Icon(_showAdvancedFilters
+                        ? Icons.filter_alt
+                        : Icons.filter_alt_outlined),
+                    onPressed: () {
+                      setState(() {
+                        _showAdvancedFilters = !_showAdvancedFilters;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _loadData,
+                  ),
+                ],
+              ),
+              if (_showAdvancedFilters) ...[
+                SizedBox(height: 12.h),
+                DropdownButtonFormField<String>(
+                  value: _tipoPagoFilter,
+                  decoration: InputDecoration(
+                    labelText: 'Tipo de Pago',
+                    hintText: 'Seleccionar tipo de pago',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.white,
+                    contentPadding: EdgeInsets.symmetric(
                       horizontal: 12.w,
                       vertical: 12.h,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      border: Border.all(color: AppColors.grey300),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.date_range, size: 20.sp),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: Text(
-                            _startDate != null && _endDate != null
-                                ? '${DateFormat('dd/MM/yyyy').format(_startDate!)} - ${DateFormat('dd/MM/yyyy').format(_endDate!)}'
-                                : 'Seleccionar rango',
-                            style: TextStyle(fontSize: 14.sp),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'CAJA',
+                      child: Text('CAJA'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'BANCO',
+                      child: Text('BANCO'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _tipoPagoFilter = value;
+                    });
+                  },
                 ),
-              ),
-              SizedBox(width: 8.w),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _loadData,
-              ),
+              ],
             ],
           ),
         ),

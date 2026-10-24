@@ -18,6 +18,13 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
   int _currentPage = 1;
   final int _pageSize = 10;
 
+  // Filtros opcionales
+  bool _showAdvancedFilters = false;
+  final _nombreProductoController = TextEditingController();
+  final _categoriaIdController = TextEditingController();
+  final _cajaIdController = TextEditingController();
+  bool _incluirAnuladas = false;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +35,14 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _nombreProductoController.dispose();
+    _categoriaIdController.dispose();
+    _cajaIdController.dispose();
+    super.dispose();
+  }
+
   void _loadData() {
     if (_startDate == null || _endDate == null) return;
 
@@ -35,6 +50,16 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
     ref.read(ventasReporteProvider.notifier).loadReporte(
           startDate: dateFormat.format(_startDate!),
           endDate: dateFormat.format(_endDate!),
+          nombreProducto: _nombreProductoController.text.isEmpty
+              ? null
+              : _nombreProductoController.text,
+          categoriaId: _categoriaIdController.text.isEmpty
+              ? null
+              : int.tryParse(_categoriaIdController.text),
+          cajaId: _cajaIdController.text.isEmpty
+              ? null
+              : int.tryParse(_cajaIdController.text),
+          incluirAnuladas: _incluirAnuladas,
           pageNumber: _currentPage,
           pageSize: _pageSize,
         );
@@ -77,43 +102,141 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
         Container(
           padding: EdgeInsets.all(16.w),
           color: AppColors.grey100,
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: InkWell(
-                  onTap: _selectDateRange,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: _selectDateRange,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 12.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.grey300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.date_range, size: 20.sp),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                _startDate != null && _endDate != null
+                                    ? '${DateFormat('dd/MM/yyyy').format(_startDate!)} - ${DateFormat('dd/MM/yyyy').format(_endDate!)}'
+                                    : 'Seleccionar rango',
+                                style: TextStyle(fontSize: 14.sp),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  IconButton(
+                    icon: Icon(_showAdvancedFilters
+                        ? Icons.filter_alt
+                        : Icons.filter_alt_outlined),
+                    onPressed: () {
+                      setState(() {
+                        _showAdvancedFilters = !_showAdvancedFilters;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _loadData,
+                  ),
+                ],
+              ),
+              if (_showAdvancedFilters) ...[
+                SizedBox(height: 12.h),
+                TextField(
+                  controller: _nombreProductoController,
+                  decoration: InputDecoration(
+                    labelText: 'Nombre del Producto',
+                    hintText: 'Buscar por nombre',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.white,
+                    contentPadding: EdgeInsets.symmetric(
                       horizontal: 12.w,
                       vertical: 12.h,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      border: Border.all(color: AppColors.grey300),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.date_range, size: 20.sp),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: Text(
-                            _startDate != null && _endDate != null
-                                ? '${DateFormat('dd/MM/yyyy').format(_startDate!)} - ${DateFormat('dd/MM/yyyy').format(_endDate!)}'
-                                : 'Seleccionar rango',
-                            style: TextStyle(fontSize: 14.sp),
+                  ),
+                  style: TextStyle(fontSize: 14.sp),
+                ),
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _categoriaIdController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'ID Categoría',
+                          hintText: 'Filtrar por categoría',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
                           ),
                         ),
-                      ],
+                        style: TextStyle(fontSize: 14.sp),
+                      ),
                     ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: TextField(
+                        controller: _cajaIdController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'ID Caja',
+                          hintText: 'Filtrar por caja',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
+                        ),
+                        style: TextStyle(fontSize: 14.sp),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                CheckboxListTile(
+                  title: Text(
+                    'Incluir ventas anuladas',
+                    style: TextStyle(fontSize: 14.sp),
+                  ),
+                  value: _incluirAnuladas,
+                  onChanged: (value) {
+                    setState(() {
+                      _incluirAnuladas = value ?? false;
+                    });
+                  },
+                  tileColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    side: BorderSide(color: AppColors.grey300),
                   ),
                 ),
-              ),
-              SizedBox(width: 8.w),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _loadData,
-              ),
+              ],
             ],
           ),
         ),
