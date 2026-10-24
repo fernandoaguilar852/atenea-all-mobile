@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../core/models/producto.dart';
+import '../../../../core/providers/catalogs_providers.dart';
 import '../../providers/reportes_provider.dart';
 
 class InventarioReporteTab extends ConsumerStatefulWidget {
@@ -21,7 +24,10 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
 
   // Filtros opcionales
   bool _showAdvancedFilters = false;
-  final _productoIdController = TextEditingController();
+  final _productoSearchController = TextEditingController();
+  Producto? _productoSelected;
+  String _searchTerm = '';
+  Timer? _debounce;
   String? _tipoMovimientoSelected;
 
   @override
@@ -35,7 +41,8 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
 
   @override
   void dispose() {
-    _productoIdController.dispose();
+    _productoSearchController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -46,13 +53,26 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
     ref.read(inventarioReporteProvider.notifier).loadReporte(
           startDate: dateFormat.format(_startDate!),
           endDate: dateFormat.format(_endDate!),
-          productoId: _productoIdController.text.isEmpty
-              ? null
-              : int.tryParse(_productoIdController.text),
+          productoId: _productoSelected?.productoId,
           tipoMovimiento: _tipoMovimientoSelected,
           pageNumber: _currentPage,
           pageSize: _pageSize,
         );
+  }
+
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (value.length >= 3) {
+        setState(() {
+          _searchTerm = value;
+        });
+      } else {
+        setState(() {
+          _searchTerm = '';
+        });
+      }
+    });
   }
 
   Future<void> _selectDateRange() async {
@@ -145,23 +165,160 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
               ),
               if (_showAdvancedFilters) ...[
                 SizedBox(height: 12.h),
-                TextField(
-                  controller: _productoIdController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'ID Producto',
-                    hintText: 'Filtrar por producto',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _productoSearchController,
+                      onChanged: _onSearchChanged,
+                      decoration: InputDecoration(
+                        labelText: 'Buscar Producto',
+                        hintText: 'Escribir 3+ caracteres para buscar',
+                        prefixIcon: _productoSelected != null
+                            ? IconButton(
+                                icon: Icon(Icons.clear, size: 20.sp),
+                                onPressed: () {
+                                  setState(() {
+                                    _productoSelected = null;
+                                    _productoSearchController.clear();
+                                    _searchTerm = '';
+                                  });
+                                },
+                              )
+                            : Icon(Icons.search, size: 20.sp),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        filled: true,
+                        fillColor: AppColors.white,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 12.h,
+                        ),
+                      ),
+                      style: TextStyle(fontSize: 14.sp),
                     ),
-                    filled: true,
-                    fillColor: AppColors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 12.h,
-                    ),
-                  ),
-                  style: TextStyle(fontSize: 14.sp),
+                    if (_productoSelected != null)
+                      Container(
+                        margin: EdgeInsets.only(top: 4.h),
+                        padding: EdgeInsets.all(8.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.primary),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.check_circle, size: 16.sp, color: AppColors.primary),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                'Seleccionado: ${_productoSelected!.displayName}',
+                                style: TextStyle(fontSize: 12.sp, color: AppColors.primary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (_searchTerm.isNotEmpty && _productoSelected == null)
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final productosAsync = ref.watch(productosSearchProvider(_searchTerm));
+
+                          return productosAsync.when(
+                            data: (productos) {
+                              if (productos.isEmpty) {
+                                return Container(
+                                  margin: EdgeInsets.only(top: 4.h),
+                                  padding: EdgeInsets.all(12.w),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.white,
+                                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                                    border: Border.all(color: AppColors.grey300),
+                                  ),
+                                  child: Text(
+                                    'No se encontraron productos',
+                                    style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+                                  ),
+                                );
+                              }
+
+                              return Container(
+                                margin: EdgeInsets.only(top: 4.h),
+                                constraints: BoxConstraints(maxHeight: 200.h),
+                                decoration: BoxDecoration(
+                                  color: AppColors.white,
+                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                  border: Border.all(color: AppColors.grey300),
+                                ),
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  itemCount: productos.length,
+                                  separatorBuilder: (context, index) => Divider(height: 1.h),
+                                  itemBuilder: (context, index) {
+                                    final producto = productos[index];
+                                    return ListTile(
+                                      dense: true,
+                                      title: Text(
+                                        producto.nombre,
+                                        style: TextStyle(fontSize: 13.sp),
+                                      ),
+                                      subtitle: Text(
+                                        'ID: ${producto.productoId} - \$${producto.precio.toStringAsFixed(0)}',
+                                        style: TextStyle(fontSize: 11.sp),
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          _productoSelected = producto;
+                                          _productoSearchController.text = producto.nombre;
+                                          _searchTerm = '';
+                                        });
+                                      },
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                            loading: () => Container(
+                              margin: EdgeInsets.only(top: 4.h),
+                              padding: EdgeInsets.all(12.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                border: Border.all(color: AppColors.grey300),
+                              ),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 16.w,
+                                    height: 16.h,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    'Buscando productos...',
+                                    style: TextStyle(fontSize: 12.sp),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            error: (error, stack) => Container(
+                              margin: EdgeInsets.only(top: 4.h),
+                              padding: EdgeInsets.all(12.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.danger.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                border: Border.all(color: AppColors.danger),
+                              ),
+                              child: Text(
+                                'Error al buscar productos',
+                                style: TextStyle(fontSize: 12.sp, color: AppColors.danger),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
                 ),
                 SizedBox(height: 8.h),
                 DropdownButtonFormField<String>(
@@ -187,10 +344,6 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
                     DropdownMenuItem(
                       value: 'salida',
                       child: Text('Salida'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'merma',
-                      child: Text('Merma'),
                     ),
                   ],
                   onChanged: (value) {
