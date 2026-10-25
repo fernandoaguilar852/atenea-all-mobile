@@ -5,6 +5,7 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/reportes/presentation/screens/reportes_screen.dart';
 import '../../features/movimientos/presentation/screens/movimientos_screen.dart';
+import '../../features/resoluciones/presentation/screens/resoluciones_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final isAuthenticated = ref.watch(isAuthenticatedProvider);
@@ -44,6 +45,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/movimientos',
         name: 'movimientos',
         builder: (context, state) => const MovimientosScreen(),
+      ),
+      GoRoute(
+        path: '/resoluciones',
+        name: 'resoluciones',
+        builder: (context, state) => const ResolucionesScreen(),
       ),
       // TODO: Add more routes (POS, Products, Clients, etc.)
     ],

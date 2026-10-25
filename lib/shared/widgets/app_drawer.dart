@@ -83,6 +83,40 @@ class AppDrawer extends ConsumerWidget {
                   },
                 ),
                 Divider(height: 1.h, color: AppColors.grey300),
+
+                // Sección Administración
+                Theme(
+                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    leading: Icon(
+                      Icons.admin_panel_settings,
+                      color: AppColors.textSecondary,
+                      size: 24.sp,
+                    ),
+                    title: Text(
+                      'Administración',
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    children: [
+                      _DrawerSubItem(
+                        icon: Icons.receipt_long,
+                        title: 'Resoluciones',
+                        isSelected: currentRoute == '/resoluciones',
+                        onTap: () {
+                          Navigator.pop(context);
+                          if (currentRoute != '/resoluciones') {
+                            context.push('/resoluciones');
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1.h, color: AppColors.grey300),
                 _DrawerItem(
                   icon: Icons.point_of_sale,
                   title: 'Punto de Venta',
@@ -247,6 +281,46 @@ class _DrawerItem extends StatelessWidget {
               ),
             )
           : null,
+    );
+  }
+}
+
+class _DrawerSubItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _DrawerSubItem({
+    required this.icon,
+    required this.title,
+    this.isSelected = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveTextColor = isSelected ? AppColors.primary : AppColors.textPrimary;
+    final effectiveIconColor = isSelected ? AppColors.primary : AppColors.textSecondary;
+
+    return ListTile(
+      contentPadding: EdgeInsets.only(left: 72.w, right: 16.w),
+      leading: Icon(
+        icon,
+        color: effectiveIconColor,
+        size: 20.sp,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14.sp,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          color: effectiveTextColor,
+        ),
+      ),
+      selected: isSelected,
+      selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
+      onTap: onTap,
     );
   }
 }
