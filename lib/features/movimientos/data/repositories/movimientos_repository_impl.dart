@@ -34,7 +34,7 @@ class MovimientosRepositoryImpl implements MovimientosRepository {
       pageSize: pageSize,
     );
 
-    return MovimientoMapper.toListEntity(response.data);
+    return MovimientoMapper.toListEntity(response);
   }
 
   @override

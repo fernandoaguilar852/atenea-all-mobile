@@ -64,8 +64,12 @@ class MovimientoModel {
 @JsonSerializable()
 class MovimientosResponse {
   final MovimientosData data;
+  final PaginacionModel? pagination;
 
-  const MovimientosResponse({required this.data});
+  const MovimientosResponse({
+    required this.data,
+    this.pagination,
+  });
 
   factory MovimientosResponse.fromJson(Map<String, dynamic> json) =>
       _$MovimientosResponseFromJson(json);
@@ -73,15 +77,13 @@ class MovimientosResponse {
   Map<String, dynamic> toJson() => _$MovimientosResponseToJson(this);
 }
 
-/// Data de movimientos con paginación
+/// Data de movimientos
 @JsonSerializable()
 class MovimientosData {
   final List<MovimientoModel> movimientos;
-  final PaginacionModel? pagination;
 
   const MovimientosData({
     required this.movimientos,
-    this.pagination,
   });
 
   factory MovimientosData.fromJson(Map<String, dynamic> json) =>

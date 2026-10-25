@@ -62,11 +62,11 @@ class MovimientoMapper {
     );
   }
 
-  /// Convierte MovimientosData a MovimientosListEntity
-  static MovimientosListEntity toListEntity(MovimientosData data) {
+  /// Convierte MovimientosResponse a MovimientosListEntity
+  static MovimientosListEntity toListEntity(MovimientosResponse response) {
     return MovimientosListEntity(
-      movimientos: toEntityList(data.movimientos),
-      pagination: toPaginacionEntity(data.pagination),
+      movimientos: toEntityList(response.data.movimientos),
+      pagination: toPaginacionEntity(response.pagination),
     );
   }
 
