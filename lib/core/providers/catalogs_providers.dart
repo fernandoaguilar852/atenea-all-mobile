@@ -2,10 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../datasources/caja_datasource.dart';
 import '../datasources/consumidor_datasource.dart';
 import '../datasources/producto_datasource.dart';
+import '../datasources/proveedor_datasource.dart';
 import '../datasources/tipo_producto_datasource.dart';
 import '../models/caja.dart';
 import '../models/consumidor.dart';
 import '../models/producto.dart';
+import '../models/proveedor.dart';
 import '../models/tipo_producto.dart';
 import 'dio_provider.dart';
 
@@ -31,6 +33,11 @@ final productoDatasourceProvider = Provider<ProductoDatasource>((ref) {
 final consumidorDatasourceProvider = Provider<ConsumidorDatasource>((ref) {
   final dioClient = ref.watch(dioClientProvider);
   return ConsumidorDatasource(dioClient.dio);
+});
+
+final proveedorDatasourceProvider = Provider<ProveedorDatasource>((ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return ProveedorDatasource(dioClient.dio);
 });
 
 // ============================================================================
@@ -136,6 +143,32 @@ class ConsumidoresSearchParams {
       clienteId.hashCode ^ searchTerm.hashCode ^ pageSize.hashCode;
 }
 
+/// Parámetros para búsqueda de proveedores
+class ProveedoresSearchParams {
+  final int clienteId;
+  final String searchTerm;
+  final int pageSize;
+
+  const ProveedoresSearchParams({
+    required this.clienteId,
+    required this.searchTerm,
+    this.pageSize = 20,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProveedoresSearchParams &&
+          runtimeType == other.runtimeType &&
+          clienteId == other.clienteId &&
+          searchTerm == other.searchTerm &&
+          pageSize == other.pageSize;
+
+  @override
+  int get hashCode =>
+      clienteId.hashCode ^ searchTerm.hashCode ^ pageSize.hashCode;
+}
+
 /// Provider para obtener lista de tipos de producto
 /// Recibe clienteId como parámetro en lugar de depender de auth
 final tiposProductoProvider =
@@ -187,6 +220,22 @@ final consumidoresSearchProvider =
 
     final datasource = ref.watch(consumidorDatasourceProvider);
     return await datasource.searchConsumidores(
+      clienteId: params.clienteId,
+      search: params.searchTerm,
+      pageSize: params.pageSize,
+    );
+  },
+);
+
+/// Provider para buscar proveedores por nombre
+/// Recibe clienteId y searchTerm como parámetros
+final proveedoresSearchProvider =
+    FutureProvider.family<List<Proveedor>, ProveedoresSearchParams>(
+  (ref, params) async {
+    if (params.searchTerm.length < 3) return [];
+
+    final datasource = ref.watch(proveedorDatasourceProvider);
+    return await datasource.searchProveedores(
       clienteId: params.clienteId,
       search: params.searchTerm,
       pageSize: params.pageSize,

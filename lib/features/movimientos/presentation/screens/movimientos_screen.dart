@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../core/models/producto.dart';
+import '../../../../core/models/proveedor.dart';
+import '../../../../core/providers/catalogs_providers.dart';
 import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/movimiento_entity.dart';
@@ -27,6 +30,12 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
   TipoMovimiento? _tipoFilter;
   DateTime? _fechaDesde;
   DateTime? _fechaHasta;
+  Producto? _productoFilter;
+  Proveedor? _proveedorFilter;
+
+  // Controllers para búsqueda
+  final _productoSearchController = TextEditingController();
+  final _proveedorSearchController = TextEditingController();
 
   @override
   void initState() {
@@ -34,6 +43,13 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
+  }
+
+  @override
+  void dispose() {
+    _productoSearchController.dispose();
+    _proveedorSearchController.dispose();
+    super.dispose();
   }
 
   void _loadData() {
@@ -45,6 +61,8 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
           tipo: _tipoFilter,
           fechaDesde: _fechaDesde,
           fechaHasta: _fechaHasta,
+          productoId: _productoFilter?.productoId,
+          proveedorId: _proveedorFilter?.proveedorId,
           pageNumber: _currentPage,
           pageSize: _pageSize,
         );
@@ -354,28 +372,136 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                   },
                 ),
                 SizedBox(height: 12.h),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.filter_list),
-                        label: const Text('Filtrar por fecha'),
-                        onPressed: () async {
-                          // TODO: Implementar selector de rango de fechas
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Filtro de fechas - En desarrollo'),
+
+                // Filtro de rango de fechas
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      initialDateRange: _fechaDesde != null && _fechaHasta != null
+                          ? DateTimeRange(start: _fechaDesde!, end: _fechaHasta!)
+                          : null,
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                              primary: AppColors.primary,
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+
+                    if (picked != null) {
+                      setState(() {
+                        _fechaDesde = picked.start;
+                        _fechaHasta = picked.end;
+                        _currentPage = 1;
+                      });
+                      _loadData();
+                    }
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      border: Border.all(color: AppColors.grey300),
                     ),
-                    SizedBox(width: 8.w),
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: _loadData,
+                    child: Row(
+                      children: [
+                        Icon(Icons.date_range, size: 20.sp, color: AppColors.primary),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Text(
+                            _fechaDesde != null && _fechaHasta != null
+                                ? '${DateFormat('dd/MM/yyyy').format(_fechaDesde!)} - ${DateFormat('dd/MM/yyyy').format(_fechaHasta!)}'
+                                : 'Seleccionar rango de fechas',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: _fechaDesde != null ? AppColors.textPrimary : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        if (_fechaDesde != null)
+                          IconButton(
+                            icon: Icon(Icons.close, size: 18.sp),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                _fechaDesde = null;
+                                _fechaHasta = null;
+                                _currentPage = 1;
+                              });
+                              _loadData();
+                            },
+                          ),
+                      ],
                     ),
-                  ],
+                  ),
+                ),
+                SizedBox(height: 12.h),
+
+                // Filtro por producto (autocomplete)
+                _ProductoAutocomplete(
+                  controller: _productoSearchController,
+                  selectedProducto: _productoFilter,
+                  onProductoSelected: (producto) {
+                    setState(() {
+                      _productoFilter = producto;
+                      _currentPage = 1;
+                    });
+                    _loadData();
+                  },
+                  onClear: () {
+                    setState(() {
+                      _productoFilter = null;
+                      _productoSearchController.clear();
+                      _currentPage = 1;
+                    });
+                    _loadData();
+                  },
+                ),
+                SizedBox(height: 12.h),
+
+                // Filtro por proveedor (autocomplete)
+                _ProveedorAutocomplete(
+                  controller: _proveedorSearchController,
+                  selectedProveedor: _proveedorFilter,
+                  onProveedorSelected: (proveedor) {
+                    setState(() {
+                      _proveedorFilter = proveedor;
+                      _currentPage = 1;
+                    });
+                    _loadData();
+                  },
+                  onClear: () {
+                    setState(() {
+                      _proveedorFilter = null;
+                      _proveedorSearchController.clear();
+                      _currentPage = 1;
+                    });
+                    _loadData();
+                  },
+                ),
+                SizedBox(height: 12.h),
+
+                // Botón refresh
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Actualizar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: _loadData,
+                  ),
                 ),
               ],
             ),
@@ -695,6 +821,412 @@ class _MovimientoTypeOption extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Widget de autocomplete para filtrar por producto
+class _ProductoAutocomplete extends ConsumerStatefulWidget {
+  final TextEditingController controller;
+  final Producto? selectedProducto;
+  final Function(Producto) onProductoSelected;
+  final VoidCallback onClear;
+
+  const _ProductoAutocomplete({
+    required this.controller,
+    required this.selectedProducto,
+    required this.onProductoSelected,
+    required this.onClear,
+  });
+
+  @override
+  ConsumerState<_ProductoAutocomplete> createState() => _ProductoAutocompleteState();
+}
+
+class _ProductoAutocompleteState extends ConsumerState<_ProductoAutocomplete> {
+  bool _showDropdown = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(currentUserProvider);
+    if (user == null) return const SizedBox();
+
+    final searchTerm = widget.controller.text;
+    final productosAsync = searchTerm.length >= 3
+        ? ref.watch(productosSearchProvider(ProductosSearchParams(
+            clienteId: user.clienteId,
+            searchTerm: searchTerm,
+          )))
+        : const AsyncValue.data(<Producto>[]);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: widget.controller,
+          decoration: InputDecoration(
+            labelText: 'Filtrar por Producto',
+            hintText: 'Buscar producto...',
+            prefixIcon: Icon(Icons.inventory_2, color: AppColors.primary),
+            suffixIcon: widget.selectedProducto != null
+                ? IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: widget.onClear,
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            filled: true,
+            fillColor: AppColors.white,
+          ),
+          onChanged: (value) {
+            setState(() {
+              _showDropdown = value.length >= 3;
+            });
+          },
+          onTap: () {
+            setState(() {
+              _showDropdown = widget.controller.text.length >= 3;
+            });
+          },
+        ),
+        if (widget.selectedProducto != null)
+          Container(
+            margin: EdgeInsets.only(top: 8.h),
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: AppColors.success),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, color: AppColors.success, size: 20.sp),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    widget.selectedProducto!.nombre,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (_showDropdown && searchTerm.length >= 3)
+          productosAsync.when(
+            data: (productos) {
+              if (productos.isEmpty) {
+                return Container(
+                  margin: EdgeInsets.only(top: 4.h),
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: AppColors.grey300),
+                  ),
+                  child: Text(
+                    'No se encontraron productos',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                );
+              }
+              return Container(
+                margin: EdgeInsets.only(top: 4.h),
+                constraints: BoxConstraints(maxHeight: 200.h),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  border: Border.all(color: AppColors.grey300),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: productos.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final producto = productos[index];
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        producto.nombre,
+                        style: TextStyle(fontSize: 13.sp),
+                      ),
+                      subtitle: Text(
+                        'Stock: ${producto.stockTotal}',
+                        style: TextStyle(fontSize: 11.sp),
+                      ),
+                      onTap: () {
+                        widget.controller.text = producto.nombre;
+                        widget.onProductoSelected(producto);
+                        setState(() {
+                          _showDropdown = false;
+                        });
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+            loading: () => Container(
+              margin: EdgeInsets.only(top: 4.h),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.grey300),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 16.w,
+                    height: 16.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 12.w),
+                  Text(
+                    'Buscando...',
+                    style: TextStyle(fontSize: 12.sp),
+                  ),
+                ],
+              ),
+            ),
+            error: (err, stack) => Container(
+              margin: EdgeInsets.only(top: 4.h),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.danger),
+              ),
+              child: Text(
+                'Error al buscar productos',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppColors.danger,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Widget de autocomplete para filtrar por proveedor
+class _ProveedorAutocomplete extends ConsumerStatefulWidget {
+  final TextEditingController controller;
+  final Proveedor? selectedProveedor;
+  final Function(Proveedor) onProveedorSelected;
+  final VoidCallback onClear;
+
+  const _ProveedorAutocomplete({
+    required this.controller,
+    required this.selectedProveedor,
+    required this.onProveedorSelected,
+    required this.onClear,
+  });
+
+  @override
+  ConsumerState<_ProveedorAutocomplete> createState() => _ProveedorAutocompleteState();
+}
+
+class _ProveedorAutocompleteState extends ConsumerState<_ProveedorAutocomplete> {
+  bool _showDropdown = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(currentUserProvider);
+    if (user == null) return const SizedBox();
+
+    final searchTerm = widget.controller.text;
+    final proveedoresAsync = searchTerm.length >= 3
+        ? ref.watch(proveedoresSearchProvider(ProveedoresSearchParams(
+            clienteId: user.clienteId,
+            searchTerm: searchTerm,
+          )))
+        : const AsyncValue.data(<Proveedor>[]);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: widget.controller,
+          decoration: InputDecoration(
+            labelText: 'Filtrar por Proveedor',
+            hintText: 'Buscar proveedor...',
+            prefixIcon: Icon(Icons.business, color: AppColors.primary),
+            suffixIcon: widget.selectedProveedor != null
+                ? IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: widget.onClear,
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            filled: true,
+            fillColor: AppColors.white,
+          ),
+          onChanged: (value) {
+            setState(() {
+              _showDropdown = value.length >= 3;
+            });
+          },
+          onTap: () {
+            setState(() {
+              _showDropdown = widget.controller.text.length >= 3;
+            });
+          },
+        ),
+        if (widget.selectedProveedor != null)
+          Container(
+            margin: EdgeInsets.only(top: 8.h),
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: AppColors.primary),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, color: AppColors.primary, size: 20.sp),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    widget.selectedProveedor!.nombre,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (_showDropdown && searchTerm.length >= 3)
+          proveedoresAsync.when(
+            data: (proveedores) {
+              if (proveedores.isEmpty) {
+                return Container(
+                  margin: EdgeInsets.only(top: 4.h),
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: AppColors.grey300),
+                  ),
+                  child: Text(
+                    'No se encontraron proveedores',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                );
+              }
+              return Container(
+                margin: EdgeInsets.only(top: 4.h),
+                constraints: BoxConstraints(maxHeight: 200.h),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  border: Border.all(color: AppColors.grey300),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: proveedores.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final proveedor = proveedores[index];
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        proveedor.nombre,
+                        style: TextStyle(fontSize: 13.sp),
+                      ),
+                      subtitle: proveedor.nit != null
+                          ? Text(
+                              'NIT: ${proveedor.nit}',
+                              style: TextStyle(fontSize: 11.sp),
+                            )
+                          : null,
+                      onTap: () {
+                        widget.controller.text = proveedor.nombre;
+                        widget.onProveedorSelected(proveedor);
+                        setState(() {
+                          _showDropdown = false;
+                        });
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+            loading: () => Container(
+              margin: EdgeInsets.only(top: 4.h),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.grey300),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 16.w,
+                    height: 16.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 12.w),
+                  Text(
+                    'Buscando...',
+                    style: TextStyle(fontSize: 12.sp),
+                  ),
+                ],
+              ),
+            ),
+            error: (err, stack) => Container(
+              margin: EdgeInsets.only(top: 4.h),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.danger),
+              ),
+              child: Text(
+                'Error al buscar proveedores',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppColors.danger,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
