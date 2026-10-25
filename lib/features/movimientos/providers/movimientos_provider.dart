@@ -139,7 +139,7 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
     }
   }
 
-  /// Actualiza un movimiento
+  /// Actualiza un movimiento completo (PUT)
   Future<bool> updateMovimiento({
     required int movimientoId,
     required int productoId,
@@ -164,6 +164,53 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
         productoId: productoId,
         usuarioId: usuarioId,
         clienteId: clienteId,
+        proveedorId: proveedorId,
+        pagoId: pagoId,
+        cajaId: cajaId,
+        ventaId: ventaId,
+        tipo: tipo,
+        costo: costo,
+        impuesto: impuesto,
+        descuentoUnidad: descuentoUnidad,
+        cantidad: cantidad,
+        observacion: observacion,
+        fecha: fecha,
+        updatedByUsuarioId: updatedByUsuarioId,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Error al actualizar movimiento: ${e.toString()}',
+      );
+      return false;
+    }
+  }
+
+  /// Actualiza un movimiento parcialmente (PATCH)
+  Future<bool> patchMovimiento({
+    required int movimientoId,
+    required int clienteId,
+    int? productoId,
+    int? usuarioId,
+    int? proveedorId,
+    int? pagoId,
+    int? cajaId,
+    int? ventaId,
+    TipoMovimiento? tipo,
+    double? costo,
+    double? impuesto,
+    double? descuentoUnidad,
+    double? cantidad,
+    String? observacion,
+    DateTime? fecha,
+    required int updatedByUsuarioId,
+  }) async {
+    try {
+      await _repository.patchMovimiento(
+        movimientoId: movimientoId,
+        clienteId: clienteId,
+        productoId: productoId,
+        usuarioId: usuarioId,
         proveedorId: proveedorId,
         pagoId: pagoId,
         cajaId: cajaId,

@@ -142,6 +142,162 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
     ).then((_) => _loadData()); // Reload data after closing form
   }
 
+  void _showEditDialog(MovimientoEntity movimiento) {
+    final cantidadController = TextEditingController(text: movimiento.cantidad.toString());
+    final observacionController = TextEditingController(text: movimiento.observacion ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Editar Movimiento #${movimiento.movimientoId}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: cantidadController,
+              decoration: const InputDecoration(
+                labelText: 'Cantidad',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 16.h),
+            TextField(
+              controller: observacionController,
+              decoration: const InputDecoration(
+                labelText: 'Observación',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final user = ref.read(currentUserProvider);
+              if (user == null) return;
+
+              final cantidad = double.tryParse(cantidadController.text);
+              if (cantidad == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Cantidad inválida')),
+                );
+                return;
+              }
+
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
+              navigator.pop();
+
+              final success = await ref.read(movimientosProvider.notifier).patchMovimiento(
+                    movimientoId: movimiento.movimientoId,
+                    clienteId: user.clienteId,
+                    cantidad: cantidad,
+                    observacion: observacionController.text.isEmpty
+                        ? null
+                        : observacionController.text,
+                    updatedByUsuarioId: user.usuarioId,
+                  );
+
+              if (success && mounted) {
+                _loadData();
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Movimiento actualizado correctamente'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteDialog(MovimientoEntity movimiento) {
+    final motivoController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Eliminar Movimiento #${movimiento.movimientoId}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Está seguro de eliminar este movimiento?',
+              style: TextStyle(fontSize: 14.sp),
+            ),
+            SizedBox(height: 16.h),
+            TextField(
+              controller: motivoController,
+              decoration: const InputDecoration(
+                labelText: 'Motivo de eliminación *',
+                border: OutlineInputBorder(),
+                hintText: 'Ej: Error en el registro',
+              ),
+              maxLines: 2,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (motivoController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Ingrese el motivo de eliminación')),
+                );
+                return;
+              }
+
+              final user = ref.read(currentUserProvider);
+              if (user == null) return;
+
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
+              navigator.pop();
+
+              final success = await ref.read(movimientosProvider.notifier).deleteMovimiento(
+                    movimientoId: movimiento.movimientoId,
+                    clienteId: user.clienteId,
+                    deletedByUsuarioId: user.usuarioId,
+                    deleteReason: motivoController.text,
+                  );
+
+              if (success && mounted) {
+                _loadData();
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Movimiento eliminado correctamente'),
+                    backgroundColor: AppColors.danger,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final movimientosState = ref.watch(movimientosProvider);
@@ -255,24 +411,8 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                                     ),
                                   );
                                 },
-                                onEdit: () {
-                                  // TODO: Implementar edición
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Editar #${movimiento.movimientoId}'),
-                                    ),
-                                  );
-                                },
-                                onDelete: () async {
-                                  // TODO: Implementar eliminación
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Eliminar #${movimiento.movimientoId}'),
-                                    ),
-                                  );
-                                },
+                                onEdit: () => _showEditDialog(movimiento),
+                                onDelete: () => _showDeleteDialog(movimiento),
                               );
                             },
                           ),
