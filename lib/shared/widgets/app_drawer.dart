@@ -71,6 +71,17 @@ class AppDrawer extends ConsumerWidget {
                     }
                   },
                 ),
+                _DrawerItem(
+                  icon: Icons.move_down,
+                  title: 'Movimientos',
+                  isSelected: currentRoute == '/movimientos',
+                  onTap: () {
+                    Navigator.pop(context); // Cerrar drawer
+                    if (currentRoute != '/movimientos') {
+                      context.push('/movimientos');
+                    }
+                  },
+                ),
                 Divider(height: 1.h, color: AppColors.grey300),
                 _DrawerItem(
                   icon: Icons.point_of_sale,

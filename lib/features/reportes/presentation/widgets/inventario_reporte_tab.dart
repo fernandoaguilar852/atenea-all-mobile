@@ -98,11 +98,6 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
     }
   }
 
-  String _formatCurrency(double value) {
-    final format = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
-    return format.format(value);
-  }
-
   @override
   Widget build(BuildContext context) {
     final reporteState = ref.watch(inventarioReporteProvider);
