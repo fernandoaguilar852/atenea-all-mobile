@@ -98,6 +98,19 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                       });
                     },
                   ),
+                  if (_showAdvancedFilters)
+                    IconButton(
+                      icon: const Icon(Icons.clear_all),
+                      tooltip: 'Limpiar filtros',
+                      onPressed: () {
+                        setState(() {
+                          _nombreProductoController.clear();
+                          _tipoProductoSelected = null;
+                          _stockBajo = false;
+                        });
+                        _loadData();
+                      },
+                    ),
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     onPressed: _loadData,
