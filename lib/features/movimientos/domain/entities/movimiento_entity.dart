@@ -60,8 +60,6 @@ enum TipoMovimiento {
   entrada,
   salida,
   venta,
-  ajuste,
-  merma,
   ingreso,
   egreso;
 
@@ -73,10 +71,6 @@ enum TipoMovimiento {
         return 'Salida';
       case TipoMovimiento.venta:
         return 'Venta';
-      case TipoMovimiento.ajuste:
-        return 'Ajuste';
-      case TipoMovimiento.merma:
-        return 'Merma';
       case TipoMovimiento.ingreso:
         return 'Ingreso';
       case TipoMovimiento.egreso:

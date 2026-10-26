@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -743,10 +744,6 @@ class _MovimientoCard extends StatelessWidget {
         return AppColors.danger;
       case TipoMovimiento.venta:
         return AppColors.primary;
-      case TipoMovimiento.ajuste:
-        return AppColors.warning;
-      case TipoMovimiento.merma:
-        return Colors.orange;
     }
   }
 }
@@ -844,20 +841,34 @@ class _ProductoAutocomplete extends ConsumerStatefulWidget {
 }
 
 class _ProductoAutocompleteState extends ConsumerState<_ProductoAutocomplete> {
-  bool _showDropdown = false;
+  String _searchTerm = '';
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (value.length >= 3) {
+        setState(() {
+          _searchTerm = value;
+        });
+      } else {
+        setState(() {
+          _searchTerm = '';
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     if (user == null) return const SizedBox();
-
-    final searchTerm = widget.controller.text;
-    final productosAsync = searchTerm.length >= 3
-        ? ref.watch(productosSearchProvider(ProductosSearchParams(
-            clienteId: user.clienteId,
-            searchTerm: searchTerm,
-          )))
-        : const AsyncValue.data(<Producto>[]);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -881,14 +892,7 @@ class _ProductoAutocompleteState extends ConsumerState<_ProductoAutocomplete> {
             fillColor: AppColors.white,
           ),
           onChanged: (value) {
-            setState(() {
-              _showDropdown = value.length >= 3;
-            });
-          },
-          onTap: () {
-            setState(() {
-              _showDropdown = widget.controller.text.length >= 3;
-            });
+            _onSearchChanged(value);
           },
         ),
         if (widget.selectedProducto != null)
@@ -917,8 +921,17 @@ class _ProductoAutocompleteState extends ConsumerState<_ProductoAutocomplete> {
               ],
             ),
           ),
-        if (_showDropdown && searchTerm.length >= 3)
-          productosAsync.when(
+        if (_searchTerm.isNotEmpty && widget.selectedProducto == null)
+          Consumer(
+            builder: (context, ref, child) {
+              final productosAsync = ref.watch(productosSearchProvider(
+                ProductosSearchParams(
+                  clienteId: user.clienteId,
+                  searchTerm: _searchTerm,
+                ),
+              ));
+
+              return productosAsync.when(
             data: (productos) {
               if (productos.isEmpty) {
                 return Container(
@@ -974,7 +987,7 @@ class _ProductoAutocompleteState extends ConsumerState<_ProductoAutocomplete> {
                         widget.controller.text = producto.nombre;
                         widget.onProductoSelected(producto);
                         setState(() {
-                          _showDropdown = false;
+                          _searchTerm = '';
                         });
                       },
                     );
@@ -1021,6 +1034,8 @@ class _ProductoAutocompleteState extends ConsumerState<_ProductoAutocomplete> {
                 ),
               ),
             ),
+          );
+            },
           ),
       ],
     );
@@ -1046,20 +1061,34 @@ class _ProveedorAutocomplete extends ConsumerStatefulWidget {
 }
 
 class _ProveedorAutocompleteState extends ConsumerState<_ProveedorAutocomplete> {
-  bool _showDropdown = false;
+  String _searchTerm = '';
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (value.length >= 3) {
+        setState(() {
+          _searchTerm = value;
+        });
+      } else {
+        setState(() {
+          _searchTerm = '';
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     if (user == null) return const SizedBox();
-
-    final searchTerm = widget.controller.text;
-    final proveedoresAsync = searchTerm.length >= 3
-        ? ref.watch(proveedoresSearchProvider(ProveedoresSearchParams(
-            clienteId: user.clienteId,
-            searchTerm: searchTerm,
-          )))
-        : const AsyncValue.data(<Proveedor>[]);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1083,14 +1112,7 @@ class _ProveedorAutocompleteState extends ConsumerState<_ProveedorAutocomplete> 
             fillColor: AppColors.white,
           ),
           onChanged: (value) {
-            setState(() {
-              _showDropdown = value.length >= 3;
-            });
-          },
-          onTap: () {
-            setState(() {
-              _showDropdown = widget.controller.text.length >= 3;
-            });
+            _onSearchChanged(value);
           },
         ),
         if (widget.selectedProveedor != null)
@@ -1119,8 +1141,17 @@ class _ProveedorAutocompleteState extends ConsumerState<_ProveedorAutocomplete> 
               ],
             ),
           ),
-        if (_showDropdown && searchTerm.length >= 3)
-          proveedoresAsync.when(
+        if (_searchTerm.isNotEmpty && widget.selectedProveedor == null)
+          Consumer(
+            builder: (context, ref, child) {
+              final proveedoresAsync = ref.watch(proveedoresSearchProvider(
+                ProveedoresSearchParams(
+                  clienteId: user.clienteId,
+                  searchTerm: _searchTerm,
+                ),
+              ));
+
+              return proveedoresAsync.when(
             data: (proveedores) {
               if (proveedores.isEmpty) {
                 return Container(
@@ -1178,7 +1209,7 @@ class _ProveedorAutocompleteState extends ConsumerState<_ProveedorAutocomplete> 
                         widget.controller.text = proveedor.nombre;
                         widget.onProveedorSelected(proveedor);
                         setState(() {
-                          _showDropdown = false;
+                          _searchTerm = '';
                         });
                       },
                     );
@@ -1225,6 +1256,8 @@ class _ProveedorAutocompleteState extends ConsumerState<_ProveedorAutocomplete> 
                 ),
               ),
             ),
+          );
+            },
           ),
       ],
     );

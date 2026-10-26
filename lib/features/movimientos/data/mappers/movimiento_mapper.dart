@@ -79,10 +79,6 @@ class MovimientoMapper {
         return TipoMovimiento.salida;
       case 'venta':
         return TipoMovimiento.venta;
-      case 'ajuste':
-        return TipoMovimiento.ajuste;
-      case 'merma':
-        return TipoMovimiento.merma;
       case 'ingreso':
         return TipoMovimiento.ingreso;
       case 'egreso':
