@@ -5,11 +5,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../../core/models/producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
 
 /// Widget reutilizable de autocomplete para búsqueda de productos
 /// Implementa debounce de 500ms y muestra dropdown con resultados
 class ProductoAutocompleteWidget extends ConsumerStatefulWidget {
+  final int clienteId;
   final TextEditingController controller;
   final Producto? selectedProducto;
   final Function(Producto) onProductoSelected;
@@ -19,6 +19,7 @@ class ProductoAutocompleteWidget extends ConsumerStatefulWidget {
 
   const ProductoAutocompleteWidget({
     super.key,
+    required this.clienteId,
     required this.controller,
     required this.selectedProducto,
     required this.onProductoSelected,
@@ -60,9 +61,6 @@ class _ProductoAutocompleteWidgetState
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(currentUserProvider);
-    if (user == null) return const SizedBox();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -119,7 +117,7 @@ class _ProductoAutocompleteWidgetState
             builder: (context, ref, child) {
               final productosAsync = ref.watch(productosSearchProvider(
                 ProductosSearchParams(
-                  clienteId: user.clienteId,
+                  clienteId: widget.clienteId,
                   searchTerm: _searchTerm,
                 ),
               ));

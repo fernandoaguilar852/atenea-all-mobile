@@ -153,6 +153,7 @@ class _SalidaFormWidgetState extends ConsumerState<SalidaFormWidget> {
   @override
   Widget build(BuildContext context) {
     const primaryColor = AppColors.warning; // Naranja para SALIDA
+    final user = ref.watch(currentUserProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -237,23 +238,25 @@ class _SalidaFormWidgetState extends ConsumerState<SalidaFormWidget> {
                             ),
                           ),
                           SizedBox(height: 8.h),
-                          ProductoAutocompleteWidget(
-                            controller: _productoSearchController,
-                            selectedProducto: _productoSelected,
-                            onProductoSelected: (producto) {
-                              setState(() {
-                                _productoSelected = producto;
-                              });
-                            },
-                            onClear: () {
-                              setState(() {
-                                _productoSelected = null;
-                                _productoSearchController.clear();
-                              });
-                            },
-                            primaryColor: primaryColor,
-                            hintText: 'Escribe 3+ caracteres para buscar...',
-                          ),
+                          if (user != null)
+                            ProductoAutocompleteWidget(
+                              clienteId: user.clienteId,
+                              controller: _productoSearchController,
+                              selectedProducto: _productoSelected,
+                              onProductoSelected: (producto) {
+                                setState(() {
+                                  _productoSelected = producto;
+                                });
+                              },
+                              onClear: () {
+                                setState(() {
+                                  _productoSelected = null;
+                                  _productoSearchController.clear();
+                                });
+                              },
+                              primaryColor: primaryColor,
+                              hintText: 'Escribe 3+ caracteres para buscar...',
+                            ),
 
                           SizedBox(height: 16.h),
 
