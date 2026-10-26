@@ -12,6 +12,7 @@ class CajaDatasource {
   Future<List<Caja>> getCajas({
     required int clienteId,
     String? estado,
+    int? usuarioId,
     int pageNumber = 1,
     int pageSize = 100,
   }) async {
@@ -23,6 +24,10 @@ class CajaDatasource {
 
     if (estado != null && estado.isNotEmpty) {
       queryParams['estado'] = estado;
+    }
+
+    if (usuarioId != null) {
+      queryParams['usuarioId'] = usuarioId;
     }
 
     final response = await _dio.get(

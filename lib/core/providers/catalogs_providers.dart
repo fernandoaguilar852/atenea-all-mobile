@@ -70,11 +70,13 @@ class TiposProductoParams {
 class CajasParams {
   final int clienteId;
   final String? estado;
+  final int? usuarioId;
   final int pageSize;
 
   const CajasParams({
     required this.clienteId,
     this.estado,
+    this.usuarioId,
     this.pageSize = 100,
   });
 
@@ -85,10 +87,15 @@ class CajasParams {
           runtimeType == other.runtimeType &&
           clienteId == other.clienteId &&
           estado == other.estado &&
+          usuarioId == other.usuarioId &&
           pageSize == other.pageSize;
 
   @override
-  int get hashCode => clienteId.hashCode ^ estado.hashCode ^ pageSize.hashCode;
+  int get hashCode =>
+      clienteId.hashCode ^
+      estado.hashCode ^
+      usuarioId.hashCode ^
+      pageSize.hashCode;
 }
 
 /// Parámetros para búsqueda de productos
@@ -183,13 +190,14 @@ final tiposProductoProvider =
 );
 
 /// Provider para obtener lista de cajas
-/// Recibe clienteId y estado como parámetros
+/// Recibe clienteId, estado y usuarioId como parámetros
 final cajasProvider = FutureProvider.family<List<Caja>, CajasParams>(
   (ref, params) async {
     final datasource = ref.watch(cajaDatasourceProvider);
     return await datasource.getCajas(
       clienteId: params.clienteId,
       estado: params.estado,
+      usuarioId: params.usuarioId,
       pageSize: params.pageSize,
     );
   },

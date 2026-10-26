@@ -175,7 +175,11 @@ class _EgresoFormWidgetState extends ConsumerState<EgresoFormWidget> {
                     Consumer(
                       builder: (context, ref, child) {
                         final cajasAsync = ref.watch(cajasProvider(
-                          CajasParams(clienteId: user.clienteId, estado: null),
+                          CajasParams(
+                            clienteId: user.clienteId,
+                            estado: 'abierta',
+                            usuarioId: user.usuarioId,
+                          ),
                         ));
 
                         return cajasAsync.when(
