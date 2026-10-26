@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../../core/models/producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 
 /// Widget reutilizable de autocomplete para búsqueda de productos
 /// Implementa debounce de 500ms y muestra dropdown con resultados
@@ -115,9 +116,12 @@ class _ProductoAutocompleteWidgetState
         if (_searchTerm.isNotEmpty && widget.selectedProducto == null)
           Consumer(
             builder: (context, ref, child) {
+              final user = ref.watch(currentUserProvider);
+              if (user == null) return const SizedBox();
+
               final productosAsync = ref.watch(productosSearchProvider(
                 ProductosSearchParams(
-                  clienteId: widget.clienteId,
+                  clienteId: user.clienteId,
                   searchTerm: _searchTerm,
                 ),
               ));

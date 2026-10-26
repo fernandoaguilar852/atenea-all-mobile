@@ -15,6 +15,7 @@ import '../widgets/entrada_form_widget.dart';
 import '../widgets/salida_form_widget.dart';
 import '../widgets/ingreso_form_widget.dart';
 import '../widgets/egreso_form_widget.dart';
+import '../widgets/producto_autocomplete_widget.dart';
 
 class MovimientosScreen extends ConsumerStatefulWidget {
   const MovimientosScreen({super.key});
@@ -321,6 +322,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
   Widget build(BuildContext context) {
     final movimientosState = ref.watch(movimientosProvider);
     final data = movimientosState.data;
+    final user = ref.watch(currentUserProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -448,25 +450,28 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                 SizedBox(height: 12.h),
 
                 // Filtro por producto (autocomplete)
-                _ProductoAutocomplete(
-                  controller: _productoSearchController,
-                  selectedProducto: _productoFilter,
-                  onProductoSelected: (producto) {
-                    setState(() {
-                      _productoFilter = producto;
-                      _currentPage = 1;
-                    });
-                    _loadData();
-                  },
-                  onClear: () {
-                    setState(() {
-                      _productoFilter = null;
-                      _productoSearchController.clear();
-                      _currentPage = 1;
-                    });
-                    _loadData();
-                  },
-                ),
+                if (user != null)
+                  ProductoAutocompleteWidget(
+                    clienteId: user.clienteId,
+                    controller: _productoSearchController,
+                    selectedProducto: _productoFilter,
+                    onProductoSelected: (producto) {
+                      setState(() {
+                        _productoFilter = producto;
+                        _currentPage = 1;
+                      });
+                      _loadData();
+                    },
+                    onClear: () {
+                      setState(() {
+                        _productoFilter = null;
+                        _productoSearchController.clear();
+                        _currentPage = 1;
+                      });
+                      _loadData();
+                    },
+                    primaryColor: AppColors.primary,
+                  ),
                 SizedBox(height: 12.h),
 
                 // Filtro por proveedor (autocomplete)
@@ -818,226 +823,6 @@ class _MovimientoTypeOption extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Widget de autocomplete para filtrar por producto
-class _ProductoAutocomplete extends ConsumerStatefulWidget {
-  final TextEditingController controller;
-  final Producto? selectedProducto;
-  final Function(Producto) onProductoSelected;
-  final VoidCallback onClear;
-
-  const _ProductoAutocomplete({
-    required this.controller,
-    required this.selectedProducto,
-    required this.onProductoSelected,
-    required this.onClear,
-  });
-
-  @override
-  ConsumerState<_ProductoAutocomplete> createState() => _ProductoAutocompleteState();
-}
-
-class _ProductoAutocompleteState extends ConsumerState<_ProductoAutocomplete> {
-  String _searchTerm = '';
-  Timer? _debounce;
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    super.dispose();
-  }
-
-  void _onSearchChanged(String value) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (value.length >= 3) {
-        setState(() {
-          _searchTerm = value;
-        });
-      } else {
-        setState(() {
-          _searchTerm = '';
-        });
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final user = ref.watch(currentUserProvider);
-    if (user == null) return const SizedBox();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: widget.controller,
-          decoration: InputDecoration(
-            labelText: 'Filtrar por Producto',
-            hintText: 'Buscar producto...',
-            prefixIcon: Icon(Icons.inventory_2, color: AppColors.primary),
-            suffixIcon: widget.selectedProducto != null
-                ? IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: widget.onClear,
-                  )
-                : null,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            filled: true,
-            fillColor: AppColors.white,
-          ),
-          onChanged: (value) {
-            _onSearchChanged(value);
-          },
-        ),
-        if (widget.selectedProducto != null)
-          Container(
-            margin: EdgeInsets.only(top: 8.h),
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: AppColors.success),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.check_circle, color: AppColors.success, size: 20.sp),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    widget.selectedProducto!.nombre,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.success,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        if (_searchTerm.isNotEmpty && widget.selectedProducto == null)
-          Consumer(
-            builder: (context, ref, child) {
-              final productosAsync = ref.watch(productosSearchProvider(
-                ProductosSearchParams(
-                  clienteId: user.clienteId,
-                  searchTerm: _searchTerm,
-                ),
-              ));
-
-              return productosAsync.when(
-            data: (productos) {
-              if (productos.isEmpty) {
-                return Container(
-                  margin: EdgeInsets.only(top: 4.h),
-                  padding: EdgeInsets.all(12.w),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    border: Border.all(color: AppColors.grey300),
-                  ),
-                  child: Text(
-                    'No se encontraron productos',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                );
-              }
-              return Container(
-                margin: EdgeInsets.only(top: 4.h),
-                constraints: BoxConstraints(maxHeight: 200.h),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: AppColors.grey300),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  padding: EdgeInsets.zero,
-                  itemCount: productos.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final producto = productos[index];
-                    return ListTile(
-                      dense: true,
-                      title: Text(
-                        producto.nombre,
-                        style: TextStyle(fontSize: 13.sp),
-                      ),
-                      subtitle: Text(
-                        'Stock: ${producto.stockTotal}',
-                        style: TextStyle(fontSize: 11.sp),
-                      ),
-                      onTap: () {
-                        widget.controller.text = producto.nombre;
-                        widget.onProductoSelected(producto);
-                        setState(() {
-                          _searchTerm = '';
-                        });
-                      },
-                    );
-                  },
-                ),
-              );
-            },
-            loading: () => Container(
-              margin: EdgeInsets.only(top: 4.h),
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.grey300),
-              ),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 16.w,
-                    height: 16.w,
-                    child: const CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  SizedBox(width: 12.w),
-                  Text(
-                    'Buscando...',
-                    style: TextStyle(fontSize: 12.sp),
-                  ),
-                ],
-              ),
-            ),
-            error: (err, stack) => Container(
-              margin: EdgeInsets.only(top: 4.h),
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.danger),
-              ),
-              child: Text(
-                'Error al buscar productos',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.danger,
-                ),
-              ),
-            ),
-          );
-            },
-          ),
-      ],
     );
   }
 }

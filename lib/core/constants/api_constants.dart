@@ -55,7 +55,7 @@ class ApiConstants {
   static const String headerAuthorization = 'Authorization';
 
   // Header Values
-  static const String appId = 'ATENEA-MOBILE-APP';
+  static const String appId = '550e8400-e29b-41d4-a716-446655440001';
   static const String contentTypeJson = 'application/json';
 
   // Timeouts
