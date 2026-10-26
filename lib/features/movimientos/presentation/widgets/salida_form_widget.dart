@@ -6,6 +6,7 @@ import '../../../../core/models/producto.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/movimiento_entity.dart';
 import '../../providers/movimientos_provider.dart';
+import 'producto_autocomplete_widget.dart';
 
 /// Representa una línea de salida antes de ser guardada
 class SalidaLineItem {
@@ -236,55 +237,23 @@ class _SalidaFormWidgetState extends ConsumerState<SalidaFormWidget> {
                             ),
                           ),
                           SizedBox(height: 8.h),
-                          TextField(
+                          ProductoAutocompleteWidget(
                             controller: _productoSearchController,
-                            decoration: InputDecoration(
-                              hintText: 'Buscar producto...',
-                              prefixIcon: Icon(Icons.search, color: primaryColor),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
-                                borderSide: BorderSide(color: primaryColor, width: 2),
-                              ),
-                            ),
+                            selectedProducto: _productoSelected,
+                            onProductoSelected: (producto) {
+                              setState(() {
+                                _productoSelected = producto;
+                              });
+                            },
+                            onClear: () {
+                              setState(() {
+                                _productoSelected = null;
+                                _productoSearchController.clear();
+                              });
+                            },
+                            primaryColor: primaryColor,
+                            hintText: 'Escribe 3+ caracteres para buscar...',
                           ),
-                          if (_productoSelected != null)
-                            Container(
-                              margin: EdgeInsets.only(top: 8.h),
-                              padding: EdgeInsets.all(12.w),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
-                                border: Border.all(color: primaryColor),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.check_circle, color: primaryColor, size: 20.sp),
-                                  SizedBox(width: 8.w),
-                                  Expanded(
-                                    child: Text(
-                                      _productoSelected!.nombre,
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: primaryColor,
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.close, size: 18.sp),
-                                    onPressed: () {
-                                      setState(() {
-                                        _productoSelected = null;
-                                        _productoSearchController.clear();
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
 
                           SizedBox(height: 16.h),
 
