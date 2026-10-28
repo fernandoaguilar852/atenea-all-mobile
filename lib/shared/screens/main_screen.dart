@@ -5,10 +5,10 @@ import '../../core/config/theme_config.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/movimientos/presentation/screens/movimientos_screen.dart';
 import '../../features/reportes/presentation/screens/reportes_screen.dart';
+import '../../features/ventas/presentation/screens/ventas_screen.dart';
 import '../../features/chat/widgets/chat_widget.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../providers/navigation_provider.dart';
-import 'facturas_screen.dart';
 
 /// Pantalla principal con BottomNavigationBar estilo Instagram
 /// Contiene 5 secciones: Facturas, Movimientos, Dashboard (centro), Reportes, Chat IA
@@ -21,7 +21,7 @@ class MainScreen extends ConsumerWidget {
     final movimientosKey = GlobalKey<ConsumerState<MovimientosScreen>>();
 
     final screens = [
-      const FacturasScreen(),
+      const VentasScreen(showScaffold: false),
       MovimientosScreen(key: movimientosKey, showScaffold: false),
       const DashboardScreen(showScaffold: false),
       const ReportesScreen(showScaffold: false),
