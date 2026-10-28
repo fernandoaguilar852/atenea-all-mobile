@@ -10,7 +10,9 @@ import '../widgets/venta_detalle_reporte_tab.dart';
 import '../widgets/ventas_reporte_tab.dart';
 
 class ReportesScreen extends ConsumerStatefulWidget {
-  const ReportesScreen({super.key});
+  final bool showScaffold;
+
+  const ReportesScreen({super.key, this.showScaffold = true});
 
   @override
   ConsumerState<ReportesScreen> createState() => _ReportesScreenState();
@@ -34,11 +36,7 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: const Text('Reportes'),
-        bottom: TabBar(
+    final tabBar = TabBar(
           controller: _tabController,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
@@ -80,9 +78,9 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen>
               text: 'Costo-Beneficio',
             ),
           ],
-        ),
-      ),
-      body: TabBarView(
+        );
+
+    final bodyContent = TabBarView(
         controller: _tabController,
         children: const [
           VentasReporteTab(),
@@ -92,7 +90,27 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen>
           StockReporteTab(),
           CostoBeneficioReporteTab(),
         ],
+      );
+
+    if (!widget.showScaffold) {
+      return Column(
+        children: [
+          Container(
+            color: AppColors.primary,
+            child: tabBar,
+          ),
+          Expanded(child: bodyContent),
+        ],
+      );
+    }
+
+    return Scaffold(
+      drawer: const AppDrawer(),
+      appBar: AppBar(
+        title: const Text('Reportes'),
+        bottom: tabBar,
       ),
+      body: bodyContent,
     );
   }
 }

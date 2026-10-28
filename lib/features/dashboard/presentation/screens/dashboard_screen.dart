@@ -11,7 +11,9 @@ import '../../data/models/dashboard_stats.dart';
 import '../../providers/dashboard_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({super.key});
+  final bool showScaffold;
+
+  const DashboardScreen({super.key, this.showScaffold = true});
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
@@ -30,20 +32,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final user = ref.watch(currentUserProvider);
     final dashboardState = ref.watch(dashboardProvider);
 
-    return Scaffold(
-      drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Navigate to notifications
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
+    final bodyContent = RefreshIndicator(
         onRefresh: () => ref.read(dashboardProvider.notifier).refresh(),
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
@@ -90,7 +79,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ],
           ),
         ),
+      );
+
+    if (!widget.showScaffold) {
+      return bodyContent;
+    }
+
+    return Scaffold(
+      drawer: const AppDrawer(),
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              // TODO: Navigate to notifications
+            },
+          ),
+        ],
       ),
+      body: bodyContent,
       floatingActionButton: Stack(
         children: [
           // Chat IA Button

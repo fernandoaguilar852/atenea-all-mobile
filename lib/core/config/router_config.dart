@@ -6,6 +6,7 @@ import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/reportes/presentation/screens/reportes_screen.dart';
 import '../../features/movimientos/presentation/screens/movimientos_screen.dart';
 import '../../features/resoluciones/presentation/screens/resoluciones_screen.dart';
+import '../../shared/screens/main_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final isAuthenticated = ref.watch(isAuthenticatedProvider);
@@ -33,6 +34,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/',
+        name: 'home',
+        builder: (context, state) => const MainScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard',
         name: 'dashboard',
         builder: (context, state) => const DashboardScreen(),
       ),

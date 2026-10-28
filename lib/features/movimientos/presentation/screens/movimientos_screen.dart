@@ -18,7 +18,9 @@ import '../widgets/egreso_form_widget.dart';
 import '../widgets/producto_autocomplete_widget.dart';
 
 class MovimientosScreen extends ConsumerStatefulWidget {
-  const MovimientosScreen({super.key});
+  final bool showScaffold;
+
+  const MovimientosScreen({super.key, this.showScaffold = true});
 
   @override
   ConsumerState<MovimientosScreen> createState() => _MovimientosScreenState();
@@ -324,18 +326,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
     final data = movimientosState.data;
     final user = ref.watch(currentUserProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Movimientos de Inventario'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showMovimientoTypeSelector(context),
-          ),
-        ],
-      ),
-      drawer: const AppDrawer(),
-      body: Column(
+    final bodyContent = Column(
         children: [
           // Filtros
           Container(
@@ -587,7 +578,24 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
               ),
             ),
         ],
+      );
+
+    if (!widget.showScaffold) {
+      return bodyContent;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Movimientos de Inventario'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _showMovimientoTypeSelector(context),
+          ),
+        ],
       ),
+      drawer: const AppDrawer(),
+      body: bodyContent,
     );
   }
 }
