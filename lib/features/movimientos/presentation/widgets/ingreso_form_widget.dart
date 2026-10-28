@@ -94,7 +94,9 @@ class _IngresoFormWidgetState extends ConsumerState<IngresoFormWidget> {
     const primaryColor = AppColors.primary; // Azul para INGRESO
     final user = ref.watch(currentUserProvider);
 
-    return Container(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -267,6 +269,7 @@ class _IngresoFormWidgetState extends ConsumerState<IngresoFormWidget> {
                       helperText: 'Monto del ingreso',
                     ),
                     keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  textInputAction: TextInputAction.next,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Ingresa el monto';
@@ -296,6 +299,7 @@ class _IngresoFormWidgetState extends ConsumerState<IngresoFormWidget> {
                       ),
                     ),
                     keyboardType: TextInputType.number,
+                                  textInputAction: TextInputAction.next,
                     initialValue: '1',
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -323,6 +327,8 @@ class _IngresoFormWidgetState extends ConsumerState<IngresoFormWidget> {
                     ),
                     maxLines: 3,
                     maxLength: 200,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                   ),
 
                   SizedBox(height: 24.h),
@@ -360,6 +366,7 @@ class _IngresoFormWidgetState extends ConsumerState<IngresoFormWidget> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -300,7 +300,7 @@ class StockNotifier extends StateNotifier<ReporteState<StockEntity>> {
   StockNotifier(this._repository, this._ref) : super(ReporteState());
 
   Future<void> loadReporte({
-    String? nombreProducto,
+    int? productoId,
     bool? stockBajo,
     bool? activo,
     int? tipoProductoId,
@@ -315,7 +315,7 @@ class StockNotifier extends StateNotifier<ReporteState<StockEntity>> {
 
       final reporte = await _repository.getStockReporte(
         clienteId: user.clienteId,
-        nombreProducto: nombreProducto,
+        productoId: productoId,
         stockBajo: stockBajo,
         activo: activo,
         tipoProductoId: tipoProductoId,

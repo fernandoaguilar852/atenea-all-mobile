@@ -186,14 +186,16 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
     const primaryColor = AppColors.success; // Verde para ENTRADA
     final user = ref.watch(currentUserProvider);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // Header
           Container(
             padding: EdgeInsets.all(16.w),
@@ -310,6 +312,7 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
                                     ),
                                   ),
                                   keyboardType: TextInputType.number,
+                                  textInputAction: TextInputAction.next,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Requerido';
@@ -337,7 +340,8 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
                                       borderSide: BorderSide(color: primaryColor, width: 2),
                                     ),
                                   ),
-                                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  textInputAction: TextInputAction.next,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Requerido';
@@ -368,7 +372,8 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
                                       borderRadius: BorderRadius.circular(AppRadius.sm),
                                     ),
                                   ),
-                                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  textInputAction: TextInputAction.next,
                                 ),
                               ),
                               SizedBox(width: 12.w),
@@ -383,7 +388,8 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
                                       borderRadius: BorderRadius.circular(AppRadius.sm),
                                     ),
                                   ),
-                                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  textInputAction: TextInputAction.next,
                                 ),
                               ),
                             ],
@@ -404,6 +410,8 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
                             ),
                             maxLines: 2,
                             maxLength: 200,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                           ),
 
                           SizedBox(height: 16.h),
@@ -553,6 +561,7 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
               ),
             ),
         ],
+        ),
       ),
     );
   }

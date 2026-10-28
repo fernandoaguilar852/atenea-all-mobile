@@ -59,7 +59,7 @@ abstract class ReportesRepository {
   /// Obtiene reporte de stock de productos
   Future<StockEntity> getStockReporte({
     required int clienteId,
-    String? nombreProducto,
+    int? productoId,
     bool? stockBajo,
     bool? activo,
     int? tipoProductoId,

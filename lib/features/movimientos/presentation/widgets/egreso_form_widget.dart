@@ -94,7 +94,9 @@ class _EgresoFormWidgetState extends ConsumerState<EgresoFormWidget> {
     const primaryColor = AppColors.danger; // Rojo para EGRESO
     final user = ref.watch(currentUserProvider);
 
-    return Container(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -267,6 +269,7 @@ class _EgresoFormWidgetState extends ConsumerState<EgresoFormWidget> {
                       helperText: 'Monto del egreso',
                     ),
                     keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  textInputAction: TextInputAction.next,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Ingresa el monto';
@@ -296,6 +299,7 @@ class _EgresoFormWidgetState extends ConsumerState<EgresoFormWidget> {
                       ),
                     ),
                     keyboardType: TextInputType.number,
+                                  textInputAction: TextInputAction.next,
                     initialValue: '1',
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -327,6 +331,8 @@ class _EgresoFormWidgetState extends ConsumerState<EgresoFormWidget> {
                     ),
                     maxLines: 3,
                     maxLength: 200,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Describe el concepto del egreso';
@@ -370,6 +376,7 @@ class _EgresoFormWidgetState extends ConsumerState<EgresoFormWidget> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -216,7 +216,7 @@ class ReportesRemoteDatasource {
   /// Obtiene reporte de stock de productos desde el API
   Future<StockReporte> getStockReporte({
     required int clienteId,
-    String? nombreProducto,
+    int? productoId,
     bool? stockBajo,
     bool? activo,
     int? tipoProductoId,
@@ -229,8 +229,8 @@ class ReportesRemoteDatasource {
       'pageSize': pageSize,
     };
 
-    if (nombreProducto != null && nombreProducto.isNotEmpty) {
-      queryParams['nombreProducto'] = nombreProducto;
+    if (productoId != null) {
+      queryParams['productoId'] = productoId;
     }
     if (stockBajo != null) {
       queryParams['stockBajo'] = stockBajo;

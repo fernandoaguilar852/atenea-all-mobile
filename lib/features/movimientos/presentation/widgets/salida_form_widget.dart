@@ -155,7 +155,9 @@ class _SalidaFormWidgetState extends ConsumerState<SalidaFormWidget> {
     const primaryColor = AppColors.warning; // Naranja para SALIDA
     final user = ref.watch(currentUserProvider);
 
-    return Container(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -277,6 +279,7 @@ class _SalidaFormWidgetState extends ConsumerState<SalidaFormWidget> {
                               helperText: 'Cantidad a retirar del inventario',
                             ),
                             keyboardType: TextInputType.number,
+                                  textInputAction: TextInputAction.next,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Ingresa la cantidad';
@@ -303,6 +306,8 @@ class _SalidaFormWidgetState extends ConsumerState<SalidaFormWidget> {
                             ),
                             maxLines: 3,
                             maxLength: 200,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                           ),
 
                           SizedBox(height: 16.h),
@@ -451,6 +456,7 @@ class _SalidaFormWidgetState extends ConsumerState<SalidaFormWidget> {
               ),
             ),
         ],
+      ),
       ),
     );
   }

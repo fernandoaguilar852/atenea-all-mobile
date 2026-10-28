@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../core/models/producto.dart';
 import '../../../../core/models/tipo_producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -22,7 +24,10 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
 
   // Filtros opcionales
   bool _showAdvancedFilters = false;
-  final _nombreProductoController = TextEditingController();
+  final _productoSearchController = TextEditingController();
+  Producto? _productoSelected;
+  String _searchTerm = '';
+  Timer? _debounce;
   TipoProducto? _tipoProductoSelected;
   bool _stockBajo = false;
 
@@ -34,21 +39,35 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
 
   @override
   void dispose() {
-    _nombreProductoController.dispose();
+    _productoSearchController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
   void _loadData() {
     ref.read(stockReporteProvider.notifier).loadReporte(
           activo: _filtroActivo,
-          nombreProducto: _nombreProductoController.text.isEmpty
-              ? null
-              : _nombreProductoController.text,
+          productoId: _productoSelected?.productoId,
           stockBajo: _stockBajo ? true : null,
           tipoProductoId: _tipoProductoSelected?.tipoProductoId,
           pageNumber: _currentPage,
           pageSize: _pageSize,
         );
+  }
+
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (value.length >= 3) {
+        setState(() {
+          _searchTerm = value;
+        });
+      } else {
+        setState(() {
+          _searchTerm = '';
+        });
+      }
+    });
   }
 
   String _formatCurrency(double value) {
@@ -104,7 +123,9 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                       tooltip: 'Limpiar filtros',
                       onPressed: () {
                         setState(() {
-                          _nombreProductoController.clear();
+                          _productoSearchController.clear();
+                          _productoSelected = null;
+                          _searchTerm = '';
                           _tipoProductoSelected = null;
                           _stockBajo = false;
                         });
@@ -119,22 +140,181 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
               ),
               if (_showAdvancedFilters) ...[
                 SizedBox(height: 12.h),
-                TextField(
-                  controller: _nombreProductoController,
-                  decoration: InputDecoration(
-                    labelText: 'Nombre del Producto',
-                    hintText: 'Buscar por nombre',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _productoSearchController,
+                      decoration: InputDecoration(
+                        labelText: 'Buscar Producto',
+                        hintText: 'Escribe 3+ caracteres para buscar...',
+                        prefixIcon: Icon(Icons.search, color: AppColors.primary),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: AppColors.white,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 12.h,
+                        ),
+                      ),
+                      style: TextStyle(fontSize: 14.sp),
+                      onChanged: _onSearchChanged,
                     ),
-                    filled: true,
-                    fillColor: AppColors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 12.h,
-                    ),
-                  ),
-                  style: TextStyle(fontSize: 14.sp),
+                    if (_productoSelected != null)
+                      Container(
+                        margin: EdgeInsets.only(top: 8.h),
+                        padding: EdgeInsets.all(12.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: AppColors.primary),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.check_circle, color: AppColors.primary, size: 20.sp),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                _productoSelected!.nombre,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.close, size: 18.sp),
+                              onPressed: () {
+                                setState(() {
+                                  _productoSelected = null;
+                                  _productoSearchController.clear();
+                                  _searchTerm = '';
+                                });
+                                _loadData();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (_searchTerm.isNotEmpty && _productoSelected == null)
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final user = ref.watch(currentUserProvider);
+                          if (user == null) return const SizedBox();
+
+                          final productosAsync = ref.watch(productosSearchProvider(
+                            ProductosSearchParams(clienteId: user.clienteId, searchTerm: _searchTerm)
+                          ));
+
+                          return productosAsync.when(
+                            data: (productos) {
+                              if (productos.isEmpty) {
+                                return Container(
+                                  margin: EdgeInsets.only(top: 4.h),
+                                  padding: EdgeInsets.all(12.w),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.white,
+                                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                                    border: Border.all(color: AppColors.grey300),
+                                  ),
+                                  child: Text(
+                                    'No se encontraron productos',
+                                    style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+                                  ),
+                                );
+                              }
+                              return Container(
+                                margin: EdgeInsets.only(top: 4.h),
+                                constraints: BoxConstraints(maxHeight: 200.h),
+                                decoration: BoxDecoration(
+                                  color: AppColors.white,
+                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                  border: Border.all(color: AppColors.grey300),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  itemCount: productos.length,
+                                  separatorBuilder: (_, __) => const Divider(height: 1),
+                                  itemBuilder: (context, index) {
+                                    final producto = productos[index];
+                                    return ListTile(
+                                      dense: true,
+                                      title: Text(
+                                        producto.nombre,
+                                        style: TextStyle(fontSize: 13.sp),
+                                      ),
+                                      subtitle: Text(
+                                        'Stock: ${producto.stockTotal}',
+                                        style: TextStyle(fontSize: 11.sp),
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          _productoSelected = producto;
+                                          _productoSearchController.text = producto.nombre;
+                                          _searchTerm = '';
+                                        });
+                                        _loadData();
+                                      },
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                            loading: () => Container(
+                              margin: EdgeInsets.only(top: 4.h),
+                              padding: EdgeInsets.all(12.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                border: Border.all(color: AppColors.grey300),
+                              ),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 16.w,
+                                    height: 16.w,
+                                    child: const CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  Text(
+                                    'Buscando...',
+                                    style: TextStyle(fontSize: 12.sp),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            error: (err, stack) => Container(
+                              margin: EdgeInsets.only(top: 4.h),
+                              padding: EdgeInsets.all(12.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                border: Border.all(color: AppColors.danger),
+                              ),
+                              child: Text(
+                                'Error al buscar productos',
+                                style: TextStyle(fontSize: 12.sp, color: AppColors.danger),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
                 ),
                 SizedBox(height: 8.h),
                 Consumer(

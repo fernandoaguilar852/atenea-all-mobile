@@ -133,7 +133,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
   @override
   Future<StockEntity> getStockReporte({
     required int clienteId,
-    String? nombreProducto,
+    int? productoId,
     bool? stockBajo,
     bool? activo,
     int? tipoProductoId,
@@ -143,7 +143,7 @@ class ReportesRepositoryImpl implements ReportesRepository {
     try {
       final dto = await _remoteDatasource.getStockReporte(
         clienteId: clienteId,
-        nombreProducto: nombreProducto,
+        productoId: productoId,
         stockBajo: stockBajo,
         activo: activo,
         tipoProductoId: tipoProductoId,
