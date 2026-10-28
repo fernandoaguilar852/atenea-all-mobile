@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/config/theme_config.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -6,41 +7,38 @@ import '../../features/movimientos/presentation/screens/movimientos_screen.dart'
 import '../../features/reportes/presentation/screens/reportes_screen.dart';
 import '../../features/chat/widgets/chat_widget.dart';
 import '../../shared/widgets/app_drawer.dart';
+import '../providers/navigation_provider.dart';
 import 'facturas_screen.dart';
 
 /// Pantalla principal con BottomNavigationBar estilo Instagram
 /// Contiene 5 secciones: Facturas, Movimientos, Dashboard (centro), Reportes, Chat IA
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = ref.watch(mainScreenIndexProvider);
+    final movimientosKey = GlobalKey<ConsumerState<MovimientosScreen>>();
 
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 2; // Empezar en Dashboard
+    final screens = [
+      const FacturasScreen(),
+      MovimientosScreen(key: movimientosKey, showScaffold: false),
+      const DashboardScreen(showScaffold: false),
+      const ReportesScreen(showScaffold: false),
+    ];
 
-  final List<Widget> _screens = const [
-    FacturasScreen(),
-    MovimientosScreen(showScaffold: false),
-    DashboardScreen(showScaffold: false),
-    ReportesScreen(showScaffold: false),
-  ];
+    final titles = const [
+      'Facturas',
+      'Movimientos de Inventario',
+      'Dashboard',
+      'Reportes',
+    ];
 
-  final List<String> _titles = const [
-    'Facturas',
-    'Movimientos de Inventario',
-    'Dashboard',
-    'Reportes',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
-        title: Text(_titles[_currentIndex]),
-        actions: _currentIndex == 2
+        title: Text(titles[currentIndex]),
+        actions: currentIndex == 2
             ? [
                 // Notificaciones solo en Dashboard
                 IconButton(
@@ -50,21 +48,24 @@ class _MainScreenState extends State<MainScreen> {
                   },
                 ),
               ]
-            : _currentIndex == 1
+            : currentIndex == 1
                 ? [
                     // Botón agregar en Movimientos
                     IconButton(
                       icon: const Icon(Icons.add),
                       onPressed: () {
-                        // TODO: Implementar diálogo de agregar movimiento
+                        final state = movimientosKey.currentState;
+                        if (state != null && state.mounted) {
+                          (state as dynamic).showMovimientoTypeSelector();
+                        }
                       },
                     ),
                   ]
                 : null,
       ),
       body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+        index: currentIndex,
+        children: screens,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -77,7 +78,7 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex,
+          currentIndex: currentIndex,
           onTap: (index) {
             if (index == 4) {
               // Abrir ChatDialog en lugar de cambiar de pantalla
@@ -86,9 +87,7 @@ class _MainScreenState extends State<MainScreen> {
                 builder: (context) => const ChatDialog(),
               );
             } else {
-              setState(() {
-                _currentIndex = index;
-              });
+              ref.read(mainScreenIndexProvider.notifier).state = index;
             }
           },
           type: BottomNavigationBarType.fixed,
@@ -119,10 +118,10 @@ class _MainScreenState extends State<MainScreen> {
               icon: Container(
                 padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
-                  gradient: _currentIndex == 2
+                  gradient: currentIndex == 2
                       ? AppColors.primaryGradient
                       : null,
-                  color: _currentIndex == 2
+                  color: currentIndex == 2
                       ? null
                       : AppColors.grey300,
                   shape: BoxShape.circle,
@@ -130,7 +129,7 @@ class _MainScreenState extends State<MainScreen> {
                 child: Icon(
                   Icons.home,
                   size: 24.sp,
-                  color: _currentIndex == 2
+                  color: currentIndex == 2
                       ? AppColors.white
                       : AppColors.grey600,
                 ),

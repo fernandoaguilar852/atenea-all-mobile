@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/config/theme_config.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../providers/navigation_provider.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -11,6 +12,7 @@ class AppDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final currentIndex = ref.watch(mainScreenIndexProvider);
     final currentRoute = GoRouterState.of(context).matchedLocation;
 
     return Drawer(
@@ -52,34 +54,31 @@ class AppDrawer extends ConsumerWidget {
                 _DrawerItem(
                   icon: Icons.dashboard,
                   title: 'Dashboard',
-                  isSelected: currentRoute == '/',
+                  isSelected: currentIndex == 2,
                   onTap: () {
                     Navigator.pop(context); // Cerrar drawer
-                    if (currentRoute != '/') {
-                      context.go('/');
-                    }
+                    ref.read(mainScreenIndexProvider.notifier).state = 2;
+                    context.go('/');
                   },
                 ),
                 _DrawerItem(
                   icon: Icons.bar_chart,
                   title: 'Reportes',
-                  isSelected: currentRoute == '/reportes',
+                  isSelected: currentIndex == 3,
                   onTap: () {
                     Navigator.pop(context); // Cerrar drawer
-                    if (currentRoute != '/reportes') {
-                      context.push('/reportes');
-                    }
+                    ref.read(mainScreenIndexProvider.notifier).state = 3;
+                    context.go('/');
                   },
                 ),
                 _DrawerItem(
                   icon: Icons.move_down,
                   title: 'Movimientos',
-                  isSelected: currentRoute == '/movimientos',
+                  isSelected: currentIndex == 1,
                   onTap: () {
                     Navigator.pop(context); // Cerrar drawer
-                    if (currentRoute != '/movimientos') {
-                      context.push('/movimientos');
-                    }
+                    ref.read(mainScreenIndexProvider.notifier).state = 1;
+                    context.go('/');
                   },
                 ),
                 Divider(height: 1.h, color: AppColors.grey300),

@@ -72,6 +72,10 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
         );
   }
 
+  void showMovimientoTypeSelector() {
+    _showMovimientoTypeSelector(context);
+  }
+
   void _showMovimientoTypeSelector(BuildContext context) {
     showModalBottomSheet(
       context: context,
