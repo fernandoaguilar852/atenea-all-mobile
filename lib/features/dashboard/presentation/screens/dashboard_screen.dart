@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../../shared/widgets/app_drawer.dart';
+import '../../../../shared/providers/navigation_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../chat/widgets/chat_widget.dart';
 import '../../data/models/dashboard_stats.dart';
@@ -172,7 +173,7 @@ class _WelcomeCard extends StatelessWidget {
   }
 }
 
-class _KPIsGrid extends StatelessWidget {
+class _KPIsGrid extends ConsumerWidget {
   final DashboardStats? stats;
 
   const _KPIsGrid({this.stats});
@@ -183,7 +184,7 @@ class _KPIsGrid extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final data = stats ?? DashboardStats.empty();
 
     return GridView.count(
@@ -223,6 +224,10 @@ class _KPIsGrid extends StatelessWidget {
           value: '${data.cantidadAlertas}',
           icon: Icons.notifications_active,
           color: data.cantidadAlertas > 0 ? AppColors.warning : AppColors.grey400,
+          onTap: () {
+            // Cambiar al index 4 (AlertasStockScreen) en el MainScreen
+            ref.read(mainScreenIndexProvider.notifier).state = 4;
+          },
         ),
       ],
     );
@@ -234,17 +239,19 @@ class _KPICard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+  final VoidCallback? onTap;
 
   const _KPICard({
     required this.title,
     required this.value,
     required this.icon,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final cardContent = Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -296,6 +303,17 @@ class _KPICard extends StatelessWidget {
         ],
       ),
     );
+
+    // Solo hacer clickeable si tiene onTap
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: cardContent,
+      );
+    }
+
+    return cardContent;
   }
 }
 
