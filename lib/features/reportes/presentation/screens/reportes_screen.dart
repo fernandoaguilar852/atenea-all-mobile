@@ -63,7 +63,7 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen>
             ),
             Tab(
               icon: Icon(Icons.inventory, size: 20),
-              text: 'Inventario',
+              text: 'Consumo de Inventario',
             ),
             Tab(
               icon: Icon(Icons.account_balance_wallet, size: 20),

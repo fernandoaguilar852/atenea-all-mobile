@@ -13,6 +13,9 @@ import '../../features/dashboard/providers/dashboard_provider.dart';
 import '../../features/alertas_stock/presentation/screens/alertas_stock_screen.dart';
 import '../../features/alertas_stock/presentation/providers/alertas_stock_provider.dart';
 import '../../features/resoluciones/presentation/screens/resoluciones_screen.dart';
+import '../../features/resoluciones/providers/resoluciones_provider.dart';
+import '../../features/ventas/providers/ventas_provider.dart';
+import '../../features/movimientos/providers/movimientos_provider.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../providers/navigation_provider.dart';
@@ -27,6 +30,10 @@ class MainScreen extends ConsumerStatefulWidget {
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
+  final movimientosKey = GlobalKey<ConsumerState<MovimientosScreen>>();
+  final ventasKey = GlobalKey<ConsumerState<VentasScreen>>();
+  final resolucionesKey = GlobalKey<ConsumerState<ResolucionesScreen>>();
+
   @override
   void initState() {
     super.initState();
@@ -45,36 +52,53 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(mainScreenIndexProvider);
-    final movimientosKey = GlobalKey<ConsumerState<MovimientosScreen>>();
     final currentUser = ref.watch(currentUserProvider);
     final clienteId = currentUser?.clienteId ?? 0;
 
     // Escuchar cambios en el índice de navegación
     ref.listen<int>(mainScreenIndexProvider, (previous, next) {
-      // Si cambiamos al Dashboard (index 2), recargar notificaciones y stats
-      if (next == 2 && clienteId > 0) {
-        ref
-            .read(notificacionesProvider(clienteId).notifier)
-            .fetchPendientes();
-        ref
-            .read(dashboardProvider.notifier)
-            .loadStats();
-      }
-      // Si cambiamos a Alertas Stock (index 4), cargar alertas
-      if (next == 4 && clienteId > 0) {
-        ref
-            .read(alertasStockProvider(clienteId).notifier)
-            .fetchAlertas();
+      // Recargar datos cuando se navega a una vista
+      if (clienteId <= 0) return;
+
+      switch (next) {
+        case 0: // Ventas/Facturas
+          final ventasState = ventasKey.currentState;
+          if (ventasState != null && ventasState.mounted) {
+            (ventasState as dynamic)._loadData();
+          }
+          break;
+        case 1: // Movimientos
+          final movimientosState = movimientosKey.currentState;
+          if (movimientosState != null && movimientosState.mounted) {
+            (movimientosState as dynamic)._loadData();
+          }
+          break;
+        case 2: // Dashboard
+          ref.read(notificacionesProvider(clienteId).notifier).fetchPendientes();
+          ref.read(dashboardProvider.notifier).loadStats();
+          break;
+        case 3: // Reportes
+          // Los reportes recargan individualmente cuando se selecciona cada tab
+          break;
+        case 4: // Alertas Stock
+          ref.read(alertasStockProvider(clienteId).notifier).fetchAlertas();
+          break;
+        case 5: // Resoluciones
+          final resolucionesState = resolucionesKey.currentState;
+          if (resolucionesState != null && resolucionesState.mounted) {
+            (resolucionesState as dynamic)._loadData();
+          }
+          break;
       }
     });
 
     final screens = [
-      const VentasScreen(showScaffold: false),
+      VentasScreen(key: ventasKey, showScaffold: false),
       MovimientosScreen(key: movimientosKey, showScaffold: false),
       const DashboardScreen(showScaffold: false),
       const ReportesScreen(showScaffold: false),
       const AlertasStockScreen(),
-      const ResolucionesScreen(showScaffold: false),
+      ResolucionesScreen(key: resolucionesKey, showScaffold: false),
     ];
 
     final titles = const [
