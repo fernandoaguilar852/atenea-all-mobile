@@ -7,6 +7,9 @@ import '../../features/movimientos/presentation/screens/movimientos_screen.dart'
 import '../../features/reportes/presentation/screens/reportes_screen.dart';
 import '../../features/ventas/presentation/screens/ventas_screen.dart';
 import '../../features/chat/widgets/chat_widget.dart';
+import '../../features/notificaciones/presentation/widgets/notificaciones_drawer.dart';
+import '../../features/notificaciones/presentation/providers/notificaciones_provider.dart';
+import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../providers/navigation_provider.dart';
 
@@ -19,6 +22,18 @@ class MainScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(mainScreenIndexProvider);
     final movimientosKey = GlobalKey<ConsumerState<MovimientosScreen>>();
+    final currentUser = ref.watch(currentUserProvider);
+    final clienteId = currentUser?.clienteId ?? 0;
+
+    // Cargar notificaciones pendientes para mostrar el badge
+    if (clienteId > 0) {
+      ref.listen<NotificacionesState>(
+        notificacionesProvider(clienteId),
+        (previous, next) {
+          // Listener vacío, solo para mantener el provider activo
+        },
+      );
+    }
 
     final screens = [
       const VentasScreen(showScaffold: false),
@@ -36,15 +51,64 @@ class MainScreen extends ConsumerWidget {
 
     return Scaffold(
       drawer: const AppDrawer(),
+      endDrawer: clienteId > 0
+          ? NotificacionesDrawer(clienteId: clienteId)
+          : null,
       appBar: AppBar(
         title: Text(titles[currentIndex]),
         actions: currentIndex == 2
             ? [
                 // Notificaciones solo en Dashboard
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined),
-                  onPressed: () {
-                    // TODO: Navigate to notifications
+                Builder(
+                  builder: (context) {
+                    if (clienteId <= 0) {
+                      return const SizedBox.shrink();
+                    }
+
+                    final notificacionesState =
+                        ref.watch(notificacionesProvider(clienteId));
+
+                    return Stack(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.notifications_outlined),
+                          onPressed: () {
+                            Scaffold.of(context).openEndDrawer();
+                            // Refrescar notificaciones al abrir el drawer
+                            ref
+                                .read(notificacionesProvider(clienteId).notifier)
+                                .fetchPendientes();
+                          },
+                        ),
+                        if (notificacionesState.totalElement > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
+                              ),
+                              child: Text(
+                                notificacionesState.totalElement > 99
+                                    ? '99+'
+                                    : '${notificacionesState.totalElement}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
                   },
                 ),
               ]
