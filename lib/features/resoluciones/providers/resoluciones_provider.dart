@@ -62,6 +62,7 @@ class ResolucionesNotifier extends StateNotifier<ResolucionesState> {
     required int clienteId,
     int pageNumber = 1,
     int pageSize = 10,
+    bool? activo,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -70,6 +71,7 @@ class ResolucionesNotifier extends StateNotifier<ResolucionesState> {
         clienteId: clienteId,
         pageNumber: pageNumber,
         pageSize: pageSize,
+        activo: activo,
       );
 
       state = state.copyWith(

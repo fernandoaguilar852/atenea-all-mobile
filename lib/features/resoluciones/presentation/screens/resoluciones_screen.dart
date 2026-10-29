@@ -21,6 +21,7 @@ class ResolucionesScreen extends ConsumerStatefulWidget {
 class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
   int _currentPage = 1;
   final int _pageSize = 10;
+  bool? _activoFilter;
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
           clienteId: user.clienteId,
           pageNumber: _currentPage,
           pageSize: _pageSize,
+          activo: _activoFilter,
         );
   }
 
@@ -171,7 +173,7 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
 
     final bodyContent = Column(
         children: [
-          // Header con botón de agregar (solo cuando no hay scaffold)
+          // Header con filtro y botón de agregar (solo cuando no hay scaffold)
           if (!widget.showScaffold)
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
@@ -185,8 +187,46 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
                 ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  // Filtro de activo
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.grey300),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: DropdownButton<bool?>(
+                      value: _activoFilter,
+                      hint: Text(
+                        'Estado',
+                        style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+                      ),
+                      underline: const SizedBox(),
+                      isDense: true,
+                      items: [
+                        DropdownMenuItem(
+                          value: null,
+                          child: Text('Todas', style: TextStyle(fontSize: 14.sp)),
+                        ),
+                        DropdownMenuItem(
+                          value: true,
+                          child: Text('Activas', style: TextStyle(fontSize: 14.sp)),
+                        ),
+                        DropdownMenuItem(
+                          value: false,
+                          child: Text('Inactivas', style: TextStyle(fontSize: 14.sp)),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _activoFilter = value;
+                          _currentPage = 1;
+                        });
+                        _loadData();
+                      },
+                    ),
+                  ),
+                  const Spacer(),
                   ElevatedButton.icon(
                     onPressed: _showCreateDialog,
                     icon: const Icon(Icons.add, size: 20),

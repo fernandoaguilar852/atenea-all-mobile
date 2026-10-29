@@ -14,12 +14,17 @@ class ResolucionesRemoteDatasource {
     required int clienteId,
     int pageNumber = 1,
     int pageSize = 10,
+    bool? activo,
   }) async {
     final queryParams = <String, dynamic>{
       'clienteId': clienteId,
       'pageNumber': pageNumber,
       'pageSize': pageSize,
     };
+
+    if (activo != null) {
+      queryParams['activo'] = activo;
+    }
 
     final response = await _dio.get(
       ApiConstants.buildUrl('/resoluciones'),

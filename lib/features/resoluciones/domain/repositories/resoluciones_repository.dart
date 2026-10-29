@@ -8,6 +8,7 @@ abstract class ResolucionesRepository {
     required int clienteId,
     int pageNumber = 1,
     int pageSize = 10,
+    bool? activo,
   });
 
   /// POST /resoluciones - Crea una nueva resolución

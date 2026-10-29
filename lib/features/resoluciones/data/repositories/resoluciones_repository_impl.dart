@@ -15,11 +15,13 @@ class ResolucionesRepositoryImpl implements ResolucionesRepository {
     required int clienteId,
     int pageNumber = 1,
     int pageSize = 10,
+    bool? activo,
   }) async {
     final response = await _datasource.getResoluciones(
       clienteId: clienteId,
       pageNumber: pageNumber,
       pageSize: pageSize,
+      activo: activo,
     );
 
     return ResolucionMapper.toListEntity(response);
