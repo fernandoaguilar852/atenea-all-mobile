@@ -72,6 +72,11 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
         );
   }
 
+  // Método público para recargar desde fuera
+  void reloadData() {
+    _loadData();
+  }
+
   void showMovimientoTypeSelector() {
     _showMovimientoTypeSelector(context);
   }

@@ -72,6 +72,11 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
         );
   }
 
+  // Método público para recargar desde fuera
+  void reloadData() {
+    _loadData();
+  }
+
   void _buscarConsumidores(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 

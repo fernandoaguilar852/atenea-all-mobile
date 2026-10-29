@@ -43,6 +43,11 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
         );
   }
 
+  // Método público para recargar desde fuera
+  void reloadData() {
+    _loadData();
+  }
+
   void _showCreateDialog() {
     showDialog(
       context: context,

@@ -52,6 +52,11 @@ class _AlertasStockScreenState extends ConsumerState<AlertasStockScreen> {
     }
   }
 
+  // Método público para recargar desde fuera
+  void reloadData() {
+    _loadData();
+  }
+
   void _limpiarFiltro() {
     setState(() {
       _productoSeleccionado = null;

@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_drawer.dart';
 import '../../../../shared/providers/navigation_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../chat/widgets/chat_widget.dart';
+import '../../../notificaciones/presentation/providers/notificaciones_provider.dart';
 import '../../data/models/dashboard_stats.dart';
 import '../../providers/dashboard_provider.dart';
 
@@ -26,6 +27,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.initState();
     // Cargar estadísticas al iniciar
     Future.microtask(() => ref.read(dashboardProvider.notifier).loadStats());
+  }
+
+  // Método público para recargar desde fuera
+  void reloadData() {
+    final user = ref.read(currentUserProvider);
+    final clienteId = user?.clienteId ?? 0;
+
+    // Recargar estadísticas del dashboard
+    ref.read(dashboardProvider.notifier).loadStats();
+
+    // Recargar notificaciones si hay clienteId válido
+    if (clienteId > 0) {
+      ref.read(notificacionesProvider(clienteId).notifier).fetchPendientes();
+    }
   }
 
   @override

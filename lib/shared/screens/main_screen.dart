@@ -32,7 +32,9 @@ class MainScreen extends ConsumerStatefulWidget {
 class _MainScreenState extends ConsumerState<MainScreen> {
   final movimientosKey = GlobalKey<ConsumerState<MovimientosScreen>>();
   final ventasKey = GlobalKey<ConsumerState<VentasScreen>>();
+  final dashboardKey = GlobalKey<ConsumerState<DashboardScreen>>();
   final resolucionesKey = GlobalKey<ConsumerState<ResolucionesScreen>>();
+  final alertasStockKey = GlobalKey<ConsumerState<AlertasStockScreen>>();
 
   @override
   void initState() {
@@ -64,29 +66,34 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         case 0: // Ventas/Facturas
           final ventasState = ventasKey.currentState;
           if (ventasState != null && ventasState.mounted) {
-            (ventasState as dynamic)._loadData();
+            (ventasState as dynamic).reloadData();
           }
           break;
         case 1: // Movimientos
           final movimientosState = movimientosKey.currentState;
           if (movimientosState != null && movimientosState.mounted) {
-            (movimientosState as dynamic)._loadData();
+            (movimientosState as dynamic).reloadData();
           }
           break;
         case 2: // Dashboard
-          ref.read(notificacionesProvider(clienteId).notifier).fetchPendientes();
-          ref.read(dashboardProvider.notifier).loadStats();
+          final dashboardState = dashboardKey.currentState;
+          if (dashboardState != null && dashboardState.mounted) {
+            (dashboardState as dynamic).reloadData();
+          }
           break;
         case 3: // Reportes
           // Los reportes recargan individualmente cuando se selecciona cada tab
           break;
         case 4: // Alertas Stock
-          ref.read(alertasStockProvider(clienteId).notifier).fetchAlertas();
+          final alertasStockState = alertasStockKey.currentState;
+          if (alertasStockState != null && alertasStockState.mounted) {
+            (alertasStockState as dynamic).reloadData();
+          }
           break;
         case 5: // Resoluciones
           final resolucionesState = resolucionesKey.currentState;
           if (resolucionesState != null && resolucionesState.mounted) {
-            (resolucionesState as dynamic)._loadData();
+            (resolucionesState as dynamic).reloadData();
           }
           break;
       }
@@ -95,9 +102,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final screens = [
       VentasScreen(key: ventasKey, showScaffold: false),
       MovimientosScreen(key: movimientosKey, showScaffold: false),
-      const DashboardScreen(showScaffold: false),
+      DashboardScreen(key: dashboardKey, showScaffold: false),
       const ReportesScreen(showScaffold: false),
-      const AlertasStockScreen(),
+      AlertasStockScreen(key: alertasStockKey),
       ResolucionesScreen(key: resolucionesKey, showScaffold: false),
     ];
 
