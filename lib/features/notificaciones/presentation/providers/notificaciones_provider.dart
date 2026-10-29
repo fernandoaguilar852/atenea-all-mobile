@@ -71,9 +71,38 @@ class NotificacionesNotifier extends StateNotifier<NotificacionesState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final response = await _repository.getNotificacionesPendientes(
+      final response = await _repository.listNotificaciones(
         clienteId: clienteId,
-        pageSize: 50, // Suficiente para mostrar todas las pendientes
+        estado: 'PENDIENTE',
+        pageSize: 10,
+        pageNumber: 1,
+      );
+
+      state = state.copyWith(
+        notificaciones: response.notificaciones,
+        totalElement: response.totalElement,
+        pageSize: response.pageSize,
+        pageNumber: response.pageNumber,
+        hasMoreElements: response.hasMoreElements,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  /// Obtener notificaciones leídas
+  Future<void> fetchLeidas() async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final response = await _repository.listNotificaciones(
+        clienteId: clienteId,
+        estado: 'LEIDA',
+        pageSize: 10,
         pageNumber: 1,
       );
 
@@ -101,7 +130,7 @@ class NotificacionesNotifier extends StateNotifier<NotificacionesState> {
       final response = await _repository.listNotificaciones(
         clienteId: clienteId,
         estado: estado,
-        pageSize: 20,
+        pageSize: 10,
         pageNumber: 1,
       );
 

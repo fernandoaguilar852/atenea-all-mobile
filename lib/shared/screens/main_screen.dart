@@ -9,31 +9,55 @@ import '../../features/ventas/presentation/screens/ventas_screen.dart';
 import '../../features/chat/widgets/chat_widget.dart';
 import '../../features/notificaciones/presentation/widgets/notificaciones_drawer.dart';
 import '../../features/notificaciones/presentation/providers/notificaciones_provider.dart';
+import '../../features/dashboard/providers/dashboard_provider.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../providers/navigation_provider.dart';
 
 /// Pantalla principal con BottomNavigationBar estilo Instagram
 /// Contiene 5 secciones: Facturas, Movimientos, Dashboard (centro), Reportes, Chat IA
-class MainScreen extends ConsumerWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends ConsumerState<MainScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Cargar notificaciones al iniciar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentUser = ref.read(currentUserProvider);
+      final clienteId = currentUser?.clienteId ?? 0;
+      if (clienteId > 0) {
+        ref
+            .read(notificacionesProvider(clienteId).notifier)
+            .fetchPendientes();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentIndex = ref.watch(mainScreenIndexProvider);
     final movimientosKey = GlobalKey<ConsumerState<MovimientosScreen>>();
     final currentUser = ref.watch(currentUserProvider);
     final clienteId = currentUser?.clienteId ?? 0;
 
-    // Cargar notificaciones pendientes para mostrar el badge
-    if (clienteId > 0) {
-      ref.listen<NotificacionesState>(
-        notificacionesProvider(clienteId),
-        (previous, next) {
-          // Listener vacío, solo para mantener el provider activo
-        },
-      );
-    }
+    // Escuchar cambios en el índice de navegación
+    ref.listen<int>(mainScreenIndexProvider, (previous, next) {
+      // Si cambiamos al Dashboard (index 2), recargar notificaciones y stats
+      if (next == 2 && clienteId > 0) {
+        ref
+            .read(notificacionesProvider(clienteId).notifier)
+            .fetchPendientes();
+        ref
+            .read(dashboardProvider.notifier)
+            .loadStats();
+      }
+    });
 
     final screens = [
       const VentasScreen(showScaffold: false),
