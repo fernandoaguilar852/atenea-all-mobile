@@ -12,6 +12,7 @@ import '../../features/notificaciones/presentation/providers/notificaciones_prov
 import '../../features/dashboard/providers/dashboard_provider.dart';
 import '../../features/alertas_stock/presentation/screens/alertas_stock_screen.dart';
 import '../../features/alertas_stock/presentation/providers/alertas_stock_provider.dart';
+import '../../features/resoluciones/presentation/screens/resoluciones_screen.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../providers/navigation_provider.dart';
@@ -73,6 +74,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       const DashboardScreen(showScaffold: false),
       const ReportesScreen(showScaffold: false),
       const AlertasStockScreen(),
+      const ResolucionesScreen(showScaffold: false),
     ];
 
     final titles = const [
@@ -81,6 +83,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       'Dashboard',
       'Reportes',
       'Alertas de Stock',
+      'Resoluciones',
     ];
 
     return Scaffold(
@@ -176,7 +179,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: currentIndex == 4 ? 2 : currentIndex,
+          currentIndex: (currentIndex == 4 || currentIndex == 5) ? 2 : currentIndex,
           onTap: (index) {
             if (index == 4) {
               // Abrir ChatDialog en lugar de cambiar de pantalla

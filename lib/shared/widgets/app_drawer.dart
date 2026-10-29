@@ -104,12 +104,10 @@ class AppDrawer extends ConsumerWidget {
                       _DrawerSubItem(
                         icon: Icons.receipt_long,
                         title: 'Resoluciones',
-                        isSelected: currentRoute == '/resoluciones',
+                        isSelected: currentIndex == 5,
                         onTap: () {
                           Navigator.pop(context);
-                          if (currentRoute != '/resoluciones') {
-                            context.push('/resoluciones');
-                          }
+                          ref.read(mainScreenIndexProvider.notifier).state = 5;
                         },
                       ),
                     ],

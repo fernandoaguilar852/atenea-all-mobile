@@ -10,7 +10,9 @@ import '../../providers/resoluciones_provider.dart';
 import '../widgets/resolucion_form_dialog.dart';
 
 class ResolucionesScreen extends ConsumerStatefulWidget {
-  const ResolucionesScreen({super.key});
+  final bool showScaffold;
+
+  const ResolucionesScreen({super.key, this.showScaffold = true});
 
   @override
   ConsumerState<ResolucionesScreen> createState() => _ResolucionesScreenState();
@@ -167,19 +169,37 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
     final resolucionesState = ref.watch(resolucionesProvider);
     final data = resolucionesState.data;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Resoluciones'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _showCreateDialog,
-          ),
-        ],
-      ),
-      drawer: const AppDrawer(),
-      body: Column(
+    final bodyContent = Column(
         children: [
+          // Header con botón de agregar (solo cuando no hay scaffold)
+          if (!widget.showScaffold)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.grey300,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _showCreateDialog,
+                    icon: const Icon(Icons.add, size: 20),
+                    label: const Text('Nueva Resolución'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // Lista de resoluciones
           Expanded(
             child: resolucionesState.isLoading
@@ -245,7 +265,24 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
               ),
             ),
         ],
+      );
+
+    if (!widget.showScaffold) {
+      return bodyContent;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Resoluciones'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _showCreateDialog,
+          ),
+        ],
       ),
+      drawer: const AppDrawer(),
+      body: bodyContent,
     );
   }
 }
