@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../core/services/credentials_storage_service.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../providers/auth_providers.dart';
@@ -17,7 +18,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _credentialsService = CredentialsStorageService();
   bool _obscurePassword = true;
+  bool _rememberMe = false;
+  bool _isLoadingCredentials = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    setState(() => _isLoadingCredentials = true);
+
+    try {
+      final hasCredentials = await _credentialsService.hasCredentials();
+      if (hasCredentials) {
+        final credentials = await _credentialsService.getCredentials();
+        if (credentials != null && mounted) {
+          setState(() {
+            _emailController.text = credentials.email;
+            _passwordController.text = credentials.password;
+            _rememberMe = true;
+          });
+        }
+      }
+    } catch (e) {
+      // Si falla la autenticación biométrica, simplemente no pre-llena
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingCredentials = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -32,10 +66,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     try {
-      await ref.read(authProvider.notifier).login(
-            _emailController.text.trim(),
-            _passwordController.text,
-          );
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      await ref.read(authProvider.notifier).login(email, password);
+
+      // Guardar credenciales si el usuario marcó "Recordar"
+      await _credentialsService.saveCredentials(
+        email: email,
+        password: password,
+        rememberMe: _rememberMe,
+      );
 
       if (mounted) {
         // Navigation will be handled by router
@@ -61,6 +102,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+
+    // Mostrar loading mientras carga las credenciales
+    if (_isLoadingCredentials) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -168,23 +218,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 SizedBox(height: AppSpacing.sm),
 
-                // Forgot Password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      // TODO: Navigate to forgot password
-                    },
-                    child: Text(
-                      '¿Olvidaste tu contraseña?',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.primary,
-                        fontFamily: 'Inter',
+                // Remember Me Checkbox
+                Row(
+                  children: [
+                    SizedBox(
+                      height: 24.h,
+                      width: 24.w,
+                      child: Checkbox(
+                        value: _rememberMe,
+                        onChanged: (value) {
+                          setState(() {
+                            _rememberMe = value ?? false;
+                          });
+                        },
+                        activeColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                     ),
-                  ),
+                    SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Recordar mis datos',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textPrimary,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        // TODO: Navigate to forgot password
+                      },
+                      child: Text(
+                        '¿Olvidaste tu contraseña?',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
                 SizedBox(height: AppSpacing.lg),

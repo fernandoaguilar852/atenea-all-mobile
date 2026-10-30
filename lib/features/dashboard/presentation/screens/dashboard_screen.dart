@@ -405,6 +405,7 @@ class _QuickActionsGrid extends StatelessWidget {
         crossAxisCount: 4,
         crossAxisSpacing: 12.w,
         mainAxisSpacing: 12.h,
+        childAspectRatio: 0.85, // Más altura para que quepa el texto
       ),
       itemCount: actions.length,
       itemBuilder: (context, index) => actions[index],
@@ -455,14 +456,20 @@ class _QuickAction extends StatelessWidget {
               ),
             ),
             SizedBox(height: AppSpacing.sm),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-                fontFamily: 'Inter',
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                  fontFamily: 'Inter',
+                  height: 1.2,
+                ),
               ),
             ),
           ],
