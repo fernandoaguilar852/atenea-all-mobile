@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/venta_entity.dart';
-import '../../providers/ventas_provider.dart';
+import '../providers/ventas_provider.dart';
 import '../../data/models/pago_model.dart';
 import '../../data/mappers/venta_mapper.dart';
 

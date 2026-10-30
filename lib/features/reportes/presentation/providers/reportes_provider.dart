@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/providers/dio_provider.dart';
-import '../../auth/presentation/providers/auth_providers.dart';
-import '../data/datasources/reportes_remote_datasource.dart';
-import '../data/repositories/reportes_repository_impl.dart';
-import '../domain/entities/arqueo_entity.dart';
-import '../domain/entities/costo_beneficio_entity.dart';
-import '../domain/entities/inventario_entity.dart';
-import '../domain/entities/stock_entity.dart';
-import '../domain/entities/venta_detalle_entity.dart';
-import '../domain/entities/ventas_entity.dart';
-import '../domain/repositories/reportes_repository.dart';
+import '../../../../core/providers/dio_provider.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../data/datasources/reportes_remote_datasource.dart';
+import '../../data/repositories/reportes_repository_impl.dart';
+import '../../domain/entities/arqueo_entity.dart';
+import '../../domain/entities/costo_beneficio_entity.dart';
+import '../../domain/entities/inventario_entity.dart';
+import '../../domain/entities/stock_entity.dart';
+import '../../domain/entities/venta_detalle_entity.dart';
+import '../../domain/entities/ventas_entity.dart';
+import '../../domain/repositories/reportes_repository.dart';
 
 // ============================================================================
 // PROVIDERS DE REPOSITORIO Y DATASOURCE

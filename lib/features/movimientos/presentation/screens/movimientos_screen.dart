@@ -10,7 +10,7 @@ import '../../../../core/providers/catalogs_providers.dart';
 import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/movimiento_entity.dart';
-import '../../providers/movimientos_provider.dart';
+import '../providers/movimientos_provider.dart';
 import '../widgets/entrada_form_widget.dart';
 import '../widgets/salida_form_widget.dart';
 import '../widgets/ingreso_form_widget.dart';

@@ -7,7 +7,7 @@ import '../../../../core/models/producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/movimiento_entity.dart';
-import '../../providers/movimientos_provider.dart';
+import '../providers/movimientos_provider.dart';
 import 'producto_autocomplete_widget.dart';
 
 /// Formulario para INGRESO de dinero

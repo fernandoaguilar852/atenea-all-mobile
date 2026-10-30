@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/config/theme_config.dart';
-import '../providers/chat_provider.dart';
+import '../presentation/providers/chat_provider.dart';
 
 class ChatFloatingButton extends ConsumerWidget {
   const ChatFloatingButton({super.key});

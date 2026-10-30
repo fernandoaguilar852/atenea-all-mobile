@@ -6,7 +6,7 @@ import '../../../../core/config/theme_config.dart';
 import '../../../../core/models/producto.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/movimiento_entity.dart';
-import '../../providers/movimientos_provider.dart';
+import '../providers/movimientos_provider.dart';
 import 'producto_autocomplete_widget.dart';
 
 /// Representa una línea de entrada antes de ser guardada

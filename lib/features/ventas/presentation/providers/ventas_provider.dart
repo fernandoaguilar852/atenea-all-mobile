@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/providers/dio_provider.dart';
-import '../data/datasources/ventas_remote_datasource.dart';
-import '../data/datasources/pagos_remote_datasource.dart';
-import '../data/datasources/consumidores_remote_datasource.dart';
-import '../data/repositories/ventas_repository_impl.dart';
-import '../domain/entities/venta_entity.dart';
-import '../domain/repositories/ventas_repository.dart';
+import '../../../../core/providers/dio_provider.dart';
+import '../../data/datasources/ventas_remote_datasource.dart';
+import '../../data/datasources/pagos_remote_datasource.dart';
+import '../../data/datasources/consumidores_remote_datasource.dart';
+import '../../data/repositories/ventas_repository_impl.dart';
+import '../../domain/entities/venta_entity.dart';
+import '../../domain/repositories/ventas_repository.dart';
 
 // ============================================================================
 // PROVIDERS DE INFRAESTRUCTURA

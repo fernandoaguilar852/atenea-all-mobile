@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/providers/dio_provider.dart';
-import '../data/datasources/movimientos_remote_datasource.dart';
-import '../data/repositories/movimientos_repository_impl.dart';
-import '../domain/entities/movimiento_entity.dart';
-import '../domain/repositories/movimientos_repository.dart';
+import '../../../../core/providers/dio_provider.dart';
+import '../../data/datasources/movimientos_remote_datasource.dart';
+import '../../data/repositories/movimientos_repository_impl.dart';
+import '../../domain/entities/movimiento_entity.dart';
+import '../../domain/repositories/movimientos_repository.dart';
 
 // ============================================================================
 // PROVIDERS DE INFRAESTRUCTURA

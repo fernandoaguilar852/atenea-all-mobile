@@ -6,7 +6,7 @@ import '../../../../core/config/theme_config.dart';
 import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/resolucion_entity.dart';
-import '../../providers/resoluciones_provider.dart';
+import '../providers/resoluciones_provider.dart';
 import '../widgets/resolucion_form_dialog.dart';
 
 class ResolucionesScreen extends ConsumerStatefulWidget {

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../core/providers/dio_provider.dart';
-import '../../auth/presentation/providers/auth_providers.dart';
-import '../data/datasources/dashboard_remote_datasource.dart';
-import '../data/models/dashboard_stats.dart';
-import '../data/repositories/dashboard_repository_impl.dart';
-import '../domain/repositories/dashboard_repository.dart';
+import '../../../../core/providers/dio_provider.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../data/datasources/dashboard_remote_datasource.dart';
+import '../../data/models/dashboard_stats.dart';
+import '../../data/repositories/dashboard_repository_impl.dart';
+import '../../domain/repositories/dashboard_repository.dart';
 
 // ============================================================================
 // PROVIDERS DE REPOSITORIO Y DATASOURCE

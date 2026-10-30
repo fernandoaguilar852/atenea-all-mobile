@@ -7,7 +7,7 @@ import '../../../../core/config/theme_config.dart';
 import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/venta_entity.dart';
-import '../../providers/ventas_provider.dart';
+import '../providers/ventas_provider.dart';
 import '../../data/models/venta_model.dart';
 import 'venta_detalle_screen.dart';
 

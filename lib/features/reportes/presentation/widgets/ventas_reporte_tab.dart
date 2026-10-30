@@ -9,7 +9,7 @@ import '../../../../core/models/producto.dart';
 import '../../../../core/models/tipo_producto.dart';
 import '../../../../core/providers/catalogs_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../providers/reportes_provider.dart';
+import '../providers/reportes_provider.dart';
 
 class VentasReporteTab extends ConsumerStatefulWidget {
   const VentasReporteTab({super.key});

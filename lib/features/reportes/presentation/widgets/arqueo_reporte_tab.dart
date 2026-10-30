@@ -6,7 +6,7 @@ import '../../../../core/config/theme_config.dart';
 import '../../../../core/models/caja.dart';
 import '../../../../core/providers/catalogs_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../providers/reportes_provider.dart';
+import '../providers/reportes_provider.dart';
 
 class ArqueoReporteTab extends ConsumerStatefulWidget {
   const ArqueoReporteTab({super.key});

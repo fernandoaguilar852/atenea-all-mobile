@@ -10,7 +10,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../chat/widgets/chat_widget.dart';
 import '../../../notificaciones/presentation/providers/notificaciones_provider.dart';
 import '../../data/models/dashboard_stats.dart';
-import '../../providers/dashboard_provider.dart';
+import '../providers/dashboard_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   final bool showScaffold;
