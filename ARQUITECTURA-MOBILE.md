@@ -8,6 +8,7 @@
 - [Guía Paso a Paso: Crear un Nuevo Módulo](#guía-paso-a-paso-crear-un-nuevo-módulo)
 - [DTOs, Entities y Mappers](#dtos-entities-y-mappers)
 - [Gestión de Estado con Riverpod](#gestión-de-estado-con-riverpod)
+- [Autenticación Biométrica y Almacenamiento Seguro](#autenticación-biométrica-y-almacenamiento-seguro)
 - [Convenciones y Mejores Prácticas](#convenciones-y-mejores-prácticas)
 
 ---
@@ -104,14 +105,13 @@ features/
     │   └── repositories/              # Interfaces abstractas
     │       └── {nombre}_repository.dart
     │
-    ├── presentation/                   # Capa de Presentación
-    │   ├── screens/                   # Pantallas completas
-    │   │   └── {nombre}_screen.dart
-    │   └── widgets/                   # Componentes reutilizables
-    │       └── {nombre}_widget.dart
-    │
-    └── providers/                      # Estado con Riverpod
-        └── {nombre}_provider.dart
+    └── presentation/                   # Capa de Presentación
+        ├── providers/                 # Estado con Riverpod ✅
+        │   └── {nombre}_provider.dart
+        ├── screens/                   # Pantallas completas
+        │   └── {nombre}_screen.dart
+        └── widgets/                   # Componentes reutilizables
+            └── {nombre}_widget.dart
 ```
 
 ### Ejemplo Real: Módulo de Movimientos
@@ -134,13 +134,13 @@ features/
     │   │   └── movimiento_entity.dart
     │   └── repositories/
     │       └── movimientos_repository.dart
-    ├── presentation/
-    │   ├── screens/
-    │   │   └── movimientos_screen.dart
-    │   └── widgets/
-    │       └── movimiento_card.dart
-    └── providers/
-        └── movimientos_provider.dart
+    └── presentation/
+        ├── providers/                   # ✅ Dentro de presentation
+        │   └── movimientos_provider.dart
+        ├── screens/
+        │   └── movimientos_screen.dart
+        └── widgets/
+            └── movimiento_card.dart
 ```
 
 ---
@@ -263,9 +263,10 @@ features/
 cd lib/features
 mkdir -p {nombre_modulo}/data/{datasources,repositories,models,mappers}
 mkdir -p {nombre_modulo}/domain/{repositories,entities}
-mkdir -p {nombre_modulo}/presentation/{screens,widgets}
-mkdir -p {nombre_modulo}/providers
+mkdir -p {nombre_modulo}/presentation/{providers,screens,widgets}
 ```
+
+**Nota importante**: Los providers SIEMPRE van dentro de `presentation/providers/` para mantener consistencia en toda la app.
 
 ### Paso 2: Crear la Entity (Domain)
 
@@ -556,15 +557,15 @@ class MovimientosRepositoryImpl implements MovimientosRepository {
 
 ### Paso 8: Crear Providers (Riverpod)
 
-**Ubicación**: `providers/{nombre}_provider.dart`
+**Ubicación**: `presentation/providers/{nombre}_provider.dart`
 
 ```dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/providers/dio_provider.dart';
-import '../data/datasources/{nombre}_remote_datasource.dart';
-import '../data/repositories/{nombre}_repository_impl.dart';
-import '../domain/entities/{nombre}_entity.dart';
-import '../domain/repositories/{nombre}_repository.dart';
+import '../../../../core/providers/dio_provider.dart';
+import '../../data/datasources/{nombre}_remote_datasource.dart';
+import '../../data/repositories/{nombre}_repository_impl.dart';
+import '../../domain/entities/{nombre}_entity.dart';
+import '../../domain/repositories/{nombre}_repository.dart';
 
 // ============================================================================
 // INFRASTRUCTURE PROVIDERS
@@ -670,7 +671,7 @@ final movimientosProvider =
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../providers/{nombre}_provider.dart';
+import '../providers/{nombre}_provider.dart';
 
 class MovimientosScreen extends ConsumerStatefulWidget {
   const MovimientosScreen({super.key});
@@ -955,6 +956,275 @@ class MyWidget extends ConsumerWidget {
 
 ---
 
+## Autenticación Biométrica y Almacenamiento Seguro
+
+### Funcionalidad "Recordar Credenciales"
+
+La app implementa un sistema seguro para recordar las credenciales del usuario usando:
+- **Almacenamiento encriptado** (`flutter_secure_storage`)
+- **Autenticación biométrica** (`local_auth`)
+
+### Arquitectura del Sistema
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    LOGIN SCREEN                               │
+│  - Checkbox "Recordar mis datos"                             │
+│  - Llama a CredentialsStorageService                         │
+└────────────────────────┬─────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│           CredentialsStorageService                          │
+│  lib/core/services/credentials_storage_service.dart          │
+│                                                               │
+│  Métodos:                                                     │
+│  - isBiometricAvailable() → bool                             │
+│  - authenticateWithBiometrics() → bool                       │
+│  - saveCredentials(email, password, rememberMe)              │
+│  - getCredentials() → SavedCredentials?                      │
+│  - clearCredentials()                                         │
+└────────────────────────┬─────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│                  SECURE STORAGE                               │
+│  - iOS: Keychain                                             │
+│  - Android: Keystore                                         │
+│                                                               │
+│  Keys guardados:                                             │
+│  - saved_email                                                │
+│  - saved_password (encriptado)                               │
+│  - remember_me                                                │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Flujo de Funcionamiento
+
+#### 1. Al Hacer Login (Guardar Credenciales)
+
+```dart
+// login_screen.dart
+Future<void> _handleLogin() async {
+  final email = _emailController.text.trim();
+  final password = _passwordController.text;
+
+  // 1. Autenticar con la API
+  await ref.read(authProvider.notifier).login(email, password);
+
+  // 2. Guardar credenciales si marcó "Recordar"
+  await _credentialsService.saveCredentials(
+    email: email,
+    password: password,
+    rememberMe: _rememberMe,  // Estado del checkbox
+  );
+}
+```
+
+#### 2. Al Abrir la App (Cargar Credenciales)
+
+```dart
+// login_screen.dart - initState
+Future<void> _loadSavedCredentials() async {
+  // 1. Verificar si hay credenciales guardadas
+  final hasCredentials = await _credentialsService.hasCredentials();
+  if (!hasCredentials) return;
+
+  // 2. Solicitar autenticación biométrica (Face ID / Huella)
+  final credentials = await _credentialsService.getCredentials();
+
+  // 3. Si autenticación exitosa, pre-llenar campos
+  if (credentials != null) {
+    _emailController.text = credentials.email;
+    _passwordController.text = credentials.password;
+    _rememberMe = true;
+  }
+}
+```
+
+#### 3. Lógica Interna del Servicio
+
+```dart
+// credentials_storage_service.dart
+Future<SavedCredentials?> getCredentials() async {
+  // 1. Verificar que está habilitado "recordar"
+  final rememberMe = await _secureStorage.read(key: 'remember_me');
+  if (rememberMe != 'true') return null;
+
+  // 2. Verificar si el dispositivo tiene biometría
+  final hasBiometrics = await isBiometricAvailable();
+
+  // 3. Si tiene biometría, solicitar autenticación
+  if (hasBiometrics) {
+    final authenticated = await authenticateWithBiometrics();
+    if (!authenticated) return null;  // Usuario canceló o falló
+  }
+
+  // 4. Si no tiene biometría O autenticación exitosa → retornar credenciales
+  final email = await _secureStorage.read(key: 'saved_email');
+  final password = await _secureStorage.read(key: 'saved_password');
+
+  return SavedCredentials(email: email!, password: password!);
+}
+```
+
+### Configuración de Permisos
+
+#### iOS - Info.plist
+
+```xml
+<key>NSFaceIDUsageDescription</key>
+<string>ATENEA POS usa Face ID para autenticar tu acceso de forma rápida y segura</string>
+```
+
+#### Android - AndroidManifest.xml
+
+```xml
+<uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+<uses-permission android:name="android.permission.USE_FINGERPRINT"/>
+```
+
+### Dependencias Necesarias
+
+```yaml
+# pubspec.yaml
+dependencies:
+  flutter_secure_storage: ^9.2.2    # Almacenamiento encriptado
+  local_auth: ^2.2.0                 # Autenticación biométrica
+```
+
+### Casos de Uso
+
+| Escenario | Comportamiento |
+|-----------|---------------|
+| **Dispositivo con Face ID (iPhone)** | Al volver al login, pide Face ID → Pre-llena credenciales |
+| **Dispositivo con huella (Android)** | Al volver al login, pide huella digital → Pre-llena credenciales |
+| **Dispositivo sin biometría** | Al volver al login, pre-llena directamente (sin autenticación adicional) |
+| **Usuario cancela Face ID/Huella** | Campos quedan vacíos, debe ingresar manualmente |
+| **Usuario desmarca "Recordar"** | Al hacer login, se borran credenciales guardadas |
+| **Cierre de sesión manual** | Credenciales se MANTIENEN guardadas (no se borran) |
+| **Cambio de contraseña** | Al hacer login con nueva contraseña + "Recordar" marcado → Actualiza credenciales automáticamente |
+
+### Seguridad
+
+✅ **Encriptación**: Keychain (iOS) y Keystore (Android) usan encriptación por hardware
+✅ **Biometría**: Capa adicional de seguridad cuando está disponible
+✅ **Sin sincronización**: Credenciales solo en el dispositivo local
+✅ **Aislamiento**: Cada app tiene su propio contenedor seguro
+✅ **Actualización automática**: Si cambia la contraseña, se actualiza al hacer login
+
+⚠️ **Consideración**: En dispositivos sin biometría, las credenciales se pre-llenan directamente. Para mayor seguridad, se podría agregar PIN de app.
+
+### Código del Servicio Completo
+
+```dart
+// lib/core/services/credentials_storage_service.dart
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:local_auth/local_auth.dart';
+
+class CredentialsStorageService {
+  static const String _keyEmail = 'saved_email';
+  static const String _keyPassword = 'saved_password';
+  static const String _keyRememberMe = 'remember_me';
+
+  final FlutterSecureStorage _secureStorage;
+  final LocalAuthentication _localAuth;
+
+  CredentialsStorageService()
+      : _secureStorage = const FlutterSecureStorage(),
+        _localAuth = LocalAuthentication();
+
+  /// Verifica si el dispositivo tiene biometría disponible
+  Future<bool> isBiometricAvailable() async {
+    try {
+      final canCheckBiometrics = await _localAuth.canCheckBiometrics;
+      final isDeviceSupported = await _localAuth.isDeviceSupported();
+      return canCheckBiometrics && isDeviceSupported;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Autentica con biometría (Face ID o huella)
+  Future<bool> authenticateWithBiometrics() async {
+    try {
+      final hasBiometrics = await isBiometricAvailable();
+      if (!hasBiometrics) return true; // Sin biometría, permitir acceso
+
+      return await _localAuth.authenticate(
+        localizedReason: 'Verifica tu identidad para acceder',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Guarda las credenciales de forma segura
+  Future<void> saveCredentials({
+    required String email,
+    required String password,
+    required bool rememberMe,
+  }) async {
+    if (rememberMe) {
+      await _secureStorage.write(key: _keyEmail, value: email);
+      await _secureStorage.write(key: _keyPassword, value: password);
+      await _secureStorage.write(key: _keyRememberMe, value: 'true');
+    } else {
+      await clearCredentials();
+    }
+  }
+
+  /// Obtiene las credenciales guardadas (requiere biometría si disponible)
+  Future<SavedCredentials?> getCredentials() async {
+    try {
+      final rememberMe = await _secureStorage.read(key: _keyRememberMe);
+      if (rememberMe != 'true') return null;
+
+      // Verificar biometría si está disponible
+      final hasBiometrics = await isBiometricAvailable();
+      if (hasBiometrics) {
+        final authenticated = await authenticateWithBiometrics();
+        if (!authenticated) return null;
+      }
+
+      final email = await _secureStorage.read(key: _keyEmail);
+      final password = await _secureStorage.read(key: _keyPassword);
+
+      if (email != null && password != null) {
+        return SavedCredentials(email: email, password: password);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Verifica si hay credenciales guardadas (sin autenticar)
+  Future<bool> hasCredentials() async {
+    final rememberMe = await _secureStorage.read(key: _keyRememberMe);
+    return rememberMe == 'true';
+  }
+
+  /// Borra las credenciales guardadas
+  Future<void> clearCredentials() async {
+    await _secureStorage.delete(key: _keyEmail);
+    await _secureStorage.delete(key: _keyPassword);
+    await _secureStorage.delete(key: _keyRememberMe);
+  }
+}
+
+class SavedCredentials {
+  final String email;
+  final String password;
+
+  SavedCredentials({required this.email, required this.password});
+}
+```
+
+---
+
 ## Convenciones y Mejores Prácticas
 
 ### Nomenclatura
@@ -1023,7 +1293,7 @@ flutter install --device-id=DEVICE_ID
 
 ## Checklist para Nuevo Módulo
 
-- [ ] Crear estructura de carpetas (data/domain/presentation/providers)
+- [ ] Crear estructura de carpetas (data/domain/presentation)
 - [ ] Crear Entity en domain/entities/
 - [ ] Crear Repository interface en domain/repositories/
 - [ ] Crear Model en data/models/ con @JsonSerializable
@@ -1031,7 +1301,7 @@ flutter install --device-id=DEVICE_ID
 - [ ] Crear Mapper en data/mappers/
 - [ ] Crear Datasource en data/datasources/
 - [ ] Crear Repository implementation en data/repositories/
-- [ ] Crear Providers en providers/
+- [ ] Crear Providers en **presentation/providers/** ✅ (NO en raíz)
 - [ ] Crear Screen en presentation/screens/
 - [ ] Agregar ruta en router_config.dart
 - [ ] Agregar opción en app_drawer.dart (si aplica)
@@ -1048,6 +1318,13 @@ flutter install --device-id=DEVICE_ID
 
 ---
 
-**Última actualización**: Octubre 2024
-**Versión**: 1.0.0
+**Última actualización**: Octubre 2026
+**Versión**: 2.0.0
 **Autor**: Equipo de Desarrollo ATENEA
+
+**Changelog v2.0.0:**
+- ✅ Actualizada estructura de módulos: providers ahora en `presentation/providers/`
+- ✅ Agregada sección completa de Autenticación Biométrica y Almacenamiento Seguro
+- ✅ Documentado sistema de "Recordar Credenciales" con Face ID/Huella
+- ✅ Ejemplos actualizados con rutas correctas de imports
+- ✅ Checklist actualizado para reflejar nueva estructura
