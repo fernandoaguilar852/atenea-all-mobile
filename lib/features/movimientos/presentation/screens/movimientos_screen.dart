@@ -494,21 +494,6 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                     _loadData();
                   },
                 ),
-                SizedBox(height: 12.h),
-
-                // Botón refresh
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Actualizar'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: _loadData,
-                  ),
-                ),
               ],
             ),
           ),

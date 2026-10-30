@@ -4,6 +4,7 @@ import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:uuid/uuid.dart';
 import '../constants/api_constants.dart';
 import '../storage/secure_storage.dart';
+import '../events/auth_events.dart';
 
 class DioClient {
   late final Dio _dio;
@@ -77,26 +78,32 @@ class DioClient {
       onError: (error, handler) async {
         // Si es error 401 (Unauthorized)
         if (error.response?.statusCode == 401) {
-          // Intentar refrescar el token
-          final refreshed = await _refreshToken();
+          // Verificar si hay un refresh token (si no hay, no es una sesión activa)
+          final refreshToken = await _secureStorage.getRefreshToken();
 
-          if (refreshed) {
-            // Reintentar la petición original
-            final token = await _secureStorage.getAccessToken();
-            error.requestOptions.headers[ApiConstants.headerAuthorization] =
-                'Bearer $token';
+          if (refreshToken != null && refreshToken.isNotEmpty) {
+            // Intentar refrescar el token
+            final refreshed = await _refreshToken();
 
-            try {
-              final response = await _dio.fetch(error.requestOptions);
-              return handler.resolve(response);
-            } catch (e) {
+            if (refreshed) {
+              // Reintentar la petición original
+              final token = await _secureStorage.getAccessToken();
+              error.requestOptions.headers[ApiConstants.headerAuthorization] =
+                  'Bearer $token';
+
+              try {
+                final response = await _dio.fetch(error.requestOptions);
+                return handler.resolve(response);
+              } catch (e) {
+                return handler.reject(error);
+              }
+            } else {
+              // No se pudo refrescar, la sesión es inválida
+              await _secureStorage.clearAll();
+              // Notificar que la sesión expiró
+              AuthEvents().notifyUnauthorized();
               return handler.reject(error);
             }
-          } else {
-            // No se pudo refrescar, logout
-            await _secureStorage.clearAll();
-            // TODO: Navegar a login
-            return handler.reject(error);
           }
         }
 

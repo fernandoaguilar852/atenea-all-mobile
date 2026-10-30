@@ -17,8 +17,11 @@ import '../../features/resoluciones/providers/resoluciones_provider.dart';
 import '../../features/ventas/providers/ventas_provider.dart';
 import '../../features/movimientos/providers/movimientos_provider.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../core/events/auth_events.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../providers/navigation_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'dart:async';
 
 /// Pantalla principal con BottomNavigationBar estilo Instagram
 /// Contiene 5 secciones: Facturas, Movimientos, Dashboard (centro), Reportes, Chat IA
@@ -35,6 +38,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   final dashboardKey = GlobalKey<ConsumerState<DashboardScreen>>();
   final resolucionesKey = GlobalKey<ConsumerState<ResolucionesScreen>>();
   final alertasStockKey = GlobalKey<ConsumerState<AlertasStockScreen>>();
+  StreamSubscription<void>? _unauthorizedSubscription;
 
   @override
   void initState() {
@@ -49,6 +53,22 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             .fetchPendientes();
       }
     });
+
+    // Escuchar eventos de sesión no autorizada
+    _unauthorizedSubscription = AuthEvents().onUnauthorized.listen((_) {
+      // Ejecutar logout y navegar al login
+      ref.read(authProvider.notifier).logout().then((_) {
+        if (mounted) {
+          context.go('/login');
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _unauthorizedSubscription?.cancel();
+    super.dispose();
   }
 
   @override
