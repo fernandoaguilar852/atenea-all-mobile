@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../core/config/theme_config.dart';
 
 enum AppButtonType { primary, secondary, outline, text }
 
@@ -77,7 +78,7 @@ class AppButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           icon!,
-          SizedBox(width: 8.w),
+          SizedBox(width: AppSpacing.sm),
           Text(text),
         ],
       );

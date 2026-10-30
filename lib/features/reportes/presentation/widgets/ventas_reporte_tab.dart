@@ -117,8 +117,8 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
       children: [
         // Filtros
         Container(
-          padding: EdgeInsets.all(16.w),
-          color: AppColors.grey100,
+          padding: EdgeInsets.all(AppSpacing.md),
+          color: AppColors.surfaceVariant,
           child: Column(
             children: [
               Row(
@@ -134,7 +134,7 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: Border.all(color: AppColors.grey300),
+                          border: Border.all(color: AppColors.borderColor),
                         ),
                         child: Row(
                           children: [
@@ -262,7 +262,7 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                                   decoration: BoxDecoration(
                                     color: AppColors.white,
                                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                                    border: Border.all(color: AppColors.grey300),
+                                    border: Border.all(color: AppColors.borderColor),
                                   ),
                                   child: Text(
                                     'No se encontraron productos',
@@ -277,7 +277,7 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                                 decoration: BoxDecoration(
                                   color: AppColors.white,
                                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                                  border: Border.all(color: AppColors.grey300),
+                                  border: Border.all(color: AppColors.borderColor),
                                 ),
                                 child: ListView.separated(
                                   shrinkWrap: true,
@@ -313,7 +313,7 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                               decoration: BoxDecoration(
                                 color: AppColors.white,
                                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                                border: Border.all(color: AppColors.grey300),
+                                border: Border.all(color: AppColors.borderColor),
                               ),
                               child: Row(
                                 children: [
@@ -392,7 +392,7 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: Border.all(color: AppColors.grey300),
+                          border: Border.all(color: AppColors.borderColor),
                         ),
                         child: Row(
                           children: [
@@ -462,7 +462,7 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: Border.all(color: AppColors.grey300),
+                          border: Border.all(color: AppColors.borderColor),
                         ),
                         child: Row(
                           children: [
@@ -514,7 +514,7 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
         // Resumen
         if (reporte != null)
           Container(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(AppSpacing.md),
             color: AppColors.primary.withValues(alpha: 0.1),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -587,7 +587,7 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
         // Paginación
         if (reporte?.pagination != null)
           Container(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(AppSpacing.md),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

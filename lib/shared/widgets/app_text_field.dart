@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../core/config/theme_config.dart';
 
 class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
@@ -44,10 +45,11 @@ class AppTextField extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
-              color: Theme.of(context).textTheme.bodyMedium?.color,
+              color: AppColors.textPrimary,
+              fontFamily: 'Inter',
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: AppSpacing.sm),
         ],
         TextFormField(
           controller: controller,

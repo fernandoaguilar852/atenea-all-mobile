@@ -51,21 +51,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final bodyContent = RefreshIndicator(
         onRefresh: () => ref.read(dashboardProvider.notifier).refresh(),
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Welcome Card
               _WelcomeCard(userName: user?.nombre ?? 'Usuario'),
 
-              SizedBox(height: 20.h),
+              SizedBox(height: AppSpacing.lg),
 
               // KPIs Grid
               dashboardState.isLoading && dashboardState.stats == null
                   ? const Center(child: CircularProgressIndicator())
                   : _KPIsGrid(stats: dashboardState.stats),
 
-              SizedBox(height: 20.h),
+              SizedBox(height: AppSpacing.lg),
 
               // Quick Actions
               Text(
@@ -74,12 +74,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
+                  fontFamily: 'Inter',
                 ),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md),
               _QuickActionsGrid(),
 
-              SizedBox(height: 20.h),
+              SizedBox(height: AppSpacing.lg),
 
               // Recent Activity
               Text(
@@ -88,9 +89,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
+                  fontFamily: 'Inter',
                 ),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md),
               _RecentActivityList(),
             ],
           ),
@@ -149,11 +151,14 @@ class _WelcomeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppShadows.md,
+        color: AppColors.primary, // Flat: fondo sólido en vez de gradient
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: AppColors.primaryDark,
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,25 +167,41 @@ class _WelcomeCard extends StatelessWidget {
             '¡Bienvenido!',
             style: TextStyle(
               fontSize: 16.sp,
+              fontWeight: FontWeight.w400,
               color: AppColors.white.withValues(alpha: 0.9),
+              fontFamily: 'Inter',
             ),
           ),
-          SizedBox(height: 4.h),
+          SizedBox(height: AppSpacing.xs),
           Text(
             userName,
             style: TextStyle(
               fontSize: 24.sp,
               fontWeight: FontWeight.w700,
               color: AppColors.white,
+              fontFamily: 'Inter',
+              height: 1.2,
             ),
           ),
-          SizedBox(height: 12.h),
-          Text(
-            DateTime.now().toString().split(' ')[0],
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.white.withValues(alpha: 0.8),
-            ),
+          SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Icon(
+                Icons.calendar_today,
+                size: 14.sp,
+                color: AppColors.white.withValues(alpha: 0.8),
+              ),
+              SizedBox(width: AppSpacing.xs),
+              Text(
+                DateFormat('dd/MM/yyyy').format(DateTime.now()),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.white.withValues(alpha: 0.8),
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -267,11 +288,14 @@ class _KPICard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardContent = Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: AppShadows.sm,
+        border: Border.all(
+          color: AppColors.borderColor,
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,15 +305,15 @@ class _KPICard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: EdgeInsets.all(8.w),
+                padding: EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: color.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(
                   icon,
                   color: color,
-                  size: 20.sp,
+                  size: 22.sp,
                 ),
               ),
             ],
@@ -300,17 +324,21 @@ class _KPICard extends StatelessWidget {
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 20.sp,
+                  fontSize: 22.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
+                  fontFamily: 'Inter',
+                  height: 1.2,
                 ),
               ),
-              SizedBox(height: 2.h),
+              SizedBox(height: AppSpacing.xs),
               Text(
                 title,
                 style: TextStyle(
                   fontSize: 12.sp,
+                  fontWeight: FontWeight.w400,
                   color: AppColors.textSecondary,
+                  fontFamily: 'Inter',
                 ),
               ),
             ],
@@ -406,24 +434,27 @@ class _QuickAction extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow: AppShadows.sm,
+          border: Border.all(
+            color: AppColors.borderColor,
+            width: 1,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(12.w),
+              padding: EdgeInsets.all(14.w),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 color: color,
-                size: 24.sp,
+                size: 28.sp, // Iconos más grandes
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.sm),
             Text(
               title,
               textAlign: TextAlign.center,
@@ -431,6 +462,7 @@ class _QuickAction extends StatelessWidget {
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
+                fontFamily: 'Inter',
               ),
             ),
           ],
@@ -444,11 +476,14 @@ class _RecentActivityList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: AppShadows.sm,
+        border: Border.all(
+          color: AppColors.borderColor,
+          width: 1,
+        ),
       ),
       child: Column(
         children: [
@@ -482,10 +517,10 @@ class _ActivityItem extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Container(
-        padding: EdgeInsets.all(8.w),
+        padding: EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
+          color: iconColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Icon(
           icon,
@@ -499,13 +534,16 @@ class _ActivityItem extends StatelessWidget {
           fontSize: 14.sp,
           fontWeight: FontWeight.w500,
           color: AppColors.textPrimary,
+          fontFamily: 'Inter',
         ),
       ),
       subtitle: Text(
         subtitle,
         style: TextStyle(
           fontSize: 12.sp,
+          fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
+          fontFamily: 'Inter',
         ),
       ),
     );

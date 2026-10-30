@@ -80,8 +80,8 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
       children: [
         // Filtros
         Container(
-          padding: EdgeInsets.all(16.w),
-          color: AppColors.grey100,
+          padding: EdgeInsets.all(AppSpacing.md),
+          color: AppColors.surfaceVariant,
           child: Column(
             children: [
               Row(
@@ -97,7 +97,7 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: Border.all(color: AppColors.grey300),
+                          border: Border.all(color: AppColors.borderColor),
                         ),
                         child: Row(
                           children: [
@@ -267,7 +267,7 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                   : reporte == null
                       ? const Center(child: Text('No hay datos'))
                       : SingleChildScrollView(
-                          padding: EdgeInsets.all(16.w),
+                          padding: EdgeInsets.all(AppSpacing.md),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -300,7 +300,7 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                               Card(
                                 color: AppColors.success.withValues(alpha: 0.1),
                                 child: Padding(
-                                  padding: EdgeInsets.all(16.w),
+                                  padding: EdgeInsets.all(AppSpacing.md),
                                   child: Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -347,7 +347,7 @@ class _ArqueoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(AppSpacing.md),
         child: Column(
           children: [
             _ArqueoRow('Total', total, AppColors.primary, isBold: true),

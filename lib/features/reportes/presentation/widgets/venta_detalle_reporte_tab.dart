@@ -136,8 +136,8 @@ class _VentaDetalleReporteTabState
       children: [
         // Filtros
         Container(
-          padding: EdgeInsets.all(16.w),
-          color: AppColors.grey100,
+          padding: EdgeInsets.all(AppSpacing.md),
+          color: AppColors.surfaceVariant,
           child: Column(
             children: [
               Row(
@@ -153,7 +153,7 @@ class _VentaDetalleReporteTabState
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: Border.all(color: AppColors.grey300),
+                          border: Border.all(color: AppColors.borderColor),
                         ),
                         child: Row(
                           children: [
@@ -264,7 +264,7 @@ class _VentaDetalleReporteTabState
         // Resumen
         if (reporte != null)
           Container(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(AppSpacing.md),
             color: AppColors.primary.withValues(alpha: 0.1),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -294,7 +294,7 @@ class _VentaDetalleReporteTabState
                   : reporte == null || reporte.ventas.isEmpty
                       ? const Center(child: Text('No hay datos'))
                       : ListView.separated(
-                          padding: EdgeInsets.all(16.w),
+                          padding: EdgeInsets.all(AppSpacing.md),
                           itemCount: reporte.ventas.length,
                           separatorBuilder: (_, __) => SizedBox(height: 12.h),
                           itemBuilder: (context, index) {
@@ -379,7 +379,7 @@ class _VentaDetalleReporteTabState
         // Paginación
         if (reporte?.pagination != null)
           Container(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(AppSpacing.md),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -491,7 +491,7 @@ class _VentaDetalleReporteTabState
                       decoration: BoxDecoration(
                         color: AppColors.white,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        border: Border.all(color: AppColors.grey300),
+                        border: Border.all(color: AppColors.borderColor),
                       ),
                       child: Text(
                         'No se encontraron consumidores',
@@ -506,7 +506,7 @@ class _VentaDetalleReporteTabState
                     decoration: BoxDecoration(
                       color: AppColors.white,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
-                      border: Border.all(color: AppColors.grey300),
+                      border: Border.all(color: AppColors.borderColor),
                     ),
                     child: ListView.separated(
                       shrinkWrap: true,
@@ -542,7 +542,7 @@ class _VentaDetalleReporteTabState
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                    border: Border.all(color: AppColors.grey300),
+                    border: Border.all(color: AppColors.borderColor),
                   ),
                   child: Row(
                     children: [
@@ -654,7 +654,7 @@ class _VentaDetalleReporteTabState
                       decoration: BoxDecoration(
                         color: AppColors.white,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        border: Border.all(color: AppColors.grey300),
+                        border: Border.all(color: AppColors.borderColor),
                       ),
                       child: Text(
                         'No se encontraron productos',
@@ -669,7 +669,7 @@ class _VentaDetalleReporteTabState
                     decoration: BoxDecoration(
                       color: AppColors.white,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
-                      border: Border.all(color: AppColors.grey300),
+                      border: Border.all(color: AppColors.borderColor),
                     ),
                     child: ListView.separated(
                       shrinkWrap: true,
@@ -705,7 +705,7 @@ class _VentaDetalleReporteTabState
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                    border: Border.all(color: AppColors.grey300),
+                    border: Border.all(color: AppColors.borderColor),
                   ),
                   child: Row(
                     children: [

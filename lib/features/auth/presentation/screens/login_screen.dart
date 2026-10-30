@@ -65,49 +65,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(24.w),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(height: 40.h),
+                SizedBox(height: AppSpacing.xxl),
 
-                // Logo
+                // Logo - Más grande y con más espacio
                 Center(
                   child: Image.asset(
                     'assets/images/atenea-logo.png',
-                    width: 150.w,
-                    height: 150.w,
+                    width: 180.w,
+                    height: 180.w,
                   ),
                 ),
 
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.xl),
 
-                // Title
+                // Title - Más grande y moderno con Inter
                 Text(
                   'ATENEA POS',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 28.sp,
+                    fontSize: 32.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
+                    fontFamily: 'Inter',
+                    height: 1.2,
                   ),
                 ),
 
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
 
-                // Subtitle
+                // Subtitle - Con Inter
                 Text(
                   'Sistema de Punto de Venta',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textSecondary,
+                    fontFamily: 'Inter',
+                    height: 1.5,
                   ),
                 ),
 
-                SizedBox(height: 48.h),
+                SizedBox(height: AppSpacing.xxl),
 
                 // Email Field
                 AppTextField(
@@ -128,7 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   },
                 ),
 
-                SizedBox(height: 16.h),
+                SizedBox(height: AppSpacing.md),
 
                 // Password Field
                 AppTextField(
@@ -161,7 +166,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   },
                 ),
 
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.sm),
 
                 // Forgot Password
                 Align(
@@ -174,13 +179,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       '¿Olvidaste tu contraseña?',
                       style: TextStyle(
                         fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
                         color: AppColors.primary,
+                        fontFamily: 'Inter',
                       ),
                     ),
                   ),
                 ),
 
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.lg),
 
                 // Login Button
                 AppButton(
@@ -189,17 +196,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   isLoading: authState.isLoading,
                 ),
 
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.lg),
 
-                // Error Message
+                // Error Message - Flat design con border sutil
                 if (authState.error != null)
                   Container(
-                    padding: EdgeInsets.all(12.w),
+                    padding: EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: AppColors.danger.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppColors.danger.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
                         color: AppColors.danger.withValues(alpha: 0.3),
+                        width: 1,
                       ),
                     ),
                     child: Row(
@@ -209,13 +217,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           color: AppColors.danger,
                           size: 20.sp,
                         ),
-                        SizedBox(width: 8.w),
+                        SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
                             authState.error!,
                             style: TextStyle(
                               color: AppColors.danger,
                               fontSize: 13.sp,
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ),

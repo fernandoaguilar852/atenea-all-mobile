@@ -44,13 +44,15 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen>
           indicatorWeight: 3,
           labelColor: AppColors.white,
           labelStyle: const TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             fontSize: 14,
+            fontFamily: 'Inter',
           ),
-          unselectedLabelColor: AppColors.white.withValues(alpha: 0.6),
+          unselectedLabelColor: AppColors.white.withValues(alpha: 0.7),
           unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.normal,
+            fontWeight: FontWeight.w400,
             fontSize: 14,
+            fontFamily: 'Inter',
           ),
           tabs: const [
             Tab(

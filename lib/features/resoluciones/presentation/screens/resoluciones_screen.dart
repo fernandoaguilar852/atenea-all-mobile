@@ -181,12 +181,15 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
           // Header con filtro y botón de agregar (solo cuando no hay scaffold)
           if (!widget.showScaffold)
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: AppColors.surfaceVariant,
                 border: Border(
                   bottom: BorderSide(
-                    color: AppColors.grey300,
+                    color: AppColors.borderColor,
                     width: 1,
                   ),
                 ),
@@ -195,31 +198,58 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
                 children: [
                   // Filtro de activo
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.grey300),
-                      borderRadius: BorderRadius.circular(8.r),
+                      color: AppColors.white,
+                      border: Border.all(color: AppColors.borderColor),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: DropdownButton<bool?>(
                       value: _activoFilter,
                       hint: Text(
                         'Estado',
-                        style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textSecondary,
+                          fontFamily: 'Inter',
+                        ),
                       ),
                       underline: const SizedBox(),
                       isDense: true,
                       items: [
                         DropdownMenuItem(
                           value: null,
-                          child: Text('Todas', style: TextStyle(fontSize: 14.sp)),
+                          child: Text(
+                            'Todas',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: true,
-                          child: Text('Activas', style: TextStyle(fontSize: 14.sp)),
+                          child: Text(
+                            'Activas',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: false,
-                          child: Text('Inactivas', style: TextStyle(fontSize: 14.sp)),
+                          child: Text(
+                            'Inactivas',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
                         ),
                       ],
                       onChanged: (value) {
@@ -239,7 +269,10 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.white,
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.md,
+                      ),
                     ),
                   ),
                 ],
@@ -253,15 +286,26 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
                     ? Center(
                         child: Text(
                           resolucionesState.error!,
-                          style: TextStyle(color: AppColors.danger),
+                          style: TextStyle(
+                            color: AppColors.danger,
+                            fontFamily: 'Inter',
+                          ),
                         ),
                       )
                     : data == null || data.resoluciones.isEmpty
-                        ? const Center(child: Text('No hay resoluciones'))
+                        ? Center(
+                            child: Text(
+                              'No hay resoluciones',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          )
                         : ListView.separated(
-                            padding: EdgeInsets.all(16.w),
+                            padding: EdgeInsets.all(AppSpacing.md),
                             itemCount: data.resoluciones.length,
-                            separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                            separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
                             itemBuilder: (context, index) {
                               final resolucion = data.resoluciones[index];
                               return _ResolucionCard(
@@ -276,13 +320,26 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
           // Paginación
           if (data?.pagination != null)
             Container(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                border: Border(
+                  top: BorderSide(
+                    color: AppColors.borderColor,
+                    width: 1,
+                  ),
+                ),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'Página $_currentPage de ${data!.pagination!.totalPages}',
-                    style: TextStyle(fontSize: 12.sp),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Inter',
+                    ),
                   ),
                   Row(
                     children: [
@@ -353,10 +410,17 @@ class _ResolucionCard extends StatelessWidget {
     final isVencida = resolucion.isVencida;
     final isCercaLimite = resolucion.isCercaLimite;
 
-    return Card(
-      elevation: 2,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: AppColors.borderColor,
+          width: 1,
+        ),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(12.w),
+        padding: EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -375,18 +439,19 @@ class _ResolucionCard extends StatelessWidget {
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w700,
                               color: AppColors.primary,
+                              fontFamily: 'Inter',
                             ),
                           ),
-                          SizedBox(width: 8.w),
+                          SizedBox(width: AppSpacing.sm),
                           if (!resolucion.activo)
                             Container(
                               padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 2.h,
+                                horizontal: AppSpacing.sm,
+                                vertical: AppSpacing.xs,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.grey300,
-                                borderRadius: BorderRadius.circular(4.r),
+                                color: AppColors.grey300.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
                               ),
                               child: Text(
                                 'INACTIVA',
@@ -394,55 +459,60 @@ class _ResolucionCard extends StatelessWidget {
                                   fontSize: 10.sp,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textSecondary,
+                                  fontFamily: 'Inter',
                                 ),
                               ),
                             ),
                           if (isVencida)
                             Container(
                               padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 2.h,
+                                horizontal: AppSpacing.sm,
+                                vertical: AppSpacing.xs,
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.danger,
-                                borderRadius: BorderRadius.circular(4.r),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
                               ),
                               child: Text(
                                 'VENCIDA',
                                 style: TextStyle(
                                   fontSize: 10.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.white,
+                                  fontFamily: 'Inter',
                                 ),
                               ),
                             ),
                           if (isCercaLimite && !isVencida)
                             Container(
                               padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 2.h,
+                                horizontal: AppSpacing.sm,
+                                vertical: AppSpacing.xs,
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.warning,
-                                borderRadius: BorderRadius.circular(4.r),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
                               ),
                               child: Text(
                                 'CERCA LÍMITE',
                                 style: TextStyle(
                                   fontSize: 10.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.white,
+                                  fontFamily: 'Inter',
                                 ),
                               ),
                             ),
                         ],
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: AppSpacing.xs),
                       Text(
                         'Resolución: ${resolucion.numeroResolucion}',
                         style: TextStyle(
                           fontSize: 12.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.textSecondary,
+                          fontFamily: 'Inter',
                         ),
                       ),
                     ],

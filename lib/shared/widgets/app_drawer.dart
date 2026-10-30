@@ -18,31 +18,68 @@ class AppDrawer extends ConsumerWidget {
     return Drawer(
       child: Column(
         children: [
-          // Header del Drawer con info del usuario
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(
-              gradient: AppColors.primaryGradient,
-            ),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: AppColors.white,
-              child: Icon(
-                Icons.person,
-                size: 40.sp,
-                color: AppColors.primary,
+          // Header del Drawer con info del usuario - Flat Design
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.primaryDark,
+                  width: 1,
+                ),
               ),
             ),
-            accountName: Text(
-              user?.nombre ?? 'Usuario',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-              ),
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + AppSpacing.lg,
+              bottom: AppSpacing.lg,
+              left: AppSpacing.md,
+              right: AppSpacing.md,
             ),
-            accountEmail: Text(
-              user?.email ?? '',
-              style: TextStyle(
-                fontSize: 14.sp,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatar
+                Container(
+                  width: 64.w,
+                  height: 64.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.white.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.person,
+                    size: 32.sp,
+                    color: AppColors.primary,
+                  ),
+                ),
+                SizedBox(height: AppSpacing.md),
+                // Nombre
+                Text(
+                  user?.nombre ?? 'Usuario',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+                SizedBox(height: AppSpacing.xs),
+                // Email
+                Text(
+                  user?.email ?? '',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.white.withValues(alpha: 0.9),
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -98,6 +135,7 @@ class AppDrawer extends ConsumerWidget {
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
+                        fontFamily: 'Inter',
                       ),
                     ),
                     children: [
@@ -264,6 +302,7 @@ class _DrawerItem extends StatelessWidget {
           fontSize: 15.sp,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
           color: effectiveTextColor,
+          fontFamily: 'Inter',
         ),
       ),
       selected: isSelected,
@@ -275,6 +314,7 @@ class _DrawerItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11.sp,
                 color: AppColors.grey400,
+                fontFamily: 'Inter',
               ),
             )
           : null,
@@ -313,6 +353,7 @@ class _DrawerSubItem extends StatelessWidget {
           fontSize: 14.sp,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
           color: effectiveTextColor,
+          fontFamily: 'Inter',
         ),
       ),
       selected: isSelected,

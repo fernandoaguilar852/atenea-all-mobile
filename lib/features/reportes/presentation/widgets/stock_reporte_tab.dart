@@ -84,14 +84,23 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
       children: [
         // Filtros
         Container(
-          padding: EdgeInsets.all(16.w),
-          color: AppColors.grey100,
+          padding: EdgeInsets.all(AppSpacing.md),
+          color: AppColors.surfaceVariant,
           child: Column(
             children: [
               Row(
                 children: [
                   Expanded(
                     child: SegmentedButton<bool?>(
+                      showSelectedIcon: false,
+                      style: ButtonStyle(
+                        textStyle: WidgetStateProperty.all(
+                          const TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
                       segments: const [
                         ButtonSegment(value: true, label: Text('Activos')),
                         ButtonSegment(value: false, label: Text('Inactivos')),
@@ -139,7 +148,7 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                 ],
               ),
               if (_showAdvancedFilters) ...[
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -150,20 +159,23 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                         hintText: 'Escribe 3+ caracteres para buscar...',
                         prefixIcon: Icon(Icons.search, color: AppColors.primary),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           borderSide: BorderSide(color: AppColors.primary, width: 2),
                         ),
                         filled: true,
                         fillColor: AppColors.white,
                         contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 12.h,
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.md,
                         ),
                       ),
-                      style: TextStyle(fontSize: 14.sp),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontFamily: 'Inter',
+                      ),
                       onChanged: _onSearchChanged,
                     ),
                     if (_productoSelected != null)
@@ -222,7 +234,7 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                                   decoration: BoxDecoration(
                                     color: AppColors.white,
                                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                                    border: Border.all(color: AppColors.grey300),
+                                    border: Border.all(color: AppColors.borderColor),
                                   ),
                                   child: Text(
                                     'No se encontraron productos',
@@ -236,7 +248,7 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                                 decoration: BoxDecoration(
                                   color: AppColors.white,
                                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                                  border: Border.all(color: AppColors.grey300),
+                                  border: Border.all(color: AppColors.borderColor),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withValues(alpha: 0.1),
@@ -281,7 +293,7 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                               decoration: BoxDecoration(
                                 color: AppColors.white,
                                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                                border: Border.all(color: AppColors.grey300),
+                                border: Border.all(color: AppColors.borderColor),
                               ),
                               child: Row(
                                 children: [
@@ -417,7 +429,7 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
         ),
         if (reporte != null)
           Container(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(AppSpacing.md),
             color: AppColors.primary.withValues(alpha: 0.1),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -445,7 +457,7 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
                   : reporte == null || reporte.productos.isEmpty
                       ? const Center(child: Text('No hay datos'))
                       : ListView.separated(
-                          padding: EdgeInsets.all(16.w),
+                          padding: EdgeInsets.all(AppSpacing.md),
                           itemCount: reporte.productos.length,
                           separatorBuilder: (_, __) => SizedBox(height: 8.h),
                           itemBuilder: (context, index) {
@@ -542,7 +554,7 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
         ),
         if (reporte?.pagination != null)
           Container(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(AppSpacing.md),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

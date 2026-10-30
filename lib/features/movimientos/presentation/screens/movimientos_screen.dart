@@ -88,10 +88,10 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
         ),
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -100,9 +100,10 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w700,
+                fontFamily: 'Inter',
               ),
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: AppSpacing.lg),
             _MovimientoTypeOption(
               title: 'Entrada de Productos',
               subtitle: 'Registrar compra o ingreso de inventario',
@@ -113,7 +114,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                 _showMovimientoForm(context, TipoMovimiento.entrada);
               },
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md),
             _MovimientoTypeOption(
               title: 'Salida de Productos',
               subtitle: 'Registrar salida de inventario',
@@ -124,7 +125,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                 _showMovimientoForm(context, TipoMovimiento.salida);
               },
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md),
             _MovimientoTypeOption(
               title: 'Ingreso de Dinero',
               subtitle: 'Registrar entrada de efectivo',
@@ -135,7 +136,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                 _showMovimientoForm(context, TipoMovimiento.ingreso);
               },
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.md),
             _MovimientoTypeOption(
               title: 'Egreso de Dinero',
               subtitle: 'Registrar salida de efectivo',
@@ -146,7 +147,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                 _showMovimientoForm(context, TipoMovimiento.egreso);
               },
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
@@ -339,8 +340,8 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
         children: [
           // Filtros
           Container(
-            padding: EdgeInsets.all(16.w),
-            color: AppColors.grey100,
+            padding: EdgeInsets.all(AppSpacing.md),
+            color: AppColors.surfaceVariant,
             child: Column(
               children: [
                 // Filtro por tipo
@@ -374,7 +375,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                     _loadData();
                   },
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md),
 
                 // Filtro de rango de fechas
                 InkWell(
@@ -408,16 +409,19 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                     }
                   },
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.md,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.white,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      border: Border.all(color: AppColors.grey300),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(color: AppColors.borderColor),
                     ),
                     child: Row(
                       children: [
                         Icon(Icons.date_range, size: 20.sp, color: AppColors.primary),
-                        SizedBox(width: 12.w),
+                        SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Text(
                             _fechaDesde != null && _fechaHasta != null
@@ -425,7 +429,9 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                                 : 'Seleccionar rango de fechas',
                             style: TextStyle(
                               fontSize: 14.sp,
+                              fontWeight: FontWeight.w400,
                               color: _fechaDesde != null ? AppColors.textPrimary : AppColors.textSecondary,
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ),
@@ -447,7 +453,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md),
 
                 // Filtro por producto (autocomplete)
                 if (user != null)
@@ -472,7 +478,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                     },
                     primaryColor: AppColors.primary,
                   ),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md),
 
                 // Filtro por proveedor (autocomplete)
                 _ProveedorAutocomplete(
@@ -506,15 +512,26 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                     ? Center(
                         child: Text(
                           movimientosState.error!,
-                          style: TextStyle(color: AppColors.danger),
+                          style: TextStyle(
+                            color: AppColors.danger,
+                            fontFamily: 'Inter',
+                          ),
                         ),
                       )
                     : data == null || data.movimientos.isEmpty
-                        ? const Center(child: Text('No hay movimientos'))
+                        ? Center(
+                            child: Text(
+                              'No hay movimientos',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          )
                         : ListView.separated(
-                            padding: EdgeInsets.all(16.w),
+                            padding: EdgeInsets.all(AppSpacing.md),
                             itemCount: data.movimientos.length,
-                            separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                            separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
                             itemBuilder: (context, index) {
                               final movimiento = data.movimientos[index];
                               return _MovimientoCard(
@@ -538,13 +555,26 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
           // Paginación
           if (data?.pagination != null)
             Container(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                border: Border(
+                  top: BorderSide(
+                    color: AppColors.borderColor,
+                    width: 1,
+                  ),
+                ),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'Página $_currentPage de ${data!.pagination!.totalPages}',
-                    style: TextStyle(fontSize: 12.sp),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Inter',
+                    ),
                   ),
                   Row(
                     children: [
@@ -619,13 +649,20 @@ class _MovimientoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: AppColors.borderColor,
+          width: 1,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: EdgeInsets.all(12.w),
+          padding: EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -641,21 +678,22 @@ class _MovimientoCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
+                            fontFamily: 'Inter',
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(height: 4.h),
+                        SizedBox(height: AppSpacing.xs),
                         Row(
                           children: [
                             Container(
                               padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 2.h,
+                                horizontal: AppSpacing.sm,
+                                vertical: AppSpacing.xs,
                               ),
                               decoration: BoxDecoration(
-                                color: _getTipoColor().withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4.r),
+                                color: _getTipoColor().withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
                               ),
                               child: Text(
                                 movimiento.tipo.displayName,
@@ -663,15 +701,18 @@ class _MovimientoCard extends StatelessWidget {
                                   fontSize: 11.sp,
                                   color: _getTipoColor(),
                                   fontWeight: FontWeight.w600,
+                                  fontFamily: 'Inter',
                                 ),
                               ),
                             ),
-                            SizedBox(width: 8.w),
+                            SizedBox(width: AppSpacing.sm),
                             Text(
                               _formatDate(movimiento.fecha),
                               style: TextStyle(
                                 fontSize: 11.sp,
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.textSecondary,
+                                fontFamily: 'Inter',
                               ),
                             ),
                           ],
@@ -688,13 +729,16 @@ class _MovimientoCard extends StatelessWidget {
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.success,
+                          fontFamily: 'Inter',
                         ),
                       ),
                       Text(
                         'Cant: ${movimiento.cantidad}',
                         style: TextStyle(
                           fontSize: 11.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.textSecondary,
+                          fontFamily: 'Inter',
                         ),
                       ),
                     ],
@@ -702,19 +746,21 @@ class _MovimientoCard extends StatelessWidget {
                 ],
               ),
               if (movimiento.observacion != null) ...[
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
                 Text(
                   movimiento.observacion!,
                   style: TextStyle(
                     fontSize: 11.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textSecondary,
                     fontStyle: FontStyle.italic,
+                    fontFamily: 'Inter',
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
-              SizedBox(height: 8.h),
+              SizedBox(height: AppSpacing.sm),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -723,7 +769,7 @@ class _MovimientoCard extends StatelessWidget {
                     label: const Text('Editar'),
                     onPressed: onEdit,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   TextButton.icon(
                     icon: Icon(Icons.delete, size: 16.sp),
                     label: const Text('Eliminar'),
@@ -773,20 +819,27 @@ class _MovimientoTypeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: AppColors.borderColor,
+          width: 1,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: EdgeInsets.all(12.w),
+          padding: EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
               Container(
-                padding: EdgeInsets.all(12.w),
+                padding: EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8.r),
+                  color: color.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(
                   icon,
@@ -794,7 +847,7 @@ class _MovimientoTypeOption extends StatelessWidget {
                   size: 24.sp,
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -805,13 +858,16 @@ class _MovimientoTypeOption extends StatelessWidget {
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
                         color: color,
+                        fontFamily: 'Inter',
                       ),
                     ),
                     Text(
                       subtitle,
                       style: TextStyle(
                         fontSize: 12.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textSecondary,
+                        fontFamily: 'Inter',
                       ),
                     ),
                   ],

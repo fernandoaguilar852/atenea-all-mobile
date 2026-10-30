@@ -174,8 +174,8 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
       children: [
         // Filtros
         Container(
-          padding: EdgeInsets.all(16.w),
-          color: AppColors.grey100,
+          padding: EdgeInsets.all(AppSpacing.md),
+          color: AppColors.surfaceVariant,
           child: Column(
             children: [
               // Filtro por estado
@@ -215,7 +215,7 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                   _loadData();
                 },
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md),
 
               // Filtro de rango de fechas
               InkWell(
@@ -250,12 +250,14 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                     '${DateFormat('dd/MM/yyyy').format(_fechaDesde!)} - ${DateFormat('dd/MM/yyyy').format(_fechaHasta!)}',
                     style: TextStyle(
                       fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.textPrimary,
+                      fontFamily: 'Inter',
                     ),
                   ),
                 ),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md),
 
               // Búsqueda de consumidores
               Column(
@@ -294,18 +296,15 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                     enabled: _consumidorIdFilter == null,
                   ),
                   if (_consumidoresEncontrados.isNotEmpty) ...[
-                    SizedBox(height: 4.h),
+                    SizedBox(height: AppSpacing.xs),
                     Container(
                       decoration: BoxDecoration(
                         color: AppColors.white,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        border: Border.all(
+                          color: AppColors.borderMedium,
+                          width: 1,
+                        ),
                       ),
                       constraints: BoxConstraints(maxHeight: 200.h),
                       child: ListView.separated(
@@ -321,13 +320,16 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
+                                fontFamily: 'Inter',
                               ),
                             ),
                             subtitle: Text(
                               '${consumidor.tipoIdentificacion}: ${consumidor.numeroIdentificacion}',
                               style: TextStyle(
                                 fontSize: 12.sp,
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.textSecondary,
+                                fontFamily: 'Inter',
                               ),
                             ),
                             onTap: () => _seleccionarConsumidor(consumidor),
@@ -341,7 +343,7 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
 
               // Botón limpiar filtros
               if (_tieneFiltrosActivos) ...[
-                SizedBox(height: 12.h),
+                SizedBox(height: AppSpacing.md),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -370,16 +372,18 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                         children: [
                           Icon(Icons.error_outline,
                               size: 48.sp, color: AppColors.danger),
-                          SizedBox(height: 16.h),
+                          SizedBox(height: AppSpacing.md),
                           Text(
                             ventasState.error!,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14.sp,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.textSecondary,
+                              fontFamily: 'Inter',
                             ),
                           ),
-                          SizedBox(height: 16.h),
+                          SizedBox(height: AppSpacing.md),
                           ElevatedButton(
                             onPressed: _loadData,
                             child: const Text('Reintentar'),
@@ -394,12 +398,14 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                             children: [
                               Icon(Icons.receipt_long_outlined,
                                   size: 64.sp, color: AppColors.grey300),
-                              SizedBox(height: 16.h),
+                              SizedBox(height: AppSpacing.md),
                               Text(
                                 'No hay ventas para mostrar',
                                 style: TextStyle(
                                   fontSize: 16.sp,
+                                  fontWeight: FontWeight.w400,
                                   color: AppColors.textSecondary,
+                                  fontFamily: 'Inter',
                                 ),
                               ),
                             ],
@@ -409,7 +415,7 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                           children: [
                             Expanded(
                               child: ListView.builder(
-                                padding: EdgeInsets.all(16.w),
+                                padding: EdgeInsets.all(AppSpacing.md),
                                 itemCount: ventasState.ventas.length,
                                 itemBuilder: (context, index) {
                                   final venta = ventasState.ventas[index];
@@ -421,14 +427,14 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                             if (ventasState.totalElements > 0)
                               Container(
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: 16.w,
-                                  vertical: 12.h,
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.md,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.grey100,
+                                  color: AppColors.surfaceVariant,
                                   border: Border(
                                     top: BorderSide(
-                                      color: AppColors.grey300,
+                                      color: AppColors.borderColor,
                                       width: 1,
                                     ),
                                   ),
@@ -441,7 +447,9 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                                       'Mostrando ${ventasState.ventas.length} de ${ventasState.totalElements}',
                                       style: TextStyle(
                                         fontSize: 12.sp,
+                                        fontWeight: FontWeight.w400,
                                         color: AppColors.textSecondary,
+                                        fontFamily: 'Inter',
                                       ),
                                     ),
                                     // Botones de navegación
@@ -461,13 +469,17 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                                         ),
                                         Container(
                                           padding: EdgeInsets.symmetric(
-                                            horizontal: 12.w,
-                                            vertical: 4.h,
+                                            horizontal: AppSpacing.md,
+                                            vertical: AppSpacing.xs,
                                           ),
                                           decoration: BoxDecoration(
                                             color: AppColors.white,
                                             borderRadius: BorderRadius.circular(
                                               AppRadius.sm,
+                                            ),
+                                            border: Border.all(
+                                              color: AppColors.borderColor,
+                                              width: 1,
                                             ),
                                           ),
                                           child: Text(
@@ -475,6 +487,7 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                                             style: TextStyle(
                                               fontSize: 14.sp,
                                               fontWeight: FontWeight.w600,
+                                              fontFamily: 'Inter',
                                             ),
                                           ),
                                         ),
@@ -536,11 +549,15 @@ class _VentaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 12.h),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
+    return Container(
+      margin: EdgeInsets.only(bottom: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: AppColors.borderColor,
+          width: 1,
+        ),
       ),
       child: InkWell(
         onTap: () {
@@ -552,7 +569,7 @@ class _VentaCard extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -567,14 +584,17 @@ class _VentaCard extends StatelessWidget {
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
+                        fontFamily: 'Inter',
                       ),
                     ),
                   ),
                   Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.xs,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getEstadoColor(venta.estado).withValues(alpha: 0.1),
+                      color: _getEstadoColor(venta.estado).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(AppRadius.full),
                     ),
                     child: Text(
@@ -583,13 +603,14 @@ class _VentaCard extends StatelessWidget {
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: _getEstadoColor(venta.estado),
+                        fontFamily: 'Inter',
                       ),
                     ),
                   ),
                 ],
               ),
 
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md),
 
               // Consumidor si existe
               if (venta.consumidorNombre != null) ...[
@@ -597,19 +618,21 @@ class _VentaCard extends StatelessWidget {
                   children: [
                     Icon(Icons.person_outline,
                         size: 16.sp, color: AppColors.grey600),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         venta.consumidorNombre!,
                         style: TextStyle(
                           fontSize: 14.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.textSecondary,
+                          fontFamily: 'Inter',
                         ),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: AppSpacing.sm),
               ],
 
               // Fecha y Forma de Pago
@@ -617,32 +640,36 @@ class _VentaCard extends StatelessWidget {
                 children: [
                   Icon(Icons.calendar_today,
                       size: 16.sp, color: AppColors.grey600),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: AppSpacing.sm),
                   Text(
                     DateFormat('dd/MM/yyyy HH:mm').format(venta.createdAt),
                     style: TextStyle(
                       fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.textSecondary,
+                      fontFamily: 'Inter',
                     ),
                   ),
-                  SizedBox(width: 16.w),
+                  SizedBox(width: AppSpacing.md),
                   if (venta.formaPagoNombre != null) ...[
                     Icon(Icons.payment, size: 16.sp, color: AppColors.grey600),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: AppSpacing.sm),
                     Text(
                       venta.formaPagoNombre!,
                       style: TextStyle(
                         fontSize: 13.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textSecondary,
+                        fontFamily: 'Inter',
                       ),
                     ),
                   ],
                 ],
               ),
 
-              SizedBox(height: 12.h),
-              Divider(height: 1.h, color: AppColors.grey300),
-              SizedBox(height: 12.h),
+              SizedBox(height: AppSpacing.md),
+              Divider(height: 1.h, color: AppColors.borderColor),
+              SizedBox(height: AppSpacing.md),
 
               // Total
               Row(
@@ -654,6 +681,7 @@ class _VentaCard extends StatelessWidget {
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
+                      fontFamily: 'Inter',
                     ),
                   ),
                   Text(
@@ -663,6 +691,8 @@ class _VentaCard extends StatelessWidget {
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
+                      fontFamily: 'Inter',
+                      height: 1.2,
                     ),
                   ),
                 ],
