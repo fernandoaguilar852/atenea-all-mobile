@@ -29,7 +29,6 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
   DateTime? _fechaDesde;
   DateTime? _fechaHasta;
   int? _consumidorIdFilter;
-  String? _consumidorNombreFilter;
 
   // Búsqueda de consumidores
   final TextEditingController _searchController = TextEditingController();
@@ -123,11 +122,9 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
     setState(() {
       if (consumidor != null) {
         _consumidorIdFilter = consumidor.consumidorId;
-        _consumidorNombreFilter = consumidor.nombreRazonSocial;
         _searchController.text = consumidor.nombreRazonSocial;
       } else {
         _consumidorIdFilter = null;
-        _consumidorNombreFilter = null;
         _searchController.clear();
       }
       _consumidoresEncontrados = [];
@@ -143,7 +140,6 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
       _fechaDesde = DateTime(now.year, now.month, now.day);
       _fechaHasta = DateTime(now.year, now.month, now.day, 23, 59, 59);
       _consumidorIdFilter = null;
-      _consumidorNombreFilter = null;
       _searchController.clear();
       _consumidoresEncontrados = [];
       _currentPage = 1;

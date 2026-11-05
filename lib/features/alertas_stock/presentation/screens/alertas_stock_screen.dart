@@ -19,7 +19,6 @@ class AlertasStockScreen extends ConsumerStatefulWidget {
 
 class _AlertasStockScreenState extends ConsumerState<AlertasStockScreen> {
   int _currentPage = 1;
-  final int _pageSize = 10;
 
   // Filtro de producto
   final TextEditingController _productoSearchController = TextEditingController();

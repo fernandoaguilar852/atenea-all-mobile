@@ -58,14 +58,17 @@ class ApiConstants {
   static const String appId = '550e8400-e29b-41d4-a716-446655440001';
   static const String contentTypeJson = 'application/json';
 
-  // Timeouts
-  static const Duration connectTimeout = Duration(seconds: 30);
-  static const Duration receiveTimeout = Duration(seconds: 30);
-  static const Duration sendTimeout = Duration(seconds: 30);
+  // Timeouts (optimizados para mejor UX)
+  static const Duration connectTimeout = Duration(seconds: 15);  // Reducido de 30s
+  static const Duration receiveTimeout = Duration(seconds: 20);  // Reducido de 30s
+  static const Duration sendTimeout = Duration(seconds: 15);     // Reducido de 30s
 
-  // Retry
-  static const int maxRetries = 3;
-  static const Duration retryDelay = Duration(seconds: 2);
+  // Retry (para reintentos automáticos)
+  static const int maxRetries = 2;                    // Reintentos automáticos
+  static const Duration retryDelay = Duration(seconds: 1);  // Delay entre reintentos
+
+  // Slow connection threshold
+  static const Duration slowConnectionThreshold = Duration(seconds: 5);
 
   // Build full URL
   static String buildUrl(String endpoint) {

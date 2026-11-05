@@ -367,7 +367,7 @@ class _NotificacionItem extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: _getPrioridadColor(notificacion.prioridad)
-                            .withOpacity(0.1),
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(

@@ -25,6 +25,7 @@ class DioClient {
 
     _dio.interceptors.addAll([
       _headerInterceptor(),
+      _retryInterceptor(),  // Retry automático para errores de red
       _authInterceptor(),
       if (kDebugMode) _loggingInterceptor(),
     ]);
@@ -45,6 +46,71 @@ class DioClient {
         return handler.next(options);
       },
     );
+  }
+
+  // Retry Interceptor - Reintenta automáticamente peticiones fallidas
+  Interceptor _retryInterceptor() {
+    return InterceptorsWrapper(
+      onError: (error, handler) async {
+        // Solo reintentar para ciertos tipos de errores
+        final shouldRetry = _shouldRetryRequest(error);
+
+        if (!shouldRetry) {
+          return handler.next(error);
+        }
+
+        // Obtener número de reintentos del request
+        final retryCount = error.requestOptions.extra['retryCount'] as int? ?? 0;
+
+        if (retryCount >= ApiConstants.maxRetries) {
+          // Ya se agotaron los reintentos
+          debugPrint('Max retries reached for ${error.requestOptions.path}');
+          return handler.next(error);
+        }
+
+        // Incrementar contador de reintentos
+        error.requestOptions.extra['retryCount'] = retryCount + 1;
+
+        debugPrint('Retrying request (${retryCount + 1}/${ApiConstants.maxRetries}): ${error.requestOptions.path}');
+
+        // Esperar antes de reintentar
+        await Future.delayed(ApiConstants.retryDelay);
+
+        try {
+          // Reintentar la petición
+          final response = await _dio.fetch(error.requestOptions);
+          return handler.resolve(response);
+        } catch (e) {
+          // Si falla el reintento, pasar al siguiente handler
+          if (e is DioException) {
+            return handler.next(e);
+          }
+          return handler.next(error);
+        }
+      },
+    );
+  }
+
+  // Determina si un error debe ser reintentado
+  bool _shouldRetryRequest(DioException error) {
+    // Errores de conexión/timeout que deben ser reintentados
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.connectionError) {
+      return true;
+    }
+
+    // Si es un error de respuesta, solo reintentar en casos específicos
+    if (error.type == DioExceptionType.badResponse) {
+      final statusCode = error.response?.statusCode;
+      // Reintentar solo en errores 5xx (servidor) o 408 (timeout)
+      if (statusCode != null && (statusCode >= 500 || statusCode == 408)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   // Auth Interceptor - Agrega token de autenticación

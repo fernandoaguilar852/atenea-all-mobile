@@ -13,7 +13,6 @@ class AppDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final currentIndex = ref.watch(mainScreenIndexProvider);
-    final currentRoute = GoRouterState.of(context).matchedLocation;
 
     return Drawer(
       child: Column(

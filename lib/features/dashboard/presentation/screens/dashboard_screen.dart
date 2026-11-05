@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../../shared/widgets/app_drawer.dart';
+import '../../../../shared/widgets/skeleton_widgets.dart';
 import '../../../../shared/providers/navigation_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../chat/widgets/chat_widget.dart';
@@ -60,9 +61,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
               SizedBox(height: AppSpacing.lg),
 
-              // KPIs Grid
+              // KPIs Grid con skeleton loading (como Instagram)
               dashboardState.isLoading && dashboardState.stats == null
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const SkeletonDashboardGrid()  // Skeleton mientras carga por primera vez
                   : _KPIsGrid(stats: dashboardState.stats),
 
               SizedBox(height: AppSpacing.lg),

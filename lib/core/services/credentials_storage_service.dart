@@ -2,9 +2,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
 class CredentialsStorageService {
-  static const String _keyEmail = 'saved_email';
-  static const String _keyPassword = 'saved_password';
-  static const String _keyRememberMe = 'remember_me';
+  // Prefijo único para evitar conflictos con otras apps ATENEA
+  static const String _prefix = 'atenea_local_';
+  static const String _keyEmail = '${_prefix}saved_email';
+  static const String _keyPassword = '${_prefix}saved_password';
+  static const String _keyRememberMe = '${_prefix}remember_me';
 
   final FlutterSecureStorage _secureStorage;
   final LocalAuthentication _localAuth;
