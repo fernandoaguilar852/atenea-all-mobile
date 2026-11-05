@@ -36,6 +36,10 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
   bool _isSearching = false;
   Timer? _debounce;
 
+  // Control de scroll
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollToTop = false;
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +47,15 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
     final now = DateTime.now();
     _fechaDesde = DateTime(now.year, now.month, now.day);
     _fechaHasta = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+    // Listener para mostrar/ocultar botón de scroll to top
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 200 && !_showScrollToTop) {
+        setState(() => _showScrollToTop = true);
+      } else if (_scrollController.offset <= 200 && _showScrollToTop) {
+        setState(() => _showScrollToTop = false);
+      }
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
@@ -52,6 +65,7 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -166,10 +180,15 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
   Widget build(BuildContext context) {
     final ventasState = ref.watch(ventasProvider);
 
-    final bodyContent = Column(
+    final bodyContent = Stack(
       children: [
-        // Filtros
-        Container(
+        SingleChildScrollView(
+          controller: _scrollController,
+          padding: EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            children: [
+              // Filtros
+              Container(
           padding: EdgeInsets.all(AppSpacing.md),
           color: AppColors.surfaceVariant,
           child: Column(
@@ -357,12 +376,11 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
           ),
         ),
 
-        // Lista de ventas
-        Expanded(
-          child: ventasState.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : ventasState.error != null
-                  ? Center(
+              // Lista de ventas
+              if (ventasState.isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (ventasState.error != null)
+                  Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -387,8 +405,8 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                         ],
                       ),
                     )
-                  : ventasState.ventas.isEmpty
-                      ? Center(
+              else if (ventasState.ventas.isEmpty)
+                  Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -407,106 +425,127 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                             ],
                           ),
                         )
-                      : Column(
-                          children: [
-                            Expanded(
-                              child: ListView.builder(
-                                padding: EdgeInsets.all(AppSpacing.md),
-                                itemCount: ventasState.ventas.length,
-                                itemBuilder: (context, index) {
-                                  final venta = ventasState.ventas[index];
-                                  return _VentaCard(venta: venta);
-                                },
-                              ),
-                            ),
+              else ...[
+                // Renderizar lista de ventas directamente
+                ...ventasState.ventas.map((venta) {
+                  return _VentaCard(venta: venta);
+                }),
                             // Controles de paginación
-                            if (ventasState.totalElements > 0)
+                            if (ventasState.totalElements > 0) ...[
+                              SizedBox(height: AppSpacing.md),
                               Container(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: AppSpacing.md,
-                                  vertical: AppSpacing.md,
+                                  vertical: 12.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.surfaceVariant,
-                                  border: Border(
-                                    top: BorderSide(
-                                      color: AppColors.borderColor,
-                                      width: 1,
-                                    ),
+                                  color: AppColors.white,
+                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                  border: Border.all(
+                                    color: AppColors.borderColor,
+                                    width: 1,
                                   ),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    // Información de paginación
+                                    // Botón Anterior
+                                    TextButton.icon(
+                                      onPressed: _currentPage > 1
+                                          ? () {
+                                              setState(() {
+                                                _currentPage--;
+                                              });
+                                              _loadData();
+                                            }
+                                          : null,
+                                      icon: Icon(Icons.chevron_left, size: 20.sp),
+                                      label: Text(
+                                        'Anterior',
+                                        style: TextStyle(fontSize: 14.sp, fontFamily: 'Inter'),
+                                      ),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: _currentPage > 1
+                                            ? AppColors.primary
+                                            : AppColors.grey400,
+                                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                                      ),
+                                    ),
+                                    // Información de página
                                     Text(
-                                      'Mostrando ${ventasState.ventas.length} de ${ventasState.totalElements}',
+                                      'Página $_currentPage de ${(ventasState.totalElements / _pageSize).ceil()}',
                                       style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w400,
-                                        color: AppColors.textSecondary,
+                                        color: AppColors.textPrimary,
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w600,
                                         fontFamily: 'Inter',
                                       ),
                                     ),
-                                    // Botones de navegación
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.chevron_left),
-                                          onPressed: _currentPage > 1
-                                              ? () {
-                                                  setState(() {
-                                                    _currentPage--;
-                                                  });
-                                                  _loadData();
-                                                }
-                                              : null,
-                                          iconSize: 24.sp,
-                                        ),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: AppSpacing.md,
-                                            vertical: AppSpacing.xs,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              AppRadius.sm,
-                                            ),
-                                            border: Border.all(
-                                              color: AppColors.borderColor,
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            'Pág. $_currentPage',
-                                            style: TextStyle(
-                                              fontSize: 14.sp,
-                                              fontWeight: FontWeight.w600,
-                                              fontFamily: 'Inter',
-                                            ),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.chevron_right),
-                                          onPressed: ventasState.hasMoreElements
-                                              ? () {
-                                                  setState(() {
-                                                    _currentPage++;
-                                                  });
-                                                  _loadData();
-                                                }
-                                              : null,
-                                          iconSize: 24.sp,
-                                        ),
-                                      ],
+                                    // Botón Siguiente
+                                    TextButton.icon(
+                                      onPressed: ventasState.hasMoreElements
+                                          ? () {
+                                              setState(() {
+                                                _currentPage++;
+                                              });
+                                              _loadData();
+                                            }
+                                          : null,
+                                      label: Text(
+                                        'Siguiente',
+                                        style: TextStyle(fontSize: 14.sp, fontFamily: 'Inter'),
+                                      ),
+                                      icon: Icon(Icons.chevron_right, size: 20.sp),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: ventasState.hasMoreElements
+                                            ? AppColors.primary
+                                            : AppColors.grey400,
+                                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                          ],
-                        ),
+                              // Espacio adicional para que el botón flotante no tape la paginación
+                              SizedBox(height: 80.h),
+                            ],
+              ],
+            ],
+          ),
         ),
+        // Botón flotante para scroll to top
+        if (_showScrollToTop)
+          Positioned(
+            bottom: 16.h,
+            right: 16.w,
+            child: Material(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(28.r),
+              elevation: 4,
+              child: InkWell(
+                onTap: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                borderRadius: BorderRadius.circular(28.r),
+                child: Container(
+                  width: 56.w,
+                  height: 56.w,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28.r),
+                  ),
+                  child: Icon(
+                    Icons.arrow_upward,
+                    color: AppColors.white,
+                    size: 28.sp,
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
 
