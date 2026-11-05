@@ -40,6 +40,9 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _showScrollToTop = false;
 
+  // Lifecycle listener
+  late final AppLifecycleListener _lifecycleListener;
+
   @override
   void initState() {
     super.initState();
@@ -57,6 +60,15 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
       }
     });
 
+    // Listener para recargar cuando la app vuelve al foreground
+    _lifecycleListener = AppLifecycleListener(
+      onResume: () {
+        // Cuando la app vuelve al foreground, recargar datos
+        debugPrint('App resumed - reloading ventas data');
+        _refreshData();
+      },
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -66,6 +78,7 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _lifecycleListener.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -88,6 +101,27 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
   // Método público para recargar desde fuera
   void reloadData() {
     _loadData();
+  }
+
+  // Método para refresh con limpieza de cache
+  Future<void> _refreshData() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    // Limpiar cache antes de recargar
+    await ref.read(ventasProvider.notifier).clearCache(user.clienteId);
+
+    // Recargar con forceRefresh
+    await ref.read(ventasProvider.notifier).loadVentas(
+      clienteId: user.clienteId,
+      pageNumber: _currentPage,
+      pageSize: _pageSize,
+      estado: _estadoFilter,
+      consumidorId: _consumidorIdFilter,
+      startDate: _fechaDesde,
+      endDate: _fechaHasta,
+      forceRefresh: true, // Forzar recarga sin cache
+    );
   }
 
   void _buscarConsumidores(String query) {
@@ -182,10 +216,12 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
 
     final bodyContent = Stack(
       children: [
-        SingleChildScrollView(
-          controller: _scrollController,
-          padding: EdgeInsets.all(AppSpacing.md),
-          child: Column(
+        RefreshIndicator(
+          onRefresh: _refreshData,
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Column(
             children: [
               // Filtros
               Container(
@@ -513,6 +549,7 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
             ],
           ),
         ),
+          ),
         // Botón flotante para scroll to top
         if (_showScrollToTop)
           Positioned(

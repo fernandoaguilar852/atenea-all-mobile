@@ -102,6 +102,22 @@ class CacheService {
     await _cacheBox.clear();
   }
 
+  /// Limpia cache por patrón (prefix)
+  Future<void> clearByPattern(String pattern) async {
+    await _ensureInitialized();
+    final keysToDelete = <String>[];
+
+    for (var key in _cacheBox.keys) {
+      if ((key as String).startsWith(pattern)) {
+        keysToDelete.add(key);
+      }
+    }
+
+    for (var key in keysToDelete) {
+      await _cacheBox.delete(key);
+    }
+  }
+
   /// Limpia cache expirado
   Future<void> clearExpired() async {
     await _ensureInitialized();
@@ -157,7 +173,19 @@ class CacheKeys {
   static String dashboardStats(int clienteId) => '${prefix}dashboard_$clienteId';
 
   // Ventas
-  static String ventas(int clienteId, int page) => '${prefix}ventas_${clienteId}_$page';
+  static String ventas({
+    required int clienteId,
+    required int pageNumber,
+    required int pageSize,
+    required String estado,
+    required int cajaId,
+    required int consumidorId,
+    required String startDate,
+    required String endDate,
+  }) =>
+      '${prefix}ventas_${clienteId}_p${pageNumber}_ps${pageSize}_e${estado}_c${cajaId}_con${consumidorId}_${startDate}_$endDate';
+
+  static String ventasPrefix(int clienteId) => '${prefix}ventas_$clienteId';
   static String ventaDetalle(int ventaId) => '${prefix}venta_detail_$ventaId';
 
   // Movimientos
