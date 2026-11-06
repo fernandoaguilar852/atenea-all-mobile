@@ -24,9 +24,22 @@ class _AlertasStockScreenState extends ConsumerState<AlertasStockScreen> {
   final TextEditingController _productoSearchController = TextEditingController();
   Producto? _productoSeleccionado;
 
+  // Control de scroll
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollToTop = false;
+
   @override
   void initState() {
     super.initState();
+
+    // Listener para mostrar/ocultar botón de scroll to top
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 200 && !_showScrollToTop) {
+        setState(() => _showScrollToTop = true);
+      } else if (_scrollController.offset <= 200 && _showScrollToTop) {
+        setState(() => _showScrollToTop = false);
+      }
+    });
 
     // Cargar alertas al iniciar
     Future.microtask(() {
@@ -37,6 +50,7 @@ class _AlertasStockScreenState extends ConsumerState<AlertasStockScreen> {
   @override
   void dispose() {
     _productoSearchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -75,8 +89,20 @@ class _AlertasStockScreenState extends ConsumerState<AlertasStockScreen> {
   }
 
   Widget _buildBody(AlertasStockState state, int clienteId) {
-    return Column(
+    return Stack(
       children: [
+        RefreshIndicator(
+          onRefresh: () {
+            setState(() {
+              _currentPage = 1;
+            });
+            _loadData();
+            return Future.value();
+          },
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              children: [
         // Filtro de producto
         Container(
           padding: EdgeInsets.all(AppSpacing.md),
@@ -138,118 +164,118 @@ class _AlertasStockScreenState extends ConsumerState<AlertasStockScreen> {
           ),
         ),
         // Lista de alertas
-        Expanded(
-          child: state.isLoading && state.alertas.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : state.error != null && state.alertas.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(AppSpacing.md),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.error_outline,
-                                size: 64.sp, color: AppColors.danger),
-                            SizedBox(height: AppSpacing.md),
-                            Text(
-                              'Error al cargar alertas',
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                                fontFamily: 'Inter',
-                              ),
-                            ),
-                            SizedBox(height: AppSpacing.sm),
-                            Text(
-                              state.error!,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.textSecondary,
-                                fontFamily: 'Inter',
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: AppSpacing.md),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                ref
-                                    .read(alertasStockProvider(clienteId).notifier)
-                                    .refresh();
-                              },
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Reintentar'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : state.alertas.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(AppSpacing.md),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  _productoSeleccionado != null
-                                      ? Icons.search_off
-                                      : Icons.check_circle_outline,
-                                  size: 64.sp,
-                                  color: _productoSeleccionado != null
-                                      ? AppColors.grey400
-                                      : AppColors.success,
-                                ),
-                                SizedBox(height: AppSpacing.md),
-                                Text(
-                                  _productoSeleccionado != null
-                                      ? 'No hay alertas para este producto'
-                                      : 'No hay alertas de stock',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                    fontFamily: 'Inter',
-                                  ),
-                                ),
-                                SizedBox(height: AppSpacing.sm),
-                                Text(
-                                  _productoSeleccionado != null
-                                      ? 'El producto "${_productoSeleccionado!.nombre}" tiene stock suficiente'
-                                      : 'Todos tus productos tienen stock suficiente',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppColors.textSecondary,
-                                    fontFamily: 'Inter',
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: () {
-                            setState(() {
-                              _currentPage = 1;
-                            });
-                            _loadData();
-                            return Future.value();
-                          },
-                          child: ListView.separated(
-                            padding: EdgeInsets.all(AppSpacing.md),
-                            itemCount: state.alertas.length,
-                            separatorBuilder: (context, index) =>
-                                SizedBox(height: AppSpacing.md),
-                            itemBuilder: (context, index) {
-                              final alerta = state.alertas[index];
-                              return _AlertaStockCard(alerta: alerta);
-                            },
-                          ),
-                        ),
-        ),
+        if (state.isLoading && state.alertas.isEmpty)
+          Container(
+            height: 400.h,
+            alignment: Alignment.center,
+            child: const CircularProgressIndicator(),
+          )
+        else if (state.error != null && state.alertas.isEmpty)
+          Container(
+            height: 400.h,
+            alignment: Alignment.center,
+            child: Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline,
+                      size: 64.sp, color: AppColors.danger),
+                  SizedBox(height: AppSpacing.md),
+                  Text(
+                    'Error al cargar alertas',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.sm),
+                  Text(
+                    state.error!,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                      fontFamily: 'Inter',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      ref
+                          .read(alertasStockProvider(clienteId).notifier)
+                          .refresh();
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else if (state.alertas.isEmpty)
+          Container(
+            height: 400.h,
+            alignment: Alignment.center,
+            child: Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _productoSeleccionado != null
+                        ? Icons.search_off
+                        : Icons.check_circle_outline,
+                    size: 64.sp,
+                    color: _productoSeleccionado != null
+                        ? AppColors.grey400
+                        : AppColors.success,
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  Text(
+                    _productoSeleccionado != null
+                        ? 'No hay alertas para este producto'
+                        : 'No hay alertas de stock',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.sm),
+                  Text(
+                    _productoSeleccionado != null
+                        ? 'El producto "${_productoSeleccionado!.nombre}" tiene stock suficiente'
+                        : 'Todos tus productos tienen stock suficiente',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                      fontFamily: 'Inter',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          // Lista de alertas como Column
+          Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              children: [
+                ...state.alertas.map((alerta) => Padding(
+                      padding: EdgeInsets.only(bottom: AppSpacing.md),
+                      child: _AlertaStockCard(alerta: alerta),
+                    )),
+              ],
+            ),
+          ),
         // Paginación en la parte inferior
         if (state.totalElement > 0)
           Container(
@@ -266,61 +292,98 @@ class _AlertasStockScreenState extends ConsumerState<AlertasStockScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Información de paginación
-                Text(
-                  'Mostrando ${state.alertas.length} de ${state.totalElement}',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
+                // Botón Anterior
+                TextButton.icon(
+                  onPressed: _currentPage > 1
+                      ? () {
+                          setState(() {
+                            _currentPage--;
+                          });
+                          _loadData();
+                        }
+                      : null,
+                  icon: Icon(Icons.chevron_left, size: 20.sp),
+                  label: Text(
+                    'Anterior',
+                    style: TextStyle(fontSize: 14.sp, fontFamily: 'Inter'),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: _currentPage > 1
+                        ? AppColors.primary
+                        : AppColors.grey400,
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                   ),
                 ),
-                // Botones de navegación
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: _currentPage > 1
-                          ? () {
-                              setState(() {
-                                _currentPage--;
-                              });
-                              _loadData();
-                            }
-                          : null,
-                      iconSize: 24.sp,
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 4.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Text(
-                        'Pág. $_currentPage',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: state.hasMoreElements
-                          ? () {
-                              setState(() {
-                                _currentPage++;
-                              });
-                              _loadData();
-                            }
-                          : null,
-                      iconSize: 24.sp,
-                    ),
-                  ],
+                // Información de página
+                Text(
+                  'Página $_currentPage de ${(state.totalElement / state.pageSize).ceil()}',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+                // Botón Siguiente
+                TextButton.icon(
+                  onPressed: state.hasMoreElements
+                      ? () {
+                          setState(() {
+                            _currentPage++;
+                          });
+                          _loadData();
+                        }
+                      : null,
+                  label: Text(
+                    'Siguiente',
+                    style: TextStyle(fontSize: 14.sp, fontFamily: 'Inter'),
+                  ),
+                  icon: Icon(Icons.chevron_right, size: 20.sp),
+                  style: TextButton.styleFrom(
+                    foregroundColor: state.hasMoreElements
+                        ? AppColors.primary
+                        : AppColors.grey400,
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  ),
                 ),
               ],
+            ),
+          ),
+        // Espaciado al final para que no quede pegado al fondo
+        SizedBox(height: 80.h),
+              ],
+            ),
+          ),
+        ),
+        // Botón flotante scroll-to-top
+        if (_showScrollToTop)
+          Positioned(
+            bottom: 16.h,
+            right: 16.w,
+            child: Material(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(28.w),
+              elevation: 4,
+              child: InkWell(
+                onTap: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                borderRadius: BorderRadius.circular(28.w),
+                child: Container(
+                  width: 56.w,
+                  height: 56.w,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.arrow_upward,
+                    color: AppColors.white,
+                    size: 28.sp,
+                  ),
+                ),
+              ),
             ),
           ),
       ],
