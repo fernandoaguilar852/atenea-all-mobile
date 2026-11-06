@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../../core/config/theme_config.dart';
 import '../presentation/providers/chat_provider.dart';
 
@@ -38,11 +39,138 @@ class _ChatDialogState extends ConsumerState<ChatDialog> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  // Speech-to-Text
+  stt.SpeechToText? _speech;
+  bool _isListening = false;
+  bool _speechAvailable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+    _messageController.addListener(() {
+      setState(() {}); // Actualizar UI cuando cambia el texto
+    });
+  }
+
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _speech?.stop();
     super.dispose();
+  }
+
+  Future<void> _initSpeech() async {
+    _speech = stt.SpeechToText();
+    _speechAvailable = await _speech!.initialize(
+      onError: (error) {
+        debugPrint('Speech Error: $error');
+        if (mounted) {
+          setState(() => _isListening = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error de voz: ${error.errorMsg}'),
+              backgroundColor: AppColors.danger,
+            ),
+          );
+        }
+      },
+      onStatus: (status) {
+        debugPrint('Speech Status: $status');
+        if (status == 'done' || status == 'notListening') {
+          if (mounted) {
+            setState(() => _isListening = false);
+          }
+        }
+      },
+    );
+    debugPrint('Speech available: $_speechAvailable');
+    if (mounted && !_speechAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reconocimiento de voz no disponible en este dispositivo'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _toggleListening() async {
+    debugPrint('Toggle listening pressed. Speech available: $_speechAvailable, Is listening: $_isListening');
+
+    if (!_speechAvailable) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reconocimiento de voz no disponible'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (_isListening) {
+      // Detener grabación
+      debugPrint('Stopping speech recognition');
+      await _speech?.stop();
+      setState(() => _isListening = false);
+    } else {
+      // Mostrar mensaje de inicio
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Iniciando grabación...'),
+            duration: Duration(seconds: 1),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+
+      // Iniciar grabación
+      debugPrint('Starting speech recognition');
+      setState(() => _isListening = true);
+
+      try {
+        await _speech?.listen(
+          onResult: (result) {
+            debugPrint('Speech result: ${result.recognizedWords}');
+            setState(() {
+              _messageController.text = result.recognizedWords;
+            });
+            // Si es el resultado final, detener
+            if (result.finalResult) {
+              _speech?.stop();
+              setState(() => _isListening = false);
+            }
+          },
+          listenOptions: stt.SpeechListenOptions(
+            listenMode: stt.ListenMode.dictation,
+            partialResults: true,
+            onDevice: false,
+            listenFor: const Duration(seconds: 30),
+            pauseFor: const Duration(seconds: 2),
+            localeId: 'es_ES',
+          ),
+        );
+        debugPrint('Speech listening started successfully');
+      } catch (e) {
+        debugPrint('Error starting speech: $e');
+        setState(() => _isListening = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error al iniciar reconocimiento de voz'),
+              backgroundColor: AppColors.danger,
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _scrollToBottom() {
@@ -232,7 +360,7 @@ class _ChatDialogState extends ConsumerState<ChatDialog> {
                     child: TextField(
                       controller: _messageController,
                       decoration: InputDecoration(
-                        hintText: 'Escribe tu mensaje...',
+                        hintText: _isListening ? 'Escuchando...' : 'Escribe tu mensaje...',
                         filled: true,
                         fillColor: AppColors.white,
                         contentPadding: EdgeInsets.symmetric(
@@ -251,13 +379,32 @@ class _ChatDialogState extends ConsumerState<ChatDialog> {
                   ),
                   SizedBox(width: 8.w),
                   Container(
-                    decoration: const BoxDecoration(
-                      gradient: AppColors.primaryGradient,
+                    decoration: BoxDecoration(
+                      gradient: _isListening
+                          ? const LinearGradient(
+                              colors: [AppColors.danger, Color(0xFFFF6B6B)],
+                            )
+                          : (_messageController.text.isEmpty
+                              ? const LinearGradient(
+                                  colors: [AppColors.success, Color(0xFF4CAF50)],
+                                )
+                              : AppColors.primaryGradient),
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.send, color: AppColors.white),
-                      onPressed: chatState.isLoading ? null : _sendMessage,
+                      icon: Icon(
+                        _isListening
+                            ? Icons.stop
+                            : (_messageController.text.isEmpty
+                                ? Icons.mic
+                                : Icons.send),
+                        color: AppColors.white,
+                      ),
+                      onPressed: chatState.isLoading
+                          ? null
+                          : (_messageController.text.isEmpty
+                              ? _toggleListening
+                              : _sendMessage),
                     ),
                   ),
                 ],
