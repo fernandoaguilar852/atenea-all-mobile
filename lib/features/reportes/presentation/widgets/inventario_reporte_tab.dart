@@ -31,6 +31,10 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
   Timer? _debounce;
   String? _tipoMovimientoSelected;
 
+  // Control de scroll
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollToTop = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,13 +42,23 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
     final now = DateTime.now();
     _startDate = now;
     _endDate = now;
-    _loadData();
+    // NO cargar datos automáticamente - esperar a que el usuario haga click en Consultar
+
+    // Listener para mostrar/ocultar botón de scroll to top
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 200 && !_showScrollToTop) {
+        setState(() => _showScrollToTop = true);
+      } else if (_scrollController.offset <= 200 && _showScrollToTop) {
+        setState(() => _showScrollToTop = false);
+      }
+    });
   }
 
   @override
   void dispose() {
     _productoSearchController.dispose();
     _debounce?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -94,7 +108,7 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
         _endDate = picked.end;
         _currentPage = 1;
       });
-      _loadData();
+      // NO llamar a _loadData automáticamente - esperar al botón Consultar
     }
   }
 
@@ -103,8 +117,12 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
     final reporteState = ref.watch(inventarioReporteProvider);
     final reporte = reporteState.data;
 
-    return Column(
+    return Stack(
       children: [
+        SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            children: [
         // Filtros
         Container(
           padding: EdgeInsets.all(AppSpacing.md),
@@ -165,13 +183,9 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
                           _searchTerm = '';
                           _tipoMovimientoSelected = null;
                         });
-                        _loadData();
+                        // NO cargar automáticamente - esperar botón Consultar
                       },
                     ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: _loadData,
-                  ),
                 ],
               ),
               if (_showAdvancedFilters) ...[
@@ -369,6 +383,37 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
                   },
                 ),
               ],
+              // Botón Consultar - siempre al final de los filtros
+              SizedBox(height: 16.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    setState(() => _currentPage = 1);
+                    // Limpiar cache antes de consultar para garantizar datos frescos
+                    await ref.read(inventarioReporteProvider.notifier).clearCache();
+                    _loadData();
+                  },
+                  icon: const Icon(Icons.search, size: 22),
+                  label: Text(
+                    'Consultar Reporte',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -394,14 +439,28 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
               ],
             ),
           ),
-        Expanded(
-          child: reporteState.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : reporteState.error != null
-                  ? Center(child: Text(reporteState.error!))
-                  : reporte == null || reporte.productos.isEmpty
-                      ? const Center(child: Text('No hay datos'))
-                      : ListView.separated(
+        if (reporteState.isLoading)
+          Container(
+            height: 400.h,
+            alignment: Alignment.center,
+            child: const CircularProgressIndicator(),
+          )
+        else if (reporteState.error != null)
+          Container(
+            height: 400.h,
+            alignment: Alignment.center,
+            child: Text(reporteState.error!),
+          )
+        else if (reporte == null || reporte.productos.isEmpty)
+          Container(
+            height: 400.h,
+            alignment: Alignment.center,
+            child: const Text('No hay datos'),
+          )
+        else
+          ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
                           padding: EdgeInsets.all(AppSpacing.md),
                           itemCount: reporte.productos.length,
                           separatorBuilder: (_, __) => SizedBox(height: 8.h),
@@ -470,40 +529,109 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
                             );
                           },
                         ),
-        ),
+
         if (reporte?.pagination != null)
           Container(
-            padding: EdgeInsets.all(AppSpacing.md),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: AppColors.grey100,
+              border: Border(
+                top: BorderSide(
+                  color: AppColors.grey300,
+                  width: 1,
+                ),
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Página $_currentPage de ${reporte!.pagination!.totalPages}',
-                  style: TextStyle(fontSize: 12.sp),
+                // Botón Anterior
+                TextButton.icon(
+                  onPressed: reporte!.pagination!.hasPrevious
+                      ? () {
+                          setState(() => _currentPage--);
+                          _loadData();
+                        }
+                      : null,
+                  icon: Icon(Icons.chevron_left, size: 20.sp),
+                  label: Text(
+                    'Anterior',
+                    style: TextStyle(fontSize: 14.sp, fontFamily: 'Inter'),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: reporte.pagination!.hasPrevious
+                        ? AppColors.primary
+                        : AppColors.grey400,
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  ),
                 ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: reporte.pagination!.hasPrevious
-                          ? () {
-                              setState(() => _currentPage--);
-                              _loadData();
-                            }
-                          : null,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: reporte.pagination!.hasNext
-                          ? () {
-                              setState(() => _currentPage++);
-                              _loadData();
-                            }
-                          : null,
-                    ),
-                  ],
+                // Información de página
+                Text(
+                  'Página $_currentPage de ${reporte.pagination!.totalPages}',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+                // Botón Siguiente
+                TextButton.icon(
+                  onPressed: reporte.pagination!.hasNext
+                      ? () {
+                          setState(() => _currentPage++);
+                          _loadData();
+                        }
+                      : null,
+                  label: Text(
+                    'Siguiente',
+                    style: TextStyle(fontSize: 14.sp, fontFamily: 'Inter'),
+                  ),
+                  icon: Icon(Icons.chevron_right, size: 20.sp),
+                  style: TextButton.styleFrom(
+                    foregroundColor: reporte.pagination!.hasNext
+                        ? AppColors.primary
+                        : AppColors.grey400,
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  ),
                 ),
               ],
+            ),
+          ),
+        // Espaciado al final
+        SizedBox(height: 80.h),
+            ],
+          ),
+        ),
+        // Botón flotante scroll-to-top
+        if (_showScrollToTop)
+          Positioned(
+            bottom: 16.h,
+            right: 16.w,
+            child: Material(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(28.w),
+              elevation: 4,
+              child: InkWell(
+                onTap: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                borderRadius: BorderRadius.circular(28.w),
+                child: Container(
+                  width: 56.w,
+                  height: 56.w,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.arrow_upward,
+                    color: AppColors.white,
+                    size: 28.sp,
+                  ),
+                ),
+              ),
             ),
           ),
       ],

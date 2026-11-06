@@ -400,6 +400,24 @@ class InventarioNotifier
 
   InventarioNotifier(this._repository, this._ref) : super(ReporteState());
 
+  String _getCacheKey({
+    required String startDate,
+    required String endDate,
+    required int pageNumber,
+    required int pageSize,
+    required int productoId,
+    required String tipoMovimiento,
+  }) {
+    return CacheKeys.reporteInventario(
+      startDate: startDate,
+      endDate: endDate,
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+      productoId: productoId,
+      tipoMovimiento: tipoMovimiento,
+    );
+  }
+
   Future<void> loadReporte({
     required String startDate,
     required String endDate,
@@ -407,13 +425,51 @@ class InventarioNotifier
     String? tipoMovimiento,
     int pageNumber = 1,
     int pageSize = 10,
+    bool forceRefresh = false,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
-
     try {
       final user = _ref.read(currentUserProvider);
       if (user == null) throw Exception('Usuario no autenticado');
 
+      final cacheService = _ref.read(cacheServiceProvider);
+      final cacheKey = _getCacheKey(
+        startDate: startDate,
+        endDate: endDate,
+        pageNumber: pageNumber,
+        pageSize: pageSize,
+        productoId: productoId ?? 0,
+        tipoMovimiento: tipoMovimiento ?? '',
+      );
+
+      // Determinar tipo de loading
+      final hasExistingData = state.data != null;
+
+      // Paso 1: Intentar cargar desde cache si no es force refresh
+      if (!forceRefresh) {
+        final cachedData = await cacheService.getStale<Map<String, dynamic>>(cacheKey);
+        if (cachedData != null) {
+          state = state.copyWith(
+            isLoadingMore: hasExistingData,
+            isLoading: !hasExistingData,
+            error: null,
+          );
+          debugPrint('Cache hit for inventario reporte (loading fresh data...)');
+        } else {
+          state = state.copyWith(
+            isLoadingMore: hasExistingData,
+            isLoading: !hasExistingData,
+            error: null,
+          );
+        }
+      } else {
+        state = state.copyWith(
+          isLoadingMore: hasExistingData,
+          isLoading: !hasExistingData,
+          error: null,
+        );
+      }
+
+      // Paso 2: Fetch datos frescos
       final reporte = await _repository.getInventarioReporte(
         clienteId: user.clienteId,
         startDate: startDate,
@@ -424,15 +480,49 @@ class InventarioNotifier
         pageSize: pageSize,
       );
 
-      state = state.copyWith(data: reporte, isLoading: false);
+      // Paso 3: Guardar en cache
+      await cacheService.set(
+        key: cacheKey,
+        data: {
+          'pagination': {
+            'currentPage': reporte.pagination?.currentPage,
+            'totalPages': reporte.pagination?.totalPages,
+            'hasNext': reporte.pagination?.hasNext,
+            'hasPrevious': reporte.pagination?.hasPrevious,
+          },
+        },
+        duration: const Duration(minutes: 5), // Cache por 5 minutos
+      );
+
+      state = state.copyWith(
+        data: reporte,
+        isLoading: false,
+        isLoadingMore: false,
+      );
     } catch (e, stackTrace) {
       debugPrint('Error loading inventario reporte: $e');
       debugPrint('Stack trace: $stackTrace');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Error al cargar reporte de inventario',
-      );
+
+      // Si hay datos existentes, mantenerlos
+      if (state.data != null) {
+        state = state.copyWith(
+          isLoading: false,
+          isLoadingMore: false,
+          error: 'Error al actualizar',
+        );
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          isLoadingMore: false,
+          error: 'Error al cargar reporte de inventario',
+        );
+      }
     }
+  }
+
+  Future<void> clearCache() async {
+    final cacheService = _ref.read(cacheServiceProvider);
+    await cacheService.clearByPattern(CacheKeys.reporteInventarioPrefix);
   }
 
   void clear() {
