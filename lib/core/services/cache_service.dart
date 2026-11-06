@@ -225,4 +225,19 @@ class CacheKeys {
 
   // Consumidores (para autocomplete)
   static String consumidores(int clienteId) => '${prefix}consumidores_$clienteId';
+
+  // Reportes - Ventas
+  static String reporteVentas({
+    required String startDate,
+    required String endDate,
+    required int pageNumber,
+    required int pageSize,
+    required int productoId,
+    required int categoriaId,
+    required int cajaId,
+    required bool incluirAnuladas,
+  }) =>
+      '${prefix}reporte_ventas_${startDate}_${endDate}_p${pageNumber}_ps${pageSize}_prod${productoId}_cat${categoriaId}_caja${cajaId}_anuladas$incluirAnuladas';
+
+  static String reporteVentasPrefix = '${prefix}reporte_ventas';
 }
