@@ -71,6 +71,71 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       await ref.read(authProvider.notifier).login(email, password);
 
+      // Validar que el rol sea ADMIN o SUPERADMIN
+      final user = ref.read(authProvider).user;
+      final nombreRol = user?.nombreRol.toUpperCase() ?? '';
+
+      debugPrint('🔐 Usuario logueado: ${user?.nombre}');
+      debugPrint('🔐 Rol del usuario: $nombreRol');
+      debugPrint('🔐 ¿Es ADMIN o SUPERADMIN?: ${nombreRol == 'ADMIN' || nombreRol == 'SUPERADMIN'}');
+
+      if (nombreRol != 'ADMIN' && nombreRol != 'SUPERADMIN') {
+        // Si el rol NO es permitido, mostrar modal y hacer logout
+        if (!mounted) return;
+
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1a1a1a),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              side: const BorderSide(color: Color(0xFFdc3545), width: 2),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.block, color: const Color(0xFFdc3545), size: 28.sp),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    'Acceso Denegado',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'Esta aplicación está disponible únicamente para usuarios con rol ADMIN o SUPERADMIN.\n\nTu rol actual: $nombreRol',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: 14.sp,
+                fontFamily: 'Inter',
+              ),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFdc3545),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                ),
+                child: Text('Entendido', style: TextStyle(fontSize: 14.sp, fontFamily: 'Inter')),
+              ),
+            ],
+          ),
+        );
+
+        // Cerrar sesión
+        await ref.read(authProvider.notifier).logout();
+        return;
+      }
+
       // Guardar credenciales si el usuario marcó "Recordar"
       await _credentialsService.saveCredentials(
         email: email,

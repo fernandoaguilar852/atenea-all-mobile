@@ -154,7 +154,12 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 
 // Computed Providers
 final isAuthenticatedProvider = Provider<bool>((ref) {
-  return ref.watch(authProvider).isAuthenticated;
+  final authState = ref.watch(authProvider);
+  if (!authState.isAuthenticated) return false;
+
+  // Validar que el rol sea ADMIN o SUPERADMIN
+  final nombreRol = authState.user?.nombreRol.toUpperCase() ?? '';
+  return nombreRol == 'ADMIN' || nombreRol == 'SUPERADMIN';
 });
 
 final currentUserProvider = Provider<User?>((ref) {
