@@ -21,6 +21,7 @@ class VentaDetalleScreen extends ConsumerStatefulWidget {
 class _VentaDetalleScreenState extends ConsumerState<VentaDetalleScreen> {
   VentaEntity? _venta;
   bool _isLoading = true;
+  bool _loadingMetodosPago = false;
   String? _error;
   Map<int, PagoModel> _metodoPagos = {}; // pagoId -> PagoModel
 
@@ -98,37 +99,67 @@ class _VentaDetalleScreenState extends ConsumerState<VentaDetalleScreen> {
         }
       }
 
-      // Cargar métodos de pago para cada pago registrado
+      // Mostrar la venta inmediatamente SIN métodos de pago (OPTIMIZACIÓN ⚡)
+      setState(() {
+        _venta = venta;
+        _isLoading = false;
+        _loadingMetodosPago = venta.pagos != null && venta.pagos!.isNotEmpty;
+      });
+
+      // Cargar métodos de pago de forma ASÍNCRONA (no bloquea UI)
       if (venta.pagos != null && venta.pagos!.isNotEmpty) {
-        final pagosDatasource = ref.read(pagosRemoteDatasourceProvider);
-        final metodoPagosTemp = <int, PagoModel>{};
-
-        for (final pago in venta.pagos!) {
-          try {
-            final metodoPago = await pagosDatasource.getPagoById(pago.pagoId);
-            metodoPagosTemp[pago.pagoId] = metodoPago;
-          } catch (e) {
-            // Si falla la carga de un método de pago, continuar con los demás
-            debugPrint('Error al cargar método de pago ${pago.pagoId}: $e');
-          }
-        }
-
-        setState(() {
-          _venta = venta;
-          _metodoPagos = metodoPagosTemp;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _venta = venta;
-          _isLoading = false;
-        });
+        _loadMetodosPagoAsync(venta);
       }
     } catch (e) {
       setState(() {
         _error = 'Error al cargar detalle: $e';
         _isLoading = false;
       });
+    }
+  }
+
+  /// Carga los métodos de pago de forma asíncrona (no bloquea la UI)
+  Future<void> _loadMetodosPagoAsync(VentaEntity venta) async {
+    try {
+      final pagosDatasource = ref.read(pagosRemoteDatasourceProvider);
+      final metodoPagosTemp = <int, PagoModel>{};
+
+      // Cargar todos los métodos de pago en paralelo para mayor velocidad
+      final futures = venta.pagos!.map((pago) async {
+        try {
+          final metodoPago = await pagosDatasource.getPagoById(pago.pagoId);
+          return MapEntry(pago.pagoId, metodoPago);
+        } catch (e) {
+          debugPrint('Error al cargar método de pago ${pago.pagoId}: $e');
+          return null;
+        }
+      });
+
+      final results = await Future.wait(futures);
+
+      // Filtrar nulls y construir el mapa
+      for (final result in results) {
+        if (result != null) {
+          metodoPagosTemp[result.key] = result.value;
+        }
+      }
+
+      // Actualizar estado solo si la venta sigue siendo la misma
+      if (mounted && _venta?.ventaId == venta.ventaId) {
+        setState(() {
+          _metodoPagos = metodoPagosTemp;
+          _loadingMetodosPago = false;
+        });
+      }
+    } catch (e) {
+      // Si falla la carga de métodos de pago, no mostramos error
+      // ya que el detalle principal ya está cargado
+      debugPrint('Error al cargar métodos de pago: $e');
+      if (mounted) {
+        setState(() {
+          _loadingMetodosPago = false;
+        });
+      }
     }
   }
 
@@ -155,6 +186,10 @@ class _VentaDetalleScreenState extends ConsumerState<VentaDetalleScreen> {
           .map((word) => word[0].toUpperCase() + word.substring(1))
           .join(' ');
       return metodo;
+    }
+    // Si aún está cargando, mostrar indicador
+    if (_loadingMetodosPago) {
+      return 'Cargando...';
     }
     return 'Pago #$pagoId';
   }

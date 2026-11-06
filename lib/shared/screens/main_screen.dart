@@ -38,15 +38,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar notificaciones al iniciar
+    // Cargar notificaciones de forma ASÍNCRONA (no bloquea UI)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final currentUser = ref.read(currentUserProvider);
-      final clienteId = currentUser?.clienteId ?? 0;
-      if (clienteId > 0) {
-        ref
-            .read(notificacionesProvider(clienteId).notifier)
-            .fetchPendientes();
-      }
+      _loadNotificacionesAsync();
     });
 
     // Escuchar eventos de sesión no autorizada
@@ -58,6 +52,30 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         }
       });
     });
+  }
+
+  /// Carga notificaciones de forma asíncrona sin bloquear la UI
+  /// Si falla, no afecta la app
+  Future<void> _loadNotificacionesAsync() async {
+    try {
+      final currentUser = ref.read(currentUserProvider);
+      final clienteId = currentUser?.clienteId ?? 0;
+      if (clienteId > 0) {
+        // NO esperamos el resultado (fire and forget)
+        // ignore: unawaited_futures
+        ref
+            .read(notificacionesProvider(clienteId).notifier)
+            .fetchPendientes()
+            .catchError((error) {
+          debugPrint('Error loading notificaciones (non-blocking): $error');
+          // No mostramos error al usuario, es una carga en background
+          return null;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error in _loadNotificacionesAsync: $e');
+      // No bloquea la UI
+    }
   }
 
   @override
