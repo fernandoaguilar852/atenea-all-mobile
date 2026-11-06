@@ -223,6 +223,51 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
   }
 
   void _showEditDialog(MovimientoEntity movimiento) {
+    // RESTRICCIÓN: No permitir editar movimientos de tipo Venta
+    if (movimiento.tipo == TipoMovimiento.venta) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.lock, color: AppColors.warning, size: 24.sp),
+              SizedBox(width: AppSpacing.sm),
+              const Text('Acción no permitida'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Los movimientos de tipo Venta no se pueden editar.',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontFamily: 'Inter',
+                ),
+              ),
+              SizedBox(height: AppSpacing.md),
+              Text(
+                'Las ventas deben ser gestionadas desde el módulo de Facturas para mantener la integridad de los datos.',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppColors.textSecondary,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final cantidadController = TextEditingController(text: movimiento.cantidad.toString());
     final observacionController = TextEditingController(text: movimiento.observacion ?? '');
 
@@ -278,6 +323,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
               final success = await ref.read(movimientosProvider.notifier).patchMovimiento(
                     movimientoId: movimiento.movimientoId,
                     clienteId: user.clienteId,
+                    movimientoTipo: movimiento.tipo, // Pasar tipo para invalidar cache de productos
                     cantidad: cantidad,
                     observacion: observacionController.text.isEmpty
                         ? null
@@ -303,6 +349,51 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
   }
 
   void _showDeleteDialog(MovimientoEntity movimiento) {
+    // RESTRICCIÓN: No permitir eliminar movimientos de tipo Venta
+    if (movimiento.tipo == TipoMovimiento.venta) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.lock, color: AppColors.danger, size: 24.sp),
+              SizedBox(width: AppSpacing.sm),
+              const Text('Acción no permitida'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Los movimientos de tipo Venta no se pueden eliminar por seguridad.',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontFamily: 'Inter',
+                ),
+              ),
+              SizedBox(height: AppSpacing.md),
+              Text(
+                'Para anular una venta, utilice el módulo de Facturas donde podrá realizar la anulación de forma segura manteniendo el registro para auditoría.',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppColors.textSecondary,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final motivoController = TextEditingController();
 
     showDialog(
@@ -354,6 +445,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
               final success = await ref.read(movimientosProvider.notifier).deleteMovimiento(
                     movimientoId: movimiento.movimientoId,
                     clienteId: user.clienteId,
+                    movimientoTipo: movimiento.tipo, // Pasar tipo para invalidar cache de productos
                     deletedByUsuarioId: user.usuarioId,
                     deleteReason: motivoController.text,
                   );
@@ -591,15 +683,6 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                                     padding: EdgeInsets.only(bottom: AppSpacing.md),
                                     child: _MovimientoCard(
                                       movimiento: movimiento,
-                                      onTap: () {
-                                        // TODO: Implementar vista de detalle
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                                'Ver detalle #${movimiento.movimientoId}'),
-                                          ),
-                                        );
-                                      },
                                       onEdit: () => _showEditDialog(movimiento),
                                       onDelete: () => _showDeleteDialog(movimiento),
                                     ),
@@ -776,13 +859,11 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
 /// Card individual para cada movimiento
 class _MovimientoCard extends StatelessWidget {
   final MovimientoEntity movimiento;
-  final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _MovimientoCard({
     required this.movimiento,
-    required this.onTap,
     required this.onEdit,
     required this.onDelete,
   });
@@ -807,12 +888,9 @@ class _MovimientoCard extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.md),
-          child: Column(
+      child: Padding(
+        padding: EdgeInsets.all(AppSpacing.md),
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -913,18 +991,35 @@ class _MovimientoCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  // Botón Editar - Muestra icono de candado para ventas
                   TextButton.icon(
-                    icon: Icon(Icons.edit, size: 16.sp),
+                    icon: Icon(
+                      movimiento.tipo == TipoMovimiento.venta ? Icons.lock : Icons.edit,
+                      size: 16.sp,
+                    ),
                     label: const Text('Editar'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: movimiento.tipo == TipoMovimiento.venta
+                          ? AppColors.grey400
+                          : null,
+                    ),
+                    // Siempre ejecuta la función - la validación está dentro de _showEditDialog
                     onPressed: onEdit,
                   ),
                   SizedBox(width: AppSpacing.sm),
+                  // Botón Eliminar - Muestra icono de candado para ventas
                   TextButton.icon(
-                    icon: Icon(Icons.delete, size: 16.sp),
+                    icon: Icon(
+                      movimiento.tipo == TipoMovimiento.venta ? Icons.lock : Icons.delete,
+                      size: 16.sp,
+                    ),
                     label: const Text('Eliminar'),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.danger,
+                      foregroundColor: movimiento.tipo == TipoMovimiento.venta
+                          ? AppColors.grey400
+                          : AppColors.danger,
                     ),
+                    // Siempre ejecuta la función - la validación está dentro de _showDeleteDialog
                     onPressed: onDelete,
                   ),
                 ],
@@ -932,7 +1027,6 @@ class _MovimientoCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/providers/dio_provider.dart';
 import '../../../../core/providers/cache_provider.dart';
 import '../../../../core/services/cache_service.dart';
+import '../../../../core/providers/catalogs_providers.dart';
 import '../../data/datasources/movimientos_remote_datasource.dart';
 import '../../data/repositories/movimientos_repository_impl.dart';
 import '../../domain/entities/movimiento_entity.dart';
@@ -213,6 +214,17 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
     }
   }
 
+  /// Invalida el caché de productos si el movimiento afecta el stock
+  /// (Entrada o Salida de productos)
+  void _invalidateProductosCache(TipoMovimiento tipo) {
+    if (tipo == TipoMovimiento.entrada || tipo == TipoMovimiento.salida) {
+      // Invalidar TODOS los providers de búsqueda de productos
+      // Esto fuerza a Riverpod a recargar los datos desde el servidor
+      _ref.invalidate(productosSearchProvider);
+      debugPrint('Cache de productos invalidado por movimiento tipo ${tipo.displayName}');
+    }
+  }
+
   /// Crea un nuevo movimiento y limpia el cache
   Future<bool> createMovimiento({
     required int productoId,
@@ -250,6 +262,9 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
 
       // Limpiar cache de movimientos para forzar recarga de datos actualizados
       await clearCache(clienteId);
+
+      // Invalidar caché de productos si es entrada/salida (afecta stock)
+      _invalidateProductosCache(tipo);
 
       return true;
     } catch (e) {
@@ -302,6 +317,9 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
       // Limpiar cache de movimientos para forzar recarga de datos actualizados
       await clearCache(clienteId);
 
+      // Invalidar caché de productos si es entrada/salida (afecta stock)
+      _invalidateProductosCache(tipo);
+
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -315,6 +333,7 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
   Future<bool> patchMovimiento({
     required int movimientoId,
     required int clienteId,
+    required TipoMovimiento movimientoTipo, // Tipo del movimiento (para invalidar productos)
     int? productoId,
     int? usuarioId,
     int? proveedorId,
@@ -353,6 +372,9 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
       // Limpiar cache de movimientos para forzar recarga de datos actualizados
       await clearCache(clienteId);
 
+      // Invalidar caché de productos si es entrada/salida (afecta stock)
+      _invalidateProductosCache(movimientoTipo);
+
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -366,6 +388,7 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
   Future<bool> deleteMovimiento({
     required int movimientoId,
     required int clienteId,
+    required TipoMovimiento movimientoTipo, // Tipo del movimiento (para invalidar productos)
     required int deletedByUsuarioId,
     String? deleteReason,
   }) async {
@@ -379,6 +402,9 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
 
       // Limpiar cache de movimientos para forzar recarga de datos actualizados
       await clearCache(clienteId);
+
+      // Invalidar caché de productos si es entrada/salida (afecta stock)
+      _invalidateProductosCache(movimientoTipo);
 
       return true;
     } catch (e) {
