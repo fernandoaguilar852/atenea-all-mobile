@@ -195,6 +195,25 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
     _loadData();
   }
 
+  /// Muestra un diálogo informando que el rango de fechas excede el límite
+  void _showDateRangeExceededDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rango de fechas excedido'),
+        content: const Text(
+          'El intervalo entre la fecha de inicio y la fecha final no puede superar los 60 días.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
   bool get _tieneFiltrosActivos {
     final now = DateTime.now();
     final hoyInicio = DateTime(now.year, now.month, now.day);
@@ -279,6 +298,13 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
                   );
 
                   if (picked != null) {
+                    // Validar que el rango no supere 60 días
+                    final difference = picked.end.difference(picked.start).inDays;
+                    if (difference > 60) {
+                      _showDateRangeExceededDialog();
+                      return;
+                    }
+
                     setState(() {
                       _fechaDesde = picked.start;
                       _fechaHasta = picked.end;

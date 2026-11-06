@@ -85,6 +85,33 @@ class _VentaDetalleReporteTabState
         );
   }
 
+  /// Valida que el rango de fechas no supere los 60 días
+  bool _validateDateRange() {
+    if (_startDate == null || _endDate == null) return false;
+
+    final difference = _endDate!.difference(_startDate!).inDays;
+    return difference <= 60;
+  }
+
+  /// Muestra un diálogo informando que el rango de fechas excede el límite
+  void _showDateRangeExceededDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rango de fechas excedido'),
+        content: const Text(
+          'El intervalo entre la fecha de inicio y la fecha final no puede superar los 60 días.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _onConsumidorSearchChanged(String value) {
     if (_consumidorDebounce?.isActive ?? false) _consumidorDebounce!.cancel();
     _consumidorDebounce = Timer(const Duration(milliseconds: 500), () {
@@ -277,6 +304,12 @@ class _VentaDetalleReporteTabState
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () async {
+                    // Validar rango de fechas
+                    if (!_validateDateRange()) {
+                      _showDateRangeExceededDialog();
+                      return;
+                    }
+
                     setState(() => _currentPage = 1);
                     // Limpiar cache antes de consultar para garantizar datos frescos
                     await ref.read(ventaDetalleReporteProvider.notifier).clearCache();

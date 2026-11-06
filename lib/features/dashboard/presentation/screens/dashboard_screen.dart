@@ -35,8 +35,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final user = ref.read(currentUserProvider);
     final clienteId = user?.clienteId ?? 0;
 
-    // Recargar estadísticas del dashboard
-    ref.read(dashboardProvider.notifier).loadStats();
+    // Recargar estadísticas del dashboard con datos frescos (sin cache)
+    ref.read(dashboardProvider.notifier).loadStats(forceRefresh: true);
 
     // Recargar notificaciones si hay clienteId válido
     if (clienteId > 0) {
@@ -243,6 +243,10 @@ class _KPIsGrid extends ConsumerWidget {
           value: '${data.cantidadFacturas}',
           icon: Icons.receipt_long,
           color: AppColors.primary,
+          onTap: () {
+            // Cambiar al index 0 (VentasScreen/Facturas) en el MainScreen
+            ref.read(mainScreenIndexProvider.notifier).state = 0;
+          },
         ),
         _KPICard(
           title: 'Ingresos',

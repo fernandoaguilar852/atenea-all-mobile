@@ -76,10 +76,27 @@ class VentasState {
   }
 }
 
+/// Entry del cache en RAM con timestamp
+class _CacheEntry {
+  final VentasState state;
+  final DateTime timestamp;
+
+  _CacheEntry(this.state, this.timestamp);
+
+  bool isExpired(Duration ttl) {
+    return DateTime.now().difference(timestamp) > ttl;
+  }
+}
+
 /// Notifier para gestionar el estado de ventas
 class VentasNotifier extends StateNotifier<VentasState> {
   final VentasRepository _repository;
   final Ref _ref;
+
+  // 🚀 Cache en memoria (RAM) con TTL - estilo Instagram/Facebook
+  // Navegación instantánea entre páginas + auto-refresh cada 2 minutos
+  final Map<String, _CacheEntry> _memoryCache = {};
+  static const Duration _cacheTTL = Duration(minutes: 2);
 
   VentasNotifier(this._repository, this._ref) : super(const VentasState());
 
@@ -110,7 +127,7 @@ class VentasNotifier extends StateNotifier<VentasState> {
     );
   }
 
-  /// Carga la lista de ventas con filtros y cache (stale-while-revalidate)
+  /// Carga la lista de ventas con filtros y cache con TTL
   Future<void> loadVentas({
     required int clienteId,
     required int pageNumber,
@@ -123,7 +140,6 @@ class VentasNotifier extends StateNotifier<VentasState> {
     bool forceRefresh = false,
   }) async {
     try {
-      final cacheService = _ref.read(cacheServiceProvider);
       final cacheKey = _getCacheKey(
         clienteId: clienteId,
         pageNumber: pageNumber,
@@ -135,35 +151,27 @@ class VentasNotifier extends StateNotifier<VentasState> {
         endDate: endDate,
       );
 
-      // Paso 1: Cargar cache inmediatamente (RÁPIDO ⚡)
-      if (!forceRefresh) {
-        final cachedData = await cacheService.getStale<Map<String, dynamic>>(cacheKey);
-        if (cachedData != null) {
-          try {
-            // Parsear datos cached (solo IDs y datos básicos)
-            final totalElements = cachedData['totalElements'] as int;
-            final hasMoreElements = cachedData['hasMoreElements'] as bool;
+      // ⚡ PASO 1: Verificar cache en RAM con TTL
+      if (!forceRefresh && _memoryCache.containsKey(cacheKey)) {
+        final cacheEntry = _memoryCache[cacheKey]!;
 
-            // Mostrar loading con datos parciales
-            state = state.copyWith(
-              totalElements: totalElements,
-              hasMoreElements: hasMoreElements,
-              isLoading: true, // Sigue cargando en background
-              error: null,
-            );
-            debugPrint('Cache hit for ventas (showing fresh data will load...)');
-          } catch (e) {
-            debugPrint('Error parsing cached ventas: $e');
-          }
+        if (!cacheEntry.isExpired(_cacheTTL)) {
+          // Cache válido (< 2 min) - INSTANTÁNEO ⚡
+          debugPrint('✨ Ventas RAM cache HIT (${DateTime.now().difference(cacheEntry.timestamp).inSeconds}s) - Carga instantánea!');
+          state = cacheEntry.state;
+          return; // NO hacer petición al servidor
         } else {
-          // No hay cache, mostrar loading completo
-          state = state.copyWith(isLoading: true, error: null);
+          // Cache expirado (> 2 min) - necesita actualizar
+          debugPrint('⏰ Ventas RAM cache EXPIRADO - Consultando servidor para datos frescos...');
         }
       } else {
-        state = state.copyWith(isLoading: true, error: null);
+        debugPrint('🌐 Ventas RAM cache MISS - Consultando servidor...');
       }
 
-      // Paso 2: Fetch datos frescos en background
+      // PASO 2: Cache expirado o no existe - consultar servidor
+      state = state.copyWith(isLoading: true, error: null);
+
+      // PASO 3: Fetch datos frescos del servidor
       final result = await _repository.getVentas(
         clienteId: clienteId,
         pageNumber: pageNumber,
@@ -175,22 +183,18 @@ class VentasNotifier extends StateNotifier<VentasState> {
         endDate: endDate,
       );
 
-      // Paso 3: Guardar en cache y actualizar UI
-      await cacheService.set(
-        key: cacheKey,
-        data: {
-          'totalElements': result.totalElements,
-          'hasMoreElements': result.hasMoreElements,
-        },
-        duration: const Duration(minutes: 2), // Cache por 2 minutos (datos pueden cambiar desde PC)
-      );
-
-      state = state.copyWith(
+      // PASO 4: Crear nuevo state y guardar en RAM con timestamp
+      final newState = state.copyWith(
         ventas: result.ventas,
         totalElements: result.totalElements,
         hasMoreElements: result.hasMoreElements,
         isLoading: false,
       );
+
+      _memoryCache[cacheKey] = _CacheEntry(newState, DateTime.now());
+      debugPrint('💾 Ventas guardado en RAM (Total páginas: ${_memoryCache.length}, TTL: ${_cacheTTL.inMinutes} min)');
+
+      state = newState;
     } catch (e) {
       debugPrint('Error loading ventas: $e');
 
@@ -209,6 +213,10 @@ class VentasNotifier extends StateNotifier<VentasState> {
   /// Limpia todo el cache de ventas de un cliente
   Future<void> clearCache(int clienteId) async {
     try {
+      // Limpiar cache en RAM
+      _memoryCache.clear();
+      debugPrint('🗑️ Ventas RAM cache limpiado');
+
       final cacheService = _ref.read(cacheServiceProvider);
       await cacheService.clearByPattern(CacheKeys.ventasPrefix(clienteId));
       debugPrint('Cache de ventas limpiado para cliente $clienteId');
