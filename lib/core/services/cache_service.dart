@@ -267,4 +267,15 @@ class CacheKeys {
       '${prefix}reporte_inventario_${startDate}_${endDate}_p${pageNumber}_ps${pageSize}_prod${productoId}_tipo$tipoMovimiento';
 
   static String reporteInventarioPrefix = '${prefix}reporte_inventario';
+
+  // Reportes - Arqueo Caja
+  static String reporteArqueo({
+    required String startDate,
+    required String endDate,
+    required int cajaId,
+    required String tipoPago,
+  }) =>
+      '${prefix}reporte_arqueo_${startDate}_${endDate}_caja${cajaId}_tipo$tipoPago';
+
+  static String reporteArqueoPrefix = '${prefix}reporte_arqueo';
 }

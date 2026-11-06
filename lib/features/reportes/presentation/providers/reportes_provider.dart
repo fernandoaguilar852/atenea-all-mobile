@@ -546,18 +546,62 @@ class ArqueoNotifier extends StateNotifier<ReporteState<ArqueoEntity>> {
 
   ArqueoNotifier(this._repository, this._ref) : super(ReporteState());
 
+  String _getCacheKey({
+    required String startDate,
+    required String endDate,
+    required int cajaId,
+    required String tipoPago,
+  }) {
+    return CacheKeys.reporteArqueo(
+      startDate: startDate,
+      endDate: endDate,
+      cajaId: cajaId,
+      tipoPago: tipoPago,
+    );
+  }
+
   Future<void> loadReporte({
     required String startDate,
     required String endDate,
     int? cajaId,
     String? tipoPago,
+    bool forceRefresh = false,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
-
     try {
       final user = _ref.read(currentUserProvider);
       if (user == null) throw Exception('Usuario no autenticado');
 
+      final cacheService = _ref.read(cacheServiceProvider);
+      final cacheKey = _getCacheKey(
+        startDate: startDate,
+        endDate: endDate,
+        cajaId: cajaId ?? 0,
+        tipoPago: tipoPago ?? '',
+      );
+
+      // Paso 1: Intentar cargar desde cache si no es force refresh
+      if (!forceRefresh) {
+        final cachedData = await cacheService.getStale<Map<String, dynamic>>(cacheKey);
+        if (cachedData != null) {
+          state = state.copyWith(
+            isLoading: true,
+            error: null,
+          );
+          debugPrint('Cache hit for arqueo reporte (loading fresh data...)');
+        } else {
+          state = state.copyWith(
+            isLoading: true,
+            error: null,
+          );
+        }
+      } else {
+        state = state.copyWith(
+          isLoading: true,
+          error: null,
+        );
+      }
+
+      // Paso 2: Fetch datos frescos
       final reporte = await _repository.getArqueoReporte(
         clienteId: user.clienteId,
         startDate: startDate,
@@ -566,15 +610,41 @@ class ArqueoNotifier extends StateNotifier<ReporteState<ArqueoEntity>> {
         tipoPago: tipoPago,
       );
 
-      state = state.copyWith(data: reporte, isLoading: false);
+      // Paso 3: Guardar en cache (sin paginación, solo datos básicos)
+      await cacheService.set(
+        key: cacheKey,
+        data: {
+          'cached': true,
+        },
+        duration: const Duration(minutes: 5), // Cache por 5 minutos
+      );
+
+      state = state.copyWith(
+        data: reporte,
+        isLoading: false,
+      );
     } catch (e, stackTrace) {
       debugPrint('Error loading arqueo reporte: $e');
       debugPrint('Stack trace: $stackTrace');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Error al cargar arqueo de caja',
-      );
+
+      // Si hay datos existentes, mantenerlos
+      if (state.data != null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Error al actualizar',
+        );
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Error al cargar arqueo de caja',
+        );
+      }
     }
+  }
+
+  Future<void> clearCache() async {
+    final cacheService = _ref.read(cacheServiceProvider);
+    await cacheService.clearByPattern(CacheKeys.reporteArqueoPrefix);
   }
 
   void clear() {

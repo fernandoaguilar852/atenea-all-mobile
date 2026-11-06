@@ -24,6 +24,10 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
   String? _tipoPagoFilter;
   Caja? _cajaSelected;
 
+  // Control de scroll
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollToTop = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,7 +35,22 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
     final now = DateTime.now();
     _startDate = now;
     _endDate = now;
-    _loadData();
+    // NO cargar datos automáticamente - esperar a que el usuario haga click en Consultar
+
+    // Listener para mostrar/ocultar botón de scroll to top
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 200 && !_showScrollToTop) {
+        setState(() => _showScrollToTop = true);
+      } else if (_scrollController.offset <= 200 && _showScrollToTop) {
+        setState(() => _showScrollToTop = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _loadData() {
@@ -62,7 +81,7 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
         _startDate = picked.start;
         _endDate = picked.end;
       });
-      _loadData();
+      // NO llamar a _loadData automáticamente - esperar al botón Consultar
     }
   }
 
@@ -76,8 +95,12 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
     final reporteState = ref.watch(arqueoReporteProvider);
     final reporte = reporteState.data;
 
-    return Column(
+    return Stack(
       children: [
+        SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            children: [
         // Filtros
         Container(
           padding: EdgeInsets.all(AppSpacing.md),
@@ -136,13 +159,9 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                           _tipoPagoFilter = null;
                           _cajaSelected = null;
                         });
-                        _loadData();
+                        // NO cargar automáticamente - esperar botón Consultar
                       },
                     ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: _loadData,
-                  ),
                 ],
               ),
               if (_showAdvancedFilters) ...[
@@ -256,17 +275,59 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                   },
                 ),
               ],
+              // Botón Consultar - siempre al final de los filtros
+              SizedBox(height: 16.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    // Limpiar cache antes de consultar para garantizar datos frescos
+                    await ref.read(arqueoReporteProvider.notifier).clearCache();
+                    _loadData();
+                  },
+                  icon: const Icon(Icons.search, size: 22),
+                  label: Text(
+                    'Consultar Reporte',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
-        Expanded(
-          child: reporteState.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : reporteState.error != null
-                  ? Center(child: Text(reporteState.error!))
-                  : reporte == null
-                      ? const Center(child: Text('No hay datos'))
-                      : SingleChildScrollView(
+        if (reporteState.isLoading)
+          Container(
+            height: 400.h,
+            alignment: Alignment.center,
+            child: const CircularProgressIndicator(),
+          )
+        else if (reporteState.error != null)
+          Container(
+            height: 400.h,
+            alignment: Alignment.center,
+            child: Text(reporteState.error!),
+          )
+        else if (reporte == null)
+          Container(
+            height: 400.h,
+            alignment: Alignment.center,
+            child: const Text('No hay datos'),
+          )
+        else
+          Padding(
                           padding: EdgeInsets.all(AppSpacing.md),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,7 +389,42 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
                             ],
                           ),
                         ),
+        // Espaciado al final
+        SizedBox(height: 80.h),
+            ],
+          ),
         ),
+        // Botón flotante scroll-to-top
+        if (_showScrollToTop)
+          Positioned(
+            bottom: 16.h,
+            right: 16.w,
+            child: Material(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(28.w),
+              elevation: 4,
+              child: InkWell(
+                onTap: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                borderRadius: BorderRadius.circular(28.w),
+                child: Container(
+                  width: 56.w,
+                  height: 56.w,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.arrow_upward,
+                    color: AppColors.white,
+                    size: 28.sp,
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
