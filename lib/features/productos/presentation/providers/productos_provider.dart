@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/datasources/producto_datasource.dart';
+import '../../../../core/datasources/producto_write_datasource.dart';
 import '../../../../core/models/producto.dart';
 import '../../../../core/providers/dio_provider.dart';
 
@@ -8,10 +9,16 @@ import '../../../../core/providers/dio_provider.dart';
 // PROVIDERS DE INFRAESTRUCTURA
 // ============================================================================
 
-/// Provider del datasource de productos
+/// Provider del datasource de productos (Read)
 final productoDatasourceProvider = Provider<ProductoDatasource>((ref) {
   final dioClient = ref.watch(dioClientProvider);
   return ProductoDatasource(dioClient.dio);
+});
+
+/// Provider del datasource de productos (Write - Create, Update, Delete)
+final productoWriteDatasourceProvider = Provider<ProductoWriteDatasource>((ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return ProductoWriteDatasource(dioClient.dio);
 });
 
 // ============================================================================
@@ -66,12 +73,13 @@ class _CacheEntry {
 /// Notifier para gestionar el estado de productos
 class ProductosNotifier extends StateNotifier<ProductosState> {
   final ProductoDatasource _datasource;
+  final ProductoWriteDatasource _writeDatasource;
 
   // 🚀 Cache en memoria (RAM) con TTL - navegación instantánea + auto-refresh cada 2 min
   final Map<String, _CacheEntry> _memoryCache = {};
   static const Duration _cacheTTL = Duration(minutes: 2);
 
-  ProductosNotifier(this._datasource) : super(const ProductosState());
+  ProductosNotifier(this._datasource, this._writeDatasource) : super(const ProductosState());
 
   /// Genera una clave de cache única basada en los filtros
   String _getCacheKey({
@@ -164,10 +172,45 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
   void clearError() {
     state = state.copyWith(error: null);
   }
+
+  /// Crea un nuevo producto
+  Future<Producto> createProducto({
+    required int clienteId,
+    required int tipoProductoId,
+    required String nombre,
+    String? codExterno,
+    String? codBarras,
+    required double precio,
+    required String unidadMedida,
+    required double stockTotal,
+    required double stockMinimo,
+    required bool manejaStock,
+    required int ivaId,
+  }) async {
+    final producto = await _writeDatasource.createProducto(
+      clienteId: clienteId,
+      tipoProductoId: tipoProductoId,
+      nombre: nombre,
+      codExterno: codExterno,
+      codBarras: codBarras,
+      precio: precio,
+      unidadMedida: unidadMedida,
+      stockTotal: stockTotal,
+      stockMinimo: stockMinimo,
+      manejaStock: manejaStock,
+      ivaId: ivaId,
+    );
+
+    // Limpiar cache para forzar refresh en próxima consulta
+    clearCache();
+
+    return producto;
+  }
 }
 
 /// Provider principal de productos
 final productosProvider = StateNotifierProvider<ProductosNotifier, ProductosState>((ref) {
   final datasource = ref.watch(productoDatasourceProvider);
-  return ProductosNotifier(datasource);
+  final writeDatasource = ref.watch(productoWriteDatasourceProvider);
+  return ProductosNotifier(datasource, writeDatasource);
 });

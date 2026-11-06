@@ -7,6 +7,7 @@ import '../../../../core/models/producto.dart';
 import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/productos_provider.dart';
+import '../widgets/crear_producto_dialog.dart';
 
 class ProductosScreen extends ConsumerStatefulWidget {
   const ProductosScreen({super.key});
@@ -357,11 +358,16 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              // TODO: Navegar a pantalla de creación
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Crear nuevo producto')),
+            onPressed: () async {
+              final result = await showDialog<bool>(
+                context: context,
+                builder: (context) => const CrearProductoDialog(),
               );
+
+              // Si se creó exitosamente, recargar la lista
+              if (result == true) {
+                _onRefresh();
+              }
             },
           ),
         ],

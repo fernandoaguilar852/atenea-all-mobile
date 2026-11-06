@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../datasources/caja_datasource.dart';
 import '../datasources/consumidor_datasource.dart';
+import '../datasources/iva_datasource.dart';
 import '../datasources/producto_datasource.dart';
 import '../datasources/proveedor_datasource.dart';
 import '../datasources/tipo_producto_datasource.dart';
 import '../models/caja.dart';
 import '../models/consumidor.dart';
+import '../models/iva.dart';
 import '../models/producto.dart';
 import '../models/proveedor.dart';
 import '../models/tipo_producto.dart';
@@ -38,6 +40,11 @@ final consumidorDatasourceProvider = Provider<ConsumidorDatasource>((ref) {
 final proveedorDatasourceProvider = Provider<ProveedorDatasource>((ref) {
   final dioClient = ref.watch(dioClientProvider);
   return ProveedorDatasource(dioClient.dio);
+});
+
+final ivaDatasourceProvider = Provider<IvaDatasource>((ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return IvaDatasource(dioClient.dio);
 });
 
 // ============================================================================
@@ -250,3 +257,9 @@ final proveedoresSearchProvider =
     );
   },
 );
+
+/// Provider para obtener lista de IVAs
+final ivasProvider = FutureProvider<List<Iva>>((ref) async {
+  final datasource = ref.watch(ivaDatasourceProvider);
+  return await datasource.getIvas();
+});
