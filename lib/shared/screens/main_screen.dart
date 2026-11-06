@@ -157,76 +157,82 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           : null,
       appBar: AppBar(
         title: Text(titles[currentIndex]),
-        actions: currentIndex == 2
-            ? [
-                // Notificaciones solo en Dashboard
-                Builder(
-                  builder: (context) {
-                    if (clienteId <= 0) {
-                      return const SizedBox.shrink();
-                    }
+        actions: [
+          // Botón específico según la pantalla
+          if (currentIndex == 1) // Movimientos
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                final state = movimientosKey.currentState;
+                if (state != null && state.mounted) {
+                  (state as dynamic).showMovimientoTypeSelector();
+                }
+              },
+            ),
+          if (currentIndex == 5) // Resoluciones
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                final state = resolucionesKey.currentState;
+                if (state != null && state.mounted) {
+                  (state as dynamic).showCreateDialog();
+                }
+              },
+            ),
+          // Notificaciones en TODAS las pantallas
+          Builder(
+            builder: (context) {
+              if (clienteId <= 0) {
+                return const SizedBox.shrink();
+              }
 
-                    final notificacionesState =
-                        ref.watch(notificacionesProvider(clienteId));
+              final notificacionesState =
+                  ref.watch(notificacionesProvider(clienteId));
 
-                    return Stack(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.notifications_outlined),
-                          onPressed: () {
-                            Scaffold.of(context).openEndDrawer();
-                            // Refrescar notificaciones al abrir el drawer
-                            ref
-                                .read(notificacionesProvider(clienteId).notifier)
-                                .fetchPendientes();
-                          },
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined),
+                    onPressed: () {
+                      Scaffold.of(context).openEndDrawer();
+                      // Refrescar notificaciones al abrir el drawer
+                      ref
+                          .read(notificacionesProvider(clienteId).notifier)
+                          .fetchPendientes();
+                    },
+                  ),
+                  if (notificacionesState.totalElement > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        if (notificacionesState.totalElement > 0)
-                          Positioned(
-                            right: 8,
-                            top: 8,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 18,
-                                minHeight: 18,
-                              ),
-                              child: Text(
-                                notificacionesState.totalElement > 99
-                                    ? '99+'
-                                    : '${notificacionesState.totalElement}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Text(
+                          notificacionesState.totalElement > 99
+                              ? '99+'
+                              : '${notificacionesState.totalElement}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
                           ),
-                      ],
-                    );
-                  },
-                ),
-              ]
-            : currentIndex == 1
-                ? [
-                    // Botón agregar en Movimientos
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () {
-                        final state = movimientosKey.currentState;
-                        if (state != null && state.mounted) {
-                          (state as dynamic).showMovimientoTypeSelector();
-                        }
-                      },
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     ),
-                  ]
-                : null,
+                ],
+              );
+            },
+          ),
+        ],
       ),
       body: IndexedStack(
         index: currentIndex,

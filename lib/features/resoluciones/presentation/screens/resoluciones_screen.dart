@@ -23,12 +23,43 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
   final int _pageSize = 10;
   bool? _activoFilter;
 
+  // Scroll controller para scroll-to-top
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollToTop = false;
+  late final AppLifecycleListener _lifecycleListener;
+
   @override
   void initState() {
     super.initState();
+
+    // Listener para mostrar/ocultar botón scroll-to-top
+    _scrollController.addListener(() {
+      final showButton = _scrollController.offset > 200;
+      if (showButton != _showScrollToTop) {
+        setState(() {
+          _showScrollToTop = showButton;
+        });
+      }
+    });
+
+    // Listener para recargar cuando la app regresa del background
+    _lifecycleListener = AppLifecycleListener(
+      onResume: () {
+        debugPrint('App resumed - reloading resoluciones data');
+        _refreshData();
+      },
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _lifecycleListener.dispose();
+    super.dispose();
   }
 
   void _loadData() {
@@ -43,12 +74,30 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
         );
   }
 
+  // Pull-to-refresh: limpia cache y recarga
+  Future<void> _refreshData() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    // Limpiar cache
+    await ref.read(resolucionesProvider.notifier).clearCache(user.clienteId);
+
+    // Recargar datos forzando refresh
+    await ref.read(resolucionesProvider.notifier).loadResoluciones(
+          clienteId: user.clienteId,
+          pageNumber: _currentPage,
+          pageSize: _pageSize,
+          activo: _activoFilter,
+          forceRefresh: true,
+        );
+  }
+
   // Método público para recargar desde fuera
   void reloadData() {
     _loadData();
   }
 
-  void _showCreateDialog() {
+  void showCreateDialog() {
     showDialog(
       context: context,
       builder: (context) => ResolucionFormDialog(
@@ -176,8 +225,14 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
     final resolucionesState = ref.watch(resolucionesProvider);
     final data = resolucionesState.data;
 
-    final bodyContent = Column(
+    final bodyContent = Stack(
         children: [
+          RefreshIndicator(
+            onRefresh: _refreshData,
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: Column(
+                children: [
           // Header con filtro y botón de agregar (solo cuando no hay scaffold)
           if (!widget.showScaffold)
             Container(
@@ -263,7 +318,7 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
                   ),
                   const Spacer(),
                   ElevatedButton.icon(
-                    onPressed: _showCreateDialog,
+                    onPressed: showCreateDialog,
                     icon: const Icon(Icons.add, size: 20),
                     label: const Text('Nueva Resolución'),
                     style: ElevatedButton.styleFrom(
@@ -278,11 +333,12 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
                 ],
               ),
             ),
-          // Lista de resoluciones
-          Expanded(
+          // Lista de resoluciones o estados (loading/error/empty)
+          Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
             child: resolucionesState.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : resolucionesState.error != null
+                : resolucionesState.error != null && data == null
                     ? Center(
                         child: Text(
                           resolucionesState.error!,
@@ -302,25 +358,65 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
                               ),
                             ),
                           )
-                        : ListView.separated(
-                            padding: EdgeInsets.all(AppSpacing.md),
-                            itemCount: data.resoluciones.length,
-                            separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
-                            itemBuilder: (context, index) {
-                              final resolucion = data.resoluciones[index];
-                              return _ResolucionCard(
-                                resolucion: resolucion,
-                                onEdit: () => _showEditDialog(resolucion),
-                                onDelete: () => _showDeleteDialog(resolucion),
-                              );
-                            },
+                        : Stack(
+                            children: [
+                              Column(
+                                children: data.resoluciones.map((resolucion) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(bottom: AppSpacing.md),
+                                    child: _ResolucionCard(
+                                      resolucion: resolucion,
+                                      onEdit: () => _showEditDialog(resolucion),
+                                      onDelete: () => _showDeleteDialog(resolucion),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              // Indicador de loading para paginación (no bloquea UI)
+                              if (resolucionesState.isLoadingMore)
+                                Positioned(
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: EdgeInsets.all(AppSpacing.sm),
+                                    color: AppColors.primary.withValues(alpha: 0.9),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 16.w,
+                                          height: 16.w,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                                          ),
+                                        ),
+                                        SizedBox(width: AppSpacing.sm),
+                                        Text(
+                                          'Cargando...',
+                                          style: TextStyle(
+                                            color: AppColors.white,
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Inter',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
           ),
 
-          // Paginación
+          // Paginación rediseñada
           if (data?.pagination != null)
             Container(
-              padding: EdgeInsets.all(AppSpacing.md),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.lg,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.surfaceVariant,
                 border: Border(
@@ -333,37 +429,91 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Botón Anterior
+                  TextButton.icon(
+                    onPressed: data!.pagination!.hasPrevious
+                        ? () {
+                            setState(() => _currentPage--);
+                            _loadData();
+                          }
+                        : null,
+                    icon: Icon(Icons.chevron_left, size: 20.sp),
+                    label: Text(
+                      'Anterior',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                  ),
+
+                  // Información de página
                   Text(
-                    'Página $_currentPage de ${data!.pagination!.totalPages}',
+                    'Página $_currentPage de ${data.pagination!.totalPages}',
                     style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
                       fontFamily: 'Inter',
                     ),
                   ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.chevron_left),
-                        onPressed: data.pagination!.hasPrevious
-                            ? () {
-                                setState(() => _currentPage--);
-                                _loadData();
-                              }
-                            : null,
+
+                  // Botón Siguiente
+                  TextButton.icon(
+                    onPressed: data.pagination!.hasNext
+                        ? () {
+                            setState(() => _currentPage++);
+                            _loadData();
+                          }
+                        : null,
+                    label: Text(
+                      'Siguiente',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontFamily: 'Inter',
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.chevron_right),
-                        onPressed: data.pagination!.hasNext
-                            ? () {
-                                setState(() => _currentPage++);
-                                _loadData();
-                              }
-                            : null,
-                      ),
-                    ],
+                    ),
+                    icon: Icon(Icons.chevron_right, size: 20.sp),
                   ),
                 ],
+              ),
+            ),
+
+          // Espaciado adicional al final para que el botón flotante no cubra contenido
+          SizedBox(height: 80.h),
+                ],
+              ),
+            ),
+          ),
+
+          // Botón flotante scroll-to-top
+          if (_showScrollToTop)
+            Positioned(
+              bottom: 16.h,
+              right: 16.w,
+              child: Material(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(28.r),
+                elevation: 4,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(28.r),
+                  onTap: () {
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  child: Container(
+                    width: 56.w,
+                    height: 56.w,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.arrow_upward,
+                      color: AppColors.white,
+                      size: 24.sp,
+                    ),
+                  ),
+                ),
               ),
             ),
         ],
@@ -379,7 +529,7 @@ class _ResolucionesScreenState extends ConsumerState<ResolucionesScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: _showCreateDialog,
+            onPressed: showCreateDialog,
           ),
         ],
       ),
