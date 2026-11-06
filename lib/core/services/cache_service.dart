@@ -278,4 +278,17 @@ class CacheKeys {
       '${prefix}reporte_arqueo_${startDate}_${endDate}_caja${cajaId}_tipo$tipoPago';
 
   static String reporteArqueoPrefix = '${prefix}reporte_arqueo';
+
+  // Reportes - Stock
+  static String reporteStock({
+    required int pageNumber,
+    required int pageSize,
+    required int productoId,
+    required bool stockBajo,
+    required bool activo,
+    required int tipoProductoId,
+  }) =>
+      '${prefix}reporte_stock_p${pageNumber}_ps${pageSize}_prod${productoId}_stockBajo${stockBajo}_activo${activo}_tipo$tipoProductoId';
+
+  static String reporteStockPrefix = '${prefix}reporte_stock';
 }
