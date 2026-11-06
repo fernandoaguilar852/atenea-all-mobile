@@ -1,5 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/providers/dio_provider.dart';
+import '../../../../core/providers/cache_provider.dart';
+import '../../../../core/services/cache_service.dart';
 import '../../data/datasources/movimientos_remote_datasource.dart';
 import '../../data/repositories/movimientos_repository_impl.dart';
 import '../../domain/entities/movimiento_entity.dart';
@@ -30,22 +34,26 @@ final movimientosRepositoryProvider = Provider<MovimientosRepository>((ref) {
 class MovimientosState {
   final MovimientosListEntity? data;
   final bool isLoading;
+  final bool isLoadingMore; // Loading para paginación (no bloquea UI)
   final String? error;
 
   const MovimientosState({
     this.data,
     this.isLoading = false,
+    this.isLoadingMore = false,
     this.error,
   });
 
   MovimientosState copyWith({
     MovimientosListEntity? data,
     bool? isLoading,
+    bool? isLoadingMore,
     String? error,
   }) {
     return MovimientosState(
       data: data ?? this.data,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       error: error,
     );
   }
@@ -54,10 +62,38 @@ class MovimientosState {
 /// Notifier para gestionar el estado de movimientos
 class MovimientosNotifier extends StateNotifier<MovimientosState> {
   final MovimientosRepository _repository;
+  final Ref _ref;
 
-  MovimientosNotifier(this._repository) : super(const MovimientosState());
+  MovimientosNotifier(this._repository, this._ref) : super(const MovimientosState());
 
-  /// Carga la lista de movimientos con filtros
+  /// Genera una clave de cache única basada en los filtros
+  String _getCacheKey({
+    required int clienteId,
+    required int pageNumber,
+    required int pageSize,
+    TipoMovimiento? tipo,
+    int? productoId,
+    int? proveedorId,
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  }) {
+    final dateFormat = DateFormat('yyyy-MM-dd');
+    final startDateStr = fechaDesde != null ? dateFormat.format(fechaDesde) : 'null';
+    final endDateStr = fechaHasta != null ? dateFormat.format(fechaHasta) : 'null';
+
+    return CacheKeys.movimientos(
+      clienteId: clienteId,
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+      tipo: tipo?.name ?? 'all',
+      productoId: productoId ?? 0,
+      proveedorId: proveedorId ?? 0,
+      startDate: startDateStr,
+      endDate: endDateStr,
+    );
+  }
+
+  /// Carga la lista de movimientos con filtros y cache (stale-while-revalidate)
   Future<void> loadMovimientos({
     required int clienteId,
     int? productoId,
@@ -68,10 +104,52 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
     bool includeDeleted = false,
     int pageNumber = 1,
     int pageSize = 10,
+    bool forceRefresh = false,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
-
     try {
+      final cacheService = _ref.read(cacheServiceProvider);
+      final cacheKey = _getCacheKey(
+        clienteId: clienteId,
+        pageNumber: pageNumber,
+        pageSize: pageSize,
+        tipo: tipo,
+        productoId: productoId,
+        proveedorId: proveedorId,
+        fechaDesde: fechaDesde,
+        fechaHasta: fechaHasta,
+      );
+
+      // Determinar tipo de loading: si hay datos, usar isLoadingMore (no bloquea UI)
+      final hasExistingData = state.data != null;
+
+      // Paso 1: Mostrar estado de loading apropiado
+      if (!forceRefresh) {
+        final cachedData = await cacheService.getStale<Map<String, dynamic>>(cacheKey);
+        if (cachedData != null) {
+          // Hay cache, mantener datos actuales y cargar en background
+          state = state.copyWith(
+            isLoadingMore: hasExistingData,
+            isLoading: !hasExistingData,
+            error: null,
+          );
+          debugPrint('Cache hit for movimientos (showing fresh data will load...)');
+        } else {
+          // No hay cache
+          state = state.copyWith(
+            isLoadingMore: hasExistingData, // Mantener datos visibles si existen
+            isLoading: !hasExistingData,
+            error: null,
+          );
+        }
+      } else {
+        state = state.copyWith(
+          isLoadingMore: hasExistingData,
+          isLoading: !hasExistingData,
+          error: null,
+        );
+      }
+
+      // Paso 2: Fetch datos frescos
       final result = await _repository.getMovimientos(
         clienteId: clienteId,
         productoId: productoId,
@@ -84,19 +162,58 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
         pageSize: pageSize,
       );
 
+      // Paso 3: Guardar en cache y actualizar UI
+      await cacheService.set(
+        key: cacheKey,
+        data: {
+          'pagination': {
+            'currentPage': result.pagination?.currentPage,
+            'totalPages': result.pagination?.totalPages,
+            'totalItems': result.pagination?.totalItems,
+            'hasNext': result.pagination?.hasNext,
+            'hasPrevious': result.pagination?.hasPrevious,
+          },
+        },
+        duration: const Duration(minutes: 2), // Cache por 2 minutos
+      );
+
       state = state.copyWith(
         data: result,
         isLoading: false,
+        isLoadingMore: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Error al cargar movimientos: ${e.toString()}',
-      );
+      debugPrint('Error loading movimientos: $e');
+
+      // Si hay datos existentes, mantenerlos visibles y solo mostrar error suave
+      if (state.data != null) {
+        state = state.copyWith(
+          isLoading: false,
+          isLoadingMore: false,
+          error: 'Error al actualizar',
+        );
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          isLoadingMore: false,
+          error: 'Error al cargar movimientos: ${e.toString()}',
+        );
+      }
     }
   }
 
-  /// Crea un nuevo movimiento
+  /// Limpia todo el cache de movimientos de un cliente
+  Future<void> clearCache(int clienteId) async {
+    try {
+      final cacheService = _ref.read(cacheServiceProvider);
+      await cacheService.clearByPattern(CacheKeys.movimientosPrefix(clienteId));
+      debugPrint('Cache de movimientos limpiado para cliente $clienteId');
+    } catch (e) {
+      debugPrint('Error clearing movimientos cache: $e');
+    }
+  }
+
+  /// Crea un nuevo movimiento y limpia el cache
   Future<bool> createMovimiento({
     required int productoId,
     required int usuarioId,
@@ -130,6 +247,10 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
         observacion: observacion,
         fecha: fecha,
       );
+
+      // Limpiar cache de movimientos para forzar recarga de datos actualizados
+      await clearCache(clienteId);
+
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -139,7 +260,7 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
     }
   }
 
-  /// Actualiza un movimiento completo (PUT)
+  /// Actualiza un movimiento completo (PUT) y limpia el cache
   Future<bool> updateMovimiento({
     required int movimientoId,
     required int productoId,
@@ -177,6 +298,10 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
         fecha: fecha,
         updatedByUsuarioId: updatedByUsuarioId,
       );
+
+      // Limpiar cache de movimientos para forzar recarga de datos actualizados
+      await clearCache(clienteId);
+
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -186,7 +311,7 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
     }
   }
 
-  /// Actualiza un movimiento parcialmente (PATCH)
+  /// Actualiza un movimiento parcialmente (PATCH) y limpia el cache
   Future<bool> patchMovimiento({
     required int movimientoId,
     required int clienteId,
@@ -224,6 +349,10 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
         fecha: fecha,
         updatedByUsuarioId: updatedByUsuarioId,
       );
+
+      // Limpiar cache de movimientos para forzar recarga de datos actualizados
+      await clearCache(clienteId);
+
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -233,7 +362,7 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
     }
   }
 
-  /// Elimina un movimiento (soft delete)
+  /// Elimina un movimiento (soft delete) y limpia el cache
   Future<bool> deleteMovimiento({
     required int movimientoId,
     required int clienteId,
@@ -247,6 +376,10 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
         deletedByUsuarioId: deletedByUsuarioId,
         deleteReason: deleteReason,
       );
+
+      // Limpiar cache de movimientos para forzar recarga de datos actualizados
+      await clearCache(clienteId);
+
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -261,5 +394,5 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
 final movimientosProvider =
     StateNotifierProvider<MovimientosNotifier, MovimientosState>((ref) {
   final repository = ref.watch(movimientosRepositoryProvider);
-  return MovimientosNotifier(repository);
+  return MovimientosNotifier(repository, ref);
 });

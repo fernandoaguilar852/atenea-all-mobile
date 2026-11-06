@@ -41,9 +41,33 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
   final _productoSearchController = TextEditingController();
   final _proveedorSearchController = TextEditingController();
 
+  // Scroll controller para scroll-to-top
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollToTop = false;
+  late final AppLifecycleListener _lifecycleListener;
+
   @override
   void initState() {
     super.initState();
+
+    // Listener para mostrar/ocultar botón scroll-to-top
+    _scrollController.addListener(() {
+      final showButton = _scrollController.offset > 200;
+      if (showButton != _showScrollToTop) {
+        setState(() {
+          _showScrollToTop = showButton;
+        });
+      }
+    });
+
+    // Listener para recargar cuando la app regresa del background
+    _lifecycleListener = AppLifecycleListener(
+      onResume: () {
+        debugPrint('App resumed - reloading movimientos data');
+        _refreshData();
+      },
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -53,6 +77,8 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
   void dispose() {
     _productoSearchController.dispose();
     _proveedorSearchController.dispose();
+    _scrollController.dispose();
+    _lifecycleListener.dispose();
     super.dispose();
   }
 
@@ -69,6 +95,28 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
           proveedorId: _proveedorFilter?.proveedorId,
           pageNumber: _currentPage,
           pageSize: _pageSize,
+        );
+  }
+
+  // Pull-to-refresh: limpia cache y recarga
+  Future<void> _refreshData() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    // Limpiar cache
+    await ref.read(movimientosProvider.notifier).clearCache(user.clienteId);
+
+    // Recargar datos forzando refresh
+    await ref.read(movimientosProvider.notifier).loadMovimientos(
+          clienteId: user.clienteId,
+          tipo: _tipoFilter,
+          fechaDesde: _fechaDesde,
+          fechaHasta: _fechaHasta,
+          productoId: _productoFilter?.productoId,
+          proveedorId: _proveedorFilter?.proveedorId,
+          pageNumber: _currentPage,
+          pageSize: _pageSize,
+          forceRefresh: true,
         );
   }
 
@@ -336,8 +384,14 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
     final data = movimientosState.data;
     final user = ref.watch(currentUserProvider);
 
-    final bodyContent = Column(
+    final bodyContent = Stack(
         children: [
+          RefreshIndicator(
+            onRefresh: _refreshData,
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: Column(
+                children: [
           // Filtros
           Container(
             padding: EdgeInsets.all(AppSpacing.md),
@@ -504,11 +558,12 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
             ),
           ),
 
-          // Lista de movimientos
-          Expanded(
+          // Lista de movimientos o estados (loading/error/empty)
+          Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
             child: movimientosState.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : movimientosState.error != null
+                : movimientosState.error != null && data == null
                     ? Center(
                         child: Text(
                           movimientosState.error!,
@@ -528,34 +583,74 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                               ),
                             ),
                           )
-                        : ListView.separated(
-                            padding: EdgeInsets.all(AppSpacing.md),
-                            itemCount: data.movimientos.length,
-                            separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
-                            itemBuilder: (context, index) {
-                              final movimiento = data.movimientos[index];
-                              return _MovimientoCard(
-                                movimiento: movimiento,
-                                onTap: () {
-                                  // TODO: Implementar vista de detalle
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Ver detalle #${movimiento.movimientoId}'),
+                        : Stack(
+                            children: [
+                              Column(
+                                children: data.movimientos.map((movimiento) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(bottom: AppSpacing.md),
+                                    child: _MovimientoCard(
+                                      movimiento: movimiento,
+                                      onTap: () {
+                                        // TODO: Implementar vista de detalle
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                'Ver detalle #${movimiento.movimientoId}'),
+                                          ),
+                                        );
+                                      },
+                                      onEdit: () => _showEditDialog(movimiento),
+                                      onDelete: () => _showDeleteDialog(movimiento),
                                     ),
                                   );
-                                },
-                                onEdit: () => _showEditDialog(movimiento),
-                                onDelete: () => _showDeleteDialog(movimiento),
-                              );
-                            },
+                                }).toList(),
+                              ),
+                              // Indicador de loading para paginación (no bloquea UI)
+                              if (movimientosState.isLoadingMore)
+                                Positioned(
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: EdgeInsets.all(AppSpacing.sm),
+                                    color: AppColors.primary.withValues(alpha: 0.9),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 16.w,
+                                          height: 16.w,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                                          ),
+                                        ),
+                                        SizedBox(width: AppSpacing.sm),
+                                        Text(
+                                          'Cargando...',
+                                          style: TextStyle(
+                                            color: AppColors.white,
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Inter',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
           ),
 
-          // Paginación
+          // Paginación rediseñada
           if (data?.pagination != null)
             Container(
-              padding: EdgeInsets.all(AppSpacing.md),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.lg,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.surfaceVariant,
                 border: Border(
@@ -568,37 +663,91 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Botón Anterior
+                  TextButton.icon(
+                    onPressed: data!.pagination!.hasPrevious
+                        ? () {
+                            setState(() => _currentPage--);
+                            _loadData();
+                          }
+                        : null,
+                    icon: Icon(Icons.chevron_left, size: 20.sp),
+                    label: Text(
+                      'Anterior',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                  ),
+
+                  // Información de página
                   Text(
-                    'Página $_currentPage de ${data!.pagination!.totalPages}',
+                    'Página $_currentPage de ${data.pagination!.totalPages}',
                     style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
                       fontFamily: 'Inter',
                     ),
                   ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.chevron_left),
-                        onPressed: data.pagination!.hasPrevious
-                            ? () {
-                                setState(() => _currentPage--);
-                                _loadData();
-                              }
-                            : null,
+
+                  // Botón Siguiente
+                  TextButton.icon(
+                    onPressed: data.pagination!.hasNext
+                        ? () {
+                            setState(() => _currentPage++);
+                            _loadData();
+                          }
+                        : null,
+                    label: Text(
+                      'Siguiente',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontFamily: 'Inter',
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.chevron_right),
-                        onPressed: data.pagination!.hasNext
-                            ? () {
-                                setState(() => _currentPage++);
-                                _loadData();
-                              }
-                            : null,
-                      ),
-                    ],
+                    ),
+                    icon: Icon(Icons.chevron_right, size: 20.sp),
                   ),
                 ],
+              ),
+            ),
+
+          // Espaciado adicional al final para que el botón flotante no cubra contenido
+          SizedBox(height: 80.h),
+                ],
+              ),
+            ),
+          ),
+
+          // Botón flotante scroll-to-top
+          if (_showScrollToTop)
+            Positioned(
+              bottom: 16.h,
+              right: 16.w,
+              child: Material(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(28.r),
+                elevation: 4,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(28.r),
+                  onTap: () {
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  child: Container(
+                    width: 56.w,
+                    height: 56.w,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.arrow_upward,
+                      color: AppColors.white,
+                      size: 24.sp,
+                    ),
+                  ),
+                ),
               ),
             ),
         ],

@@ -189,7 +189,19 @@ class CacheKeys {
   static String ventaDetalle(int ventaId) => '${prefix}venta_detail_$ventaId';
 
   // Movimientos
-  static String movimientos(int clienteId, int page) => '${prefix}movimientos_${clienteId}_$page';
+  static String movimientos({
+    required int clienteId,
+    required int pageNumber,
+    required int pageSize,
+    required String tipo,
+    required int productoId,
+    required int proveedorId,
+    required String startDate,
+    required String endDate,
+  }) =>
+      '${prefix}movimientos_${clienteId}_p${pageNumber}_ps${pageSize}_t${tipo}_prod${productoId}_prov${proveedorId}_${startDate}_$endDate';
+
+  static String movimientosPrefix(int clienteId) => '${prefix}movimientos_$clienteId';
 
   // Reportes
   static String reportes(int clienteId, String type) => '${prefix}reportes_${clienteId}_$type';
