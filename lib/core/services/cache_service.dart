@@ -240,4 +240,18 @@ class CacheKeys {
       '${prefix}reporte_ventas_${startDate}_${endDate}_p${pageNumber}_ps${pageSize}_prod${productoId}_cat${categoriaId}_caja${cajaId}_anuladas$incluirAnuladas';
 
   static String reporteVentasPrefix = '${prefix}reporte_ventas';
+
+  // Reportes - Venta Detallada
+  static String reporteVentaDetalle({
+    required String startDate,
+    required String endDate,
+    required int pageNumber,
+    required int pageSize,
+    required int consumidorId,
+    required String estado,
+    required int productoId,
+  }) =>
+      '${prefix}reporte_venta_detalle_${startDate}_${endDate}_p${pageNumber}_ps${pageSize}_cons${consumidorId}_estado${estado}_prod$productoId';
+
+  static String reporteVentaDetallePrefix = '${prefix}reporte_venta_detalle';
 }
