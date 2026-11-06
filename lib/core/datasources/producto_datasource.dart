@@ -8,6 +8,39 @@ class ProductoDatasource {
 
   ProductoDatasource(this._dio);
 
+  /// Lista productos con paginación
+  Future<ProductoResponse> getProductos({
+    required int clienteId,
+    int pageNumber = 1,
+    int pageSize = 20,
+    String? search,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'clienteId': clienteId,
+      'pageNumber': pageNumber,
+      'pageSize': pageSize,
+    };
+
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    final response = await _dio.get(
+      ApiConstants.buildUrl('/products'),
+      queryParameters: queryParams,
+    );
+
+    if (response.statusCode == 200) {
+      return ProductoResponse.fromJson(response.data);
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al obtener productos',
+      );
+    }
+  }
+
   /// Busca productos por nombre
   Future<List<Producto>> searchProductos({
     required int clienteId,

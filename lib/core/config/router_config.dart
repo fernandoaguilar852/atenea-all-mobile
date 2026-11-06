@@ -6,6 +6,7 @@ import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/reportes/presentation/screens/reportes_screen.dart';
 import '../../features/movimientos/presentation/screens/movimientos_screen.dart';
 import '../../features/resoluciones/presentation/screens/resoluciones_screen.dart';
+import '../../features/productos/presentation/screens/productos_screen.dart';
 import '../../shared/screens/main_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -57,7 +58,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'resoluciones',
         builder: (context, state) => const ResolucionesScreen(),
       ),
-      // TODO: Add more routes (POS, Products, Clients, etc.)
+      GoRoute(
+        path: '/productos',
+        name: 'productos',
+        builder: (context, state) => const ProductosScreen(),
+      ),
+      // TODO: Add more routes (POS, Clients, etc.)
     ],
   );
 });

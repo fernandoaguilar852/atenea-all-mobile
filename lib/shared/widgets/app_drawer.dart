@@ -139,6 +139,14 @@ class AppDrawer extends ConsumerWidget {
                     ),
                     children: [
                       _DrawerSubItem(
+                        icon: Icons.inventory_2_outlined,
+                        title: 'Productos',
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push('/productos');
+                        },
+                      ),
+                      _DrawerSubItem(
                         icon: Icons.receipt_long,
                         title: 'Resoluciones',
                         isSelected: currentIndex == 5,
@@ -157,21 +165,6 @@ class AppDrawer extends ConsumerWidget {
                   isDisabled: true,
                   onTap: () {
                     // TODO: Implementar navegación a POS
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Módulo en desarrollo'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'Productos',
-                  isDisabled: true,
-                  onTap: () {
-                    // TODO: Implementar navegación a Productos
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
