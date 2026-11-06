@@ -71,6 +71,10 @@ class VentasNotifier extends StateNotifier<ReporteState<VentasEntity>> {
   final ReportesRepository _repository;
   final Ref _ref;
 
+  // 🚀 Cache en memoria (RAM) - estilo Instagram/Facebook
+  // Navegación instantánea entre páginas ya consultadas
+  final Map<String, VentasEntity> _memoryCache = {};
+
   VentasNotifier(this._repository, this._ref) : super(ReporteState());
 
   /// Genera una clave de cache única basada en los filtros
@@ -113,7 +117,6 @@ class VentasNotifier extends StateNotifier<ReporteState<VentasEntity>> {
       final user = _ref.read(currentUserProvider);
       if (user == null) throw Exception('Usuario no autenticado');
 
-      final cacheService = _ref.read(cacheServiceProvider);
       final cacheKey = _getCacheKey(
         startDate: startDate,
         endDate: endDate,
@@ -125,35 +128,28 @@ class VentasNotifier extends StateNotifier<ReporteState<VentasEntity>> {
         incluirAnuladas: incluirAnuladas,
       );
 
-      // Determinar tipo de loading
-      final hasExistingData = state.data != null;
-
-      // Paso 1: Intentar cargar desde cache si no es force refresh
-      if (!forceRefresh) {
-        final cachedData = await cacheService.getStale<Map<String, dynamic>>(cacheKey);
-        if (cachedData != null) {
-          state = state.copyWith(
-            isLoadingMore: hasExistingData,
-            isLoading: !hasExistingData,
-            error: null,
-          );
-          debugPrint('Cache hit for ventas reporte (loading fresh data...)');
-        } else {
-          state = state.copyWith(
-            isLoadingMore: hasExistingData,
-            isLoading: !hasExistingData,
-            error: null,
-          );
-        }
-      } else {
+      // ⚡ PASO 1: Verificar cache en RAM (INSTANTÁNEO - estilo Instagram)
+      if (!forceRefresh && _memoryCache.containsKey(cacheKey)) {
+        debugPrint('✨ RAM cache HIT - Carga instantánea!');
         state = state.copyWith(
-          isLoadingMore: hasExistingData,
-          isLoading: !hasExistingData,
+          data: _memoryCache[cacheKey],
+          isLoading: false,
+          isLoadingMore: false,
           error: null,
         );
+        return; // Retornar inmediatamente - NO hacer petición al servidor
       }
 
-      // Paso 2: Fetch datos frescos
+      // PASO 2: No está en RAM, mostrar loading y consultar servidor
+      debugPrint('🌐 RAM cache MISS - Consultando servidor...');
+      final hasExistingData = state.data != null;
+      state = state.copyWith(
+        isLoadingMore: hasExistingData,
+        isLoading: !hasExistingData,
+        error: null,
+      );
+
+      // PASO 3: Fetch datos frescos del servidor
       final reporte = await _repository.getVentasReporte(
         clienteId: user.clienteId,
         startDate: startDate,
@@ -168,19 +164,9 @@ class VentasNotifier extends StateNotifier<ReporteState<VentasEntity>> {
         pageSize: pageSize,
       );
 
-      // Paso 3: Guardar en cache
-      await cacheService.set(
-        key: cacheKey,
-        data: {
-          'pagination': {
-            'currentPage': reporte.pagination?.currentPage,
-            'totalPages': reporte.pagination?.totalPages,
-            'hasNext': reporte.pagination?.hasNext,
-            'hasPrevious': reporte.pagination?.hasPrevious,
-          },
-        },
-        duration: const Duration(minutes: 5), // Cache por 5 minutos
-      );
+      // PASO 4: Guardar en RAM para próximas consultas
+      _memoryCache[cacheKey] = reporte;
+      debugPrint('💾 Guardado en RAM (Total páginas: ${_memoryCache.length})');
 
       state = state.copyWith(
         data: reporte,
@@ -211,6 +197,10 @@ class VentasNotifier extends StateNotifier<ReporteState<VentasEntity>> {
   /// Limpia el cache de reportes de ventas
   Future<void> clearCache() async {
     try {
+      // Limpiar cache en RAM
+      _memoryCache.clear();
+      debugPrint('🗑️ Ventas RAM cache limpiado');
+
       final cacheService = _ref.read(cacheServiceProvider);
       await cacheService.clearByPattern(CacheKeys.reporteVentasPrefix);
       debugPrint('Cache de reportes de ventas limpiado');
@@ -238,6 +228,10 @@ class VentaDetalleNotifier
     extends StateNotifier<ReporteState<VentaDetalleEntity>> {
   final ReportesRepository _repository;
   final Ref _ref;
+
+  // 🚀 Cache en memoria (RAM) - estilo Instagram/Facebook
+  // Navegación instantánea entre páginas ya consultadas
+  final Map<String, VentaDetalleEntity> _memoryCache = {};
 
   VentaDetalleNotifier(this._repository, this._ref) : super(ReporteState());
 
@@ -276,7 +270,6 @@ class VentaDetalleNotifier
       final user = _ref.read(currentUserProvider);
       if (user == null) throw Exception('Usuario no autenticado');
 
-      final cacheService = _ref.read(cacheServiceProvider);
       final cacheKey = _getCacheKey(
         startDate: startDate,
         endDate: endDate,
@@ -287,35 +280,28 @@ class VentaDetalleNotifier
         productoId: productoId,
       );
 
-      // Determinar tipo de loading
-      final hasExistingData = state.data != null;
-
-      // Paso 1: Intentar cargar desde cache si no es force refresh
-      if (!forceRefresh) {
-        final cachedData = await cacheService.getStale<Map<String, dynamic>>(cacheKey);
-        if (cachedData != null) {
-          state = state.copyWith(
-            isLoadingMore: hasExistingData,
-            isLoading: !hasExistingData,
-            error: null,
-          );
-          debugPrint('Cache hit for venta detalle reporte (loading fresh data...)');
-        } else {
-          state = state.copyWith(
-            isLoadingMore: hasExistingData,
-            isLoading: !hasExistingData,
-            error: null,
-          );
-        }
-      } else {
+      // ⚡ PASO 1: Verificar cache en RAM (INSTANTÁNEO - estilo Instagram)
+      if (!forceRefresh && _memoryCache.containsKey(cacheKey)) {
+        debugPrint('✨ VentaDetalle RAM cache HIT - Carga instantánea!');
         state = state.copyWith(
-          isLoadingMore: hasExistingData,
-          isLoading: !hasExistingData,
+          data: _memoryCache[cacheKey],
+          isLoading: false,
+          isLoadingMore: false,
           error: null,
         );
+        return; // Retornar inmediatamente - NO hacer petición al servidor
       }
 
-      // Paso 2: Fetch datos frescos
+      // PASO 2: No está en RAM, mostrar loading y consultar servidor
+      debugPrint('🌐 VentaDetalle RAM cache MISS - Consultando servidor...');
+      final hasExistingData = state.data != null;
+      state = state.copyWith(
+        isLoadingMore: hasExistingData,
+        isLoading: !hasExistingData,
+        error: null,
+      );
+
+      // PASO 3: Fetch datos frescos del servidor
       final reporte = await _repository.getVentaDetalleReporte(
         clienteId: user.clienteId,
         startDate: startDate,
@@ -327,19 +313,9 @@ class VentaDetalleNotifier
         pageSize: pageSize,
       );
 
-      // Paso 3: Guardar en cache
-      await cacheService.set(
-        key: cacheKey,
-        data: {
-          'pagination': {
-            'currentPage': reporte.pagination?.currentPage,
-            'totalPages': reporte.pagination?.totalPages,
-            'hasNext': reporte.pagination?.hasNext,
-            'hasPrevious': reporte.pagination?.hasPrevious,
-          },
-        },
-        duration: const Duration(minutes: 5),
-      );
+      // PASO 4: Guardar en RAM para próximas consultas
+      _memoryCache[cacheKey] = reporte;
+      debugPrint('💾 VentaDetalle guardado en RAM (Total páginas: ${_memoryCache.length})');
 
       state = state.copyWith(
         data: reporte,
@@ -370,6 +346,10 @@ class VentaDetalleNotifier
   /// Limpia el cache de reportes de venta detallada
   Future<void> clearCache() async {
     try {
+      // Limpiar cache en RAM
+      _memoryCache.clear();
+      debugPrint('🗑️ VentaDetalle RAM cache limpiado');
+
       final cacheService = _ref.read(cacheServiceProvider);
       await cacheService.clearByPattern(CacheKeys.reporteVentaDetallePrefix);
       debugPrint('Cache de reportes de venta detallada limpiado');
@@ -397,6 +377,10 @@ class InventarioNotifier
     extends StateNotifier<ReporteState<InventarioEntity>> {
   final ReportesRepository _repository;
   final Ref _ref;
+
+  // 🚀 Cache en memoria (RAM) - estilo Instagram/Facebook
+  // Navegación instantánea entre páginas ya consultadas
+  final Map<String, InventarioEntity> _memoryCache = {};
 
   InventarioNotifier(this._repository, this._ref) : super(ReporteState());
 
@@ -431,7 +415,6 @@ class InventarioNotifier
       final user = _ref.read(currentUserProvider);
       if (user == null) throw Exception('Usuario no autenticado');
 
-      final cacheService = _ref.read(cacheServiceProvider);
       final cacheKey = _getCacheKey(
         startDate: startDate,
         endDate: endDate,
@@ -441,35 +424,28 @@ class InventarioNotifier
         tipoMovimiento: tipoMovimiento ?? '',
       );
 
-      // Determinar tipo de loading
-      final hasExistingData = state.data != null;
-
-      // Paso 1: Intentar cargar desde cache si no es force refresh
-      if (!forceRefresh) {
-        final cachedData = await cacheService.getStale<Map<String, dynamic>>(cacheKey);
-        if (cachedData != null) {
-          state = state.copyWith(
-            isLoadingMore: hasExistingData,
-            isLoading: !hasExistingData,
-            error: null,
-          );
-          debugPrint('Cache hit for inventario reporte (loading fresh data...)');
-        } else {
-          state = state.copyWith(
-            isLoadingMore: hasExistingData,
-            isLoading: !hasExistingData,
-            error: null,
-          );
-        }
-      } else {
+      // ⚡ PASO 1: Verificar cache en RAM (INSTANTÁNEO - estilo Instagram)
+      if (!forceRefresh && _memoryCache.containsKey(cacheKey)) {
+        debugPrint('✨ Inventario RAM cache HIT - Carga instantánea!');
         state = state.copyWith(
-          isLoadingMore: hasExistingData,
-          isLoading: !hasExistingData,
+          data: _memoryCache[cacheKey],
+          isLoading: false,
+          isLoadingMore: false,
           error: null,
         );
+        return; // Retornar inmediatamente - NO hacer petición al servidor
       }
 
-      // Paso 2: Fetch datos frescos
+      // PASO 2: No está en RAM, mostrar loading y consultar servidor
+      debugPrint('🌐 Inventario RAM cache MISS - Consultando servidor...');
+      final hasExistingData = state.data != null;
+      state = state.copyWith(
+        isLoadingMore: hasExistingData,
+        isLoading: !hasExistingData,
+        error: null,
+      );
+
+      // PASO 3: Fetch datos frescos del servidor
       final reporte = await _repository.getInventarioReporte(
         clienteId: user.clienteId,
         startDate: startDate,
@@ -480,19 +456,9 @@ class InventarioNotifier
         pageSize: pageSize,
       );
 
-      // Paso 3: Guardar en cache
-      await cacheService.set(
-        key: cacheKey,
-        data: {
-          'pagination': {
-            'currentPage': reporte.pagination?.currentPage,
-            'totalPages': reporte.pagination?.totalPages,
-            'hasNext': reporte.pagination?.hasNext,
-            'hasPrevious': reporte.pagination?.hasPrevious,
-          },
-        },
-        duration: const Duration(minutes: 5), // Cache por 5 minutos
-      );
+      // PASO 4: Guardar en RAM para próximas consultas
+      _memoryCache[cacheKey] = reporte;
+      debugPrint('💾 Inventario guardado en RAM (Total páginas: ${_memoryCache.length})');
 
       state = state.copyWith(
         data: reporte,
@@ -521,6 +487,10 @@ class InventarioNotifier
   }
 
   Future<void> clearCache() async {
+    // Limpiar cache en RAM
+    _memoryCache.clear();
+    debugPrint('🗑️ Inventario RAM cache limpiado');
+
     final cacheService = _ref.read(cacheServiceProvider);
     await cacheService.clearByPattern(CacheKeys.reporteInventarioPrefix);
   }
@@ -666,6 +636,10 @@ class StockNotifier extends StateNotifier<ReporteState<StockEntity>> {
   final ReportesRepository _repository;
   final Ref _ref;
 
+  // 🚀 Cache en memoria (RAM) - estilo Instagram/Facebook
+  // Navegación instantánea entre páginas ya consultadas
+  final Map<String, StockEntity> _memoryCache = {};
+
   StockNotifier(this._repository, this._ref) : super(ReporteState());
 
   String _getCacheKey({
@@ -699,7 +673,6 @@ class StockNotifier extends StateNotifier<ReporteState<StockEntity>> {
       final user = _ref.read(currentUserProvider);
       if (user == null) throw Exception('Usuario no autenticado');
 
-      final cacheService = _ref.read(cacheServiceProvider);
       final cacheKey = _getCacheKey(
         pageNumber: pageNumber,
         pageSize: pageSize,
@@ -709,35 +682,28 @@ class StockNotifier extends StateNotifier<ReporteState<StockEntity>> {
         tipoProductoId: tipoProductoId ?? 0,
       );
 
-      // Determinar tipo de loading
-      final hasExistingData = state.data != null;
-
-      // Paso 1: Intentar cargar desde cache si no es force refresh
-      if (!forceRefresh) {
-        final cachedData = await cacheService.getStale<Map<String, dynamic>>(cacheKey);
-        if (cachedData != null) {
-          state = state.copyWith(
-            isLoadingMore: hasExistingData,
-            isLoading: !hasExistingData,
-            error: null,
-          );
-          debugPrint('Cache hit for stock reporte (loading fresh data...)');
-        } else {
-          state = state.copyWith(
-            isLoadingMore: hasExistingData,
-            isLoading: !hasExistingData,
-            error: null,
-          );
-        }
-      } else {
+      // ⚡ PASO 1: Verificar cache en RAM (INSTANTÁNEO - estilo Instagram)
+      if (!forceRefresh && _memoryCache.containsKey(cacheKey)) {
+        debugPrint('✨ Stock RAM cache HIT - Carga instantánea!');
         state = state.copyWith(
-          isLoadingMore: hasExistingData,
-          isLoading: !hasExistingData,
+          data: _memoryCache[cacheKey],
+          isLoading: false,
+          isLoadingMore: false,
           error: null,
         );
+        return; // Retornar inmediatamente - NO hacer petición al servidor
       }
 
-      // Paso 2: Fetch datos frescos
+      // PASO 2: No está en RAM, mostrar loading y consultar servidor
+      debugPrint('🌐 Stock RAM cache MISS - Consultando servidor...');
+      final hasExistingData = state.data != null;
+      state = state.copyWith(
+        isLoadingMore: hasExistingData,
+        isLoading: !hasExistingData,
+        error: null,
+      );
+
+      // PASO 3: Fetch datos frescos del servidor
       final reporte = await _repository.getStockReporte(
         clienteId: user.clienteId,
         productoId: productoId,
@@ -748,19 +714,9 @@ class StockNotifier extends StateNotifier<ReporteState<StockEntity>> {
         pageSize: pageSize,
       );
 
-      // Paso 3: Guardar en cache
-      await cacheService.set(
-        key: cacheKey,
-        data: {
-          'pagination': {
-            'currentPage': reporte.pagination?.currentPage,
-            'totalPages': reporte.pagination?.totalPages,
-            'hasNext': reporte.pagination?.hasNext,
-            'hasPrevious': reporte.pagination?.hasPrevious,
-          },
-        },
-        duration: const Duration(minutes: 5), // Cache por 5 minutos
-      );
+      // PASO 4: Guardar en RAM para próximas consultas
+      _memoryCache[cacheKey] = reporte;
+      debugPrint('💾 Stock guardado en RAM (Total páginas: ${_memoryCache.length})');
 
       state = state.copyWith(
         data: reporte,
@@ -789,6 +745,10 @@ class StockNotifier extends StateNotifier<ReporteState<StockEntity>> {
   }
 
   Future<void> clearCache() async {
+    // Limpiar cache en RAM
+    _memoryCache.clear();
+    debugPrint('🗑️ Stock RAM cache limpiado');
+
     final cacheService = _ref.read(cacheServiceProvider);
     await cacheService.clearByPattern(CacheKeys.reporteStockPrefix);
   }
@@ -813,7 +773,31 @@ class CostoBeneficioNotifier
   final ReportesRepository _repository;
   final Ref _ref;
 
+  // 🚀 Cache en memoria (RAM) - estilo Instagram/Facebook
+  // Navegación instantánea entre páginas ya consultadas
+  final Map<String, CostoBeneficioEntity> _memoryCache = {};
+
   CostoBeneficioNotifier(this._repository, this._ref) : super(ReporteState());
+
+  String _getCacheKey({
+    required String startDate,
+    required String endDate,
+    required int pageNumber,
+    required int pageSize,
+    required int productoId,
+    required int categoriaId,
+    required bool activo,
+  }) {
+    return CacheKeys.reporteCostoBeneficio(
+      startDate: startDate,
+      endDate: endDate,
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+      productoId: productoId,
+      categoriaId: categoriaId,
+      activo: activo,
+    );
+  }
 
   Future<void> loadReporte({
     required String startDate,
@@ -823,13 +807,44 @@ class CostoBeneficioNotifier
     bool? activo,
     int pageNumber = 1,
     int pageSize = 10,
+    bool forceRefresh = false,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
-
     try {
       final user = _ref.read(currentUserProvider);
       if (user == null) throw Exception('Usuario no autenticado');
 
+      final cacheKey = _getCacheKey(
+        startDate: startDate,
+        endDate: endDate,
+        pageNumber: pageNumber,
+        pageSize: pageSize,
+        productoId: productoId ?? 0,
+        categoriaId: categoriaId ?? 0,
+        activo: activo ?? false,
+      );
+
+      // ⚡ PASO 1: Verificar cache en RAM (INSTANTÁNEO - estilo Instagram)
+      if (!forceRefresh && _memoryCache.containsKey(cacheKey)) {
+        debugPrint('✨ CostoBeneficio RAM cache HIT - Carga instantánea!');
+        state = state.copyWith(
+          data: _memoryCache[cacheKey],
+          isLoading: false,
+          isLoadingMore: false,
+          error: null,
+        );
+        return; // Retornar inmediatamente - NO hacer petición al servidor
+      }
+
+      // PASO 2: No está en RAM, mostrar loading y consultar servidor
+      debugPrint('🌐 CostoBeneficio RAM cache MISS - Consultando servidor...');
+      final hasExistingData = state.data != null;
+      state = state.copyWith(
+        isLoadingMore: hasExistingData,
+        isLoading: !hasExistingData,
+        error: null,
+      );
+
+      // PASO 3: Fetch datos frescos del servidor
       final reporte = await _repository.getCostoBeneficioReporte(
         clienteId: user.clienteId,
         startDate: startDate,
@@ -841,15 +856,43 @@ class CostoBeneficioNotifier
         pageSize: pageSize,
       );
 
-      state = state.copyWith(data: reporte, isLoading: false);
+      // PASO 4: Guardar en RAM para próximas consultas
+      _memoryCache[cacheKey] = reporte;
+      debugPrint('💾 CostoBeneficio guardado en RAM (Total páginas: ${_memoryCache.length})');
+
+      state = state.copyWith(
+        data: reporte,
+        isLoading: false,
+        isLoadingMore: false,
+      );
     } catch (e, stackTrace) {
       debugPrint('Error loading costo-beneficio reporte: $e');
       debugPrint('Stack trace: $stackTrace');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Error al cargar reporte de costo-beneficio',
-      );
+
+      // Si hay datos existentes, mantenerlos
+      if (state.data != null) {
+        state = state.copyWith(
+          isLoading: false,
+          isLoadingMore: false,
+          error: 'Error al actualizar',
+        );
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          isLoadingMore: false,
+          error: 'Error al cargar reporte de costo-beneficio',
+        );
+      }
     }
+  }
+
+  Future<void> clearCache() async {
+    // Limpiar cache en RAM
+    _memoryCache.clear();
+    debugPrint('🗑️ CostoBeneficio RAM cache limpiado');
+
+    final cacheService = _ref.read(cacheServiceProvider);
+    await cacheService.clearByPattern(CacheKeys.reporteCostoBeneficioPrefix);
   }
 
   void clear() {

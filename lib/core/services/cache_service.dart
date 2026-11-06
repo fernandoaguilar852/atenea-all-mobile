@@ -291,4 +291,18 @@ class CacheKeys {
       '${prefix}reporte_stock_p${pageNumber}_ps${pageSize}_prod${productoId}_stockBajo${stockBajo}_activo${activo}_tipo$tipoProductoId';
 
   static String reporteStockPrefix = '${prefix}reporte_stock';
+
+  // Reportes - Costo-Beneficio
+  static String reporteCostoBeneficio({
+    required String startDate,
+    required String endDate,
+    required int pageNumber,
+    required int pageSize,
+    required int productoId,
+    required int categoriaId,
+    required bool activo,
+  }) =>
+      '${prefix}reporte_costo_beneficio_${startDate}_${endDate}_p${pageNumber}_ps${pageSize}_prod${productoId}_cat${categoriaId}_activo$activo';
+
+  static String reporteCostoBeneficioPrefix = '${prefix}reporte_costo_beneficio';
 }
