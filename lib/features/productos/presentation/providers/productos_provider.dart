@@ -87,8 +87,10 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
     required int pageNumber,
     required int pageSize,
     String? search,
+    int? tipoProductoId,
+    int? productoId,
   }) {
-    return 'productos_${clienteId}_page${pageNumber}_size${pageSize}_search${search ?? 'all'}';
+    return 'productos_${clienteId}_page${pageNumber}_size${pageSize}_search${search ?? 'all'}_tipo${tipoProductoId ?? 'all'}_prod${productoId ?? 'all'}';
   }
 
   /// Carga la lista de productos con paginación y cache con TTL
@@ -97,14 +99,25 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
     required int pageNumber,
     required int pageSize,
     String? search,
+    int? tipoProductoId,
+    int? productoId,
     bool forceRefresh = false,
   }) async {
+    debugPrint('🔥 PROVIDER loadProductos llamado con:');
+    debugPrint('   - clienteId: $clienteId');
+    debugPrint('   - pageNumber: $pageNumber');
+    debugPrint('   - search: $search');
+    debugPrint('   - tipoProductoId: $tipoProductoId');
+    debugPrint('   - productoId: $productoId');
+
     try {
       final cacheKey = _getCacheKey(
         clienteId: clienteId,
         pageNumber: pageNumber,
         pageSize: pageSize,
         search: search,
+        tipoProductoId: tipoProductoId,
+        productoId: productoId,
       );
 
       // ⚡ PASO 1: Verificar cache en RAM con TTL
@@ -128,18 +141,39 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
       state = state.copyWith(isLoading: true, error: null);
 
       // PASO 3: Fetch datos frescos del servidor
-      final response = await _datasource.getProductos(
-        clienteId: clienteId,
-        pageNumber: pageNumber,
-        pageSize: pageSize,
-        search: search,
-      );
+      List<Producto> productos;
+      int totalElements;
+      bool hasMoreElements;
+
+      if (productoId != null) {
+        // Si hay un productoId, usar el endpoint específico GET /products/{id}
+        debugPrint('📍 Usando endpoint específico para producto ID: $productoId');
+        final producto = await _datasource.getProductoById(
+          productoId: productoId,
+          clienteId: clienteId,
+        );
+        productos = [producto]; // Convertir a lista con un solo elemento
+        totalElements = 1;
+        hasMoreElements = false;
+      } else {
+        // Si no hay productoId, usar el endpoint de listado normal
+        final response = await _datasource.getProductos(
+          clienteId: clienteId,
+          pageNumber: pageNumber,
+          pageSize: pageSize,
+          search: search,
+          tipoProductoId: tipoProductoId,
+        );
+        productos = response.data.products;
+        totalElements = response.pagination?.totalElement ?? 0;
+        hasMoreElements = response.pagination?.hasMoreElements ?? false;
+      }
 
       // PASO 4: Crear nuevo state y guardar en RAM con timestamp
       final newState = state.copyWith(
-        productos: response.data.products,
-        totalElements: response.pagination?.totalElement ?? 0,
-        hasMoreElements: response.pagination?.hasMoreElements ?? false,
+        productos: productos,
+        totalElements: totalElements,
+        hasMoreElements: hasMoreElements,
         isLoading: false,
       );
 

@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
+import '../../../../core/datasources/producto_datasource.dart';
 import '../../../../core/models/producto.dart';
+import '../../../../core/providers/catalogs_providers.dart';
+import '../../../../core/providers/dio_provider.dart';
 import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../providers/productos_provider.dart';
+import '../providers/productos_provider.dart' hide productoDatasourceProvider;
 import '../widgets/crear_producto_dialog.dart';
 import '../widgets/editar_producto_dialog.dart';
 
@@ -17,12 +20,23 @@ class ProductosScreen extends ConsumerStatefulWidget {
   ConsumerState<ProductosScreen> createState() => _ProductosScreenState();
 }
 
+enum ProductoEstadoFiltro { todos, activos, inactivos }
+
 class _ProductosScreenState extends ConsumerState<ProductosScreen> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   int _currentPage = 1;
   static const int _pageSize = 20;
   String? _searchQuery;
+  int? _selectedProductoId; // Para filtrar por producto específico
+  int? _selectedTipoProductoId; // Para filtrar por categoría/tipo
   bool _showScrollToTop = false;
+  ProductoEstadoFiltro _estadoFiltro = ProductoEstadoFiltro.todos;
+  List<Producto> _searchSuggestions = [];
+  bool _isSearching = false;
+  bool _showSuggestions = false;
+  bool _isSettingTextProgrammatically = false; // Flag para evitar onChanged
 
   @override
   void initState() {
@@ -44,6 +58,8 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -51,12 +67,21 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
     final user = ref.read(currentUserProvider);
     final clienteId = user?.clienteId ?? 0;
 
+    debugPrint('📡 Cargando datos con filtros:');
+    debugPrint('   - clienteId: $clienteId');
+    debugPrint('   - page: $_currentPage');
+    debugPrint('   - search: $_searchQuery');
+    debugPrint('   - tipoProductoId: $_selectedTipoProductoId');
+    debugPrint('   - productoId: $_selectedProductoId');
+
     if (clienteId > 0) {
       ref.read(productosProvider.notifier).loadProductos(
             clienteId: clienteId,
             pageNumber: _currentPage,
             pageSize: _pageSize,
             search: _searchQuery,
+            tipoProductoId: _selectedTipoProductoId,
+            productoId: _selectedProductoId,
           );
     }
   }
@@ -97,19 +122,13 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
             pageNumber: _currentPage,
             pageSize: _pageSize,
             search: _searchQuery,
+            tipoProductoId: _selectedTipoProductoId,
+            productoId: _selectedProductoId,
             forceRefresh: true,
           );
     }
   }
 
-  void _onSearch(String query) {
-    setState(() {
-      _searchQuery = query.isEmpty ? null : query;
-      _currentPage = 1;
-    });
-    ref.read(productosProvider.notifier).clearCache();
-    _loadData();
-  }
 
   void _onEditProducto(Producto producto) async {
     final result = await showDialog<bool>(
@@ -197,9 +216,151 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
     }
   }
 
+  Future<void> _onSearchChanged(String query) async {
+    // Ignorar cambios programáticos
+    if (_isSettingTextProgrammatically) {
+      return;
+    }
+
+    // Si el usuario borró todo el texto, limpiar el producto seleccionado
+    if (query.isEmpty && _selectedProductoId != null) {
+      _clearSearch();
+      return;
+    }
+
+    // Si ya hay un producto seleccionado, ignorar el onChange
+    if (_selectedProductoId != null) {
+      return;
+    }
+
+    if (query.length >= 3) {
+      setState(() {
+        _isSearching = true;
+        _showSuggestions = true;
+      });
+
+      try {
+        final user = ref.read(currentUserProvider);
+        final clienteId = user?.clienteId ?? 0;
+
+        // Usar el ProductoDatasource del catalogs_providers
+        final dioClient = ref.read(dioClientProvider);
+        final datasource = ProductoDatasource(dioClient.dio);
+        final sugerencias = await datasource.searchProductos(
+          clienteId: clienteId,
+          search: query,
+          pageSize: 10,
+        );
+
+        setState(() {
+          _searchSuggestions = sugerencias;
+          _isSearching = false;
+        });
+      } catch (e) {
+        setState(() {
+          _searchSuggestions = [];
+          _isSearching = false;
+        });
+      }
+    } else {
+      setState(() {
+        _searchSuggestions = [];
+        _showSuggestions = false;
+        _isSearching = false;
+      });
+    }
+  }
+
+  void _onProductoSelected(Producto producto) {
+    debugPrint('🔍 Producto seleccionado: ${producto.nombre} (ID: ${producto.productoId})');
+
+    // Establecer flag para evitar que onChanged interfiera
+    _isSettingTextProgrammatically = true;
+
+    setState(() {
+      _selectedProductoId = producto.productoId;
+      _searchController.text = producto.nombre;
+      _searchSuggestions = []; // Limpiar sugerencias
+      _showSuggestions = false;
+      _isSearching = false;
+      _searchFocusNode.unfocus();
+      _currentPage = 1; // Reset a primera página
+    });
+
+    // Restablecer flag después de un breve delay
+    Future.delayed(Duration(milliseconds: 100), () {
+      _isSettingTextProgrammatically = false;
+    });
+
+    debugPrint('✅ _selectedProductoId guardado: $_selectedProductoId');
+    // Limpiar cache y recargar con el productoId seleccionado
+    ref.read(productosProvider.notifier).clearCache();
+    _loadData();
+  }
+
+  void _clearSearch() {
+    // Establecer flag para evitar que onChanged interfiera
+    _isSettingTextProgrammatically = true;
+
+    setState(() {
+      _searchController.clear();
+      _selectedProductoId = null;
+      _searchSuggestions = [];
+      _showSuggestions = false;
+      _currentPage = 1;
+    });
+
+    // Restablecer flag después de un breve delay
+    Future.delayed(Duration(milliseconds: 100), () {
+      _isSettingTextProgrammatically = false;
+    });
+
+    // Limpiar cache y recargar sin filtro de producto
+    ref.read(productosProvider.notifier).clearCache();
+    _loadData();
+  }
+
+  String _formatCurrency(double value) {
+    // Formato español: punto (.) para miles, coma (,) para decimales
+    String valueStr = value.toString();
+
+    // Si es entero, formatear sin decimales
+    if (value == value.toInt()) {
+      return '\$${NumberFormat('#,###', 'es').format(value.toInt())}';
+    }
+
+    // Si tiene decimales, mantenerlos tal cual con coma decimal
+    List<String> parts = valueStr.split('.');
+    String integerPart = NumberFormat('#,###', 'es').format(int.parse(parts[0]));
+    String decimalPart = parts.length > 1 ? parts[1] : '';
+
+    return '\$$integerPart${decimalPart.isNotEmpty ? ',$decimalPart' : ''}';
+  }
+
+  List<Producto> _filtrarProductos(List<Producto> productos) {
+    // Los filtros de tipoProductoId y productoId se aplican desde el backend
+
+    // Solo filtrar por estado del lado del cliente
+    switch (_estadoFiltro) {
+      case ProductoEstadoFiltro.activos:
+        return productos.where((p) => p.activo).toList();
+      case ProductoEstadoFiltro.inactivos:
+        return productos.where((p) => !p.activo).toList();
+      case ProductoEstadoFiltro.todos:
+        return productos;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final productosState = ref.watch(productosProvider);
+    final user = ref.watch(currentUserProvider);
+    final tiposProductoAsync = ref.watch(tiposProductoProvider(
+      TiposProductoParams(clienteId: user?.clienteId ?? 0),
+    ));
+
+    // Filtrar productos
+    final productosFiltrados = _filtrarProductos(productosState.productos);
 
     // Calcular total de páginas
     final totalPages = productosState.totalElements > 0
@@ -212,31 +373,227 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
           controller: _scrollController,
           child: Column(
             children: [
-              // Barra de búsqueda
+              // Barra de búsqueda con autocompletado
               Padding(
                 padding: EdgeInsets.all(AppSpacing.md),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Buscar productos...',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: AppColors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 12.h,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Buscar productos (mín. 3 caracteres)...',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: _clearSearch,
+                              )
+                            : (_isSearching
+                                ? Padding(
+                                    padding: EdgeInsets.all(12.w),
+                                    child: SizedBox(
+                                      width: 20.w,
+                                      height: 20.h,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  )
+                                : null),
+                        filled: true,
+                        fillColor: AppColors.white,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 12.h,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          borderSide: BorderSide(color: AppColors.borderColor),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          borderSide: BorderSide(color: AppColors.borderColor),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                        ),
+                      ),
+                      onChanged: _onSearchChanged,
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                      borderSide: BorderSide(color: AppColors.borderColor),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                      borderSide: BorderSide(color: AppColors.borderColor),
-                    ),
-                  ),
-                  onChanged: _onSearch,
+
+                    // Dropdown de sugerencias
+                    if (_showSuggestions && _searchSuggestions.isNotEmpty)
+                      Container(
+                        margin: EdgeInsets.only(top: 8.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(color: AppColors.borderColor),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        constraints: BoxConstraints(maxHeight: 300.h),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          itemCount: _searchSuggestions.length,
+                          separatorBuilder: (context, index) => Divider(
+                            height: 1,
+                            color: AppColors.borderColor,
+                          ),
+                          itemBuilder: (context, index) {
+                            final producto = _searchSuggestions[index];
+                            return ListTile(
+                              dense: true,
+                              title: Text(
+                                producto.nombre,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Cod: ${producto.codExterno ?? "N/A"} - ${_formatCurrency(producto.precio)}',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textSecondary,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                              trailing: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                decoration: BoxDecoration(
+                                  color: producto.activo
+                                      ? AppColors.success.withValues(alpha: 0.1)
+                                      : AppColors.grey400.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                ),
+                                child: Text(
+                                  producto.activo ? 'Activo' : 'Inactivo',
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: producto.activo ? AppColors.success : AppColors.grey400,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                              ),
+                              onTap: () => _onProductoSelected(producto),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
                 ),
               ),
+
+              // Filtros de estado
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: Row(
+                  children: [
+                    _FiltroChip(
+                      label: 'Todos',
+                      isSelected: _estadoFiltro == ProductoEstadoFiltro.todos,
+                      onTap: () {
+                        setState(() => _estadoFiltro = ProductoEstadoFiltro.todos);
+                      },
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    _FiltroChip(
+                      label: 'Activos',
+                      isSelected: _estadoFiltro == ProductoEstadoFiltro.activos,
+                      onTap: () {
+                        setState(() => _estadoFiltro = ProductoEstadoFiltro.activos);
+                      },
+                      color: AppColors.success,
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    _FiltroChip(
+                      label: 'Inactivos',
+                      isSelected: _estadoFiltro == ProductoEstadoFiltro.inactivos,
+                      onTap: () {
+                        setState(() => _estadoFiltro = ProductoEstadoFiltro.inactivos);
+                      },
+                      color: AppColors.grey400,
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: AppSpacing.sm),
+
+              // Filtro de categoría/tipo de producto
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: tiposProductoAsync.when(
+                  data: (tipos) {
+                    return DropdownButtonFormField<int?>(
+                      value: _selectedTipoProductoId,
+                      decoration: InputDecoration(
+                        labelText: 'Categoría',
+                        prefixIcon: const Icon(Icons.category_outlined),
+                        filled: true,
+                        fillColor: AppColors.white,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 12.h,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: BorderSide(color: AppColors.borderColor),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: BorderSide(color: AppColors.borderColor),
+                        ),
+                      ),
+                      items: [
+                        DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text(
+                            'Todas las categorías',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontFamily: 'Inter',
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        ...tipos.map((tipo) => DropdownMenuItem<int?>(
+                              value: tipo.tipoProductoId,
+                              child: Text(
+                                tipo.nombre,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                            )),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedTipoProductoId = value;
+                          _currentPage = 1; // Reset a primera página
+                        });
+                        ref.read(productosProvider.notifier).clearCache();
+                        _loadData();
+                      },
+                    );
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ),
+              SizedBox(height: AppSpacing.md),
 
               // Lista de productos
               if (productosState.isLoading && productosState.productos.isEmpty)
@@ -263,7 +620,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                     ],
                   ),
                 )
-              else if (productosState.productos.isEmpty)
+              else if (productosFiltrados.isEmpty)
                 Container(
                   height: 400.h,
                   alignment: Alignment.center,
@@ -283,7 +640,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   child: Column(
-                    children: productosState.productos
+                    children: productosFiltrados
                         .map((producto) => _ProductoCard(
                               producto: producto,
                               onEdit: () => _onEditProducto(producto),
@@ -770,6 +1127,50 @@ class _ProductosSkeletonList extends StatelessWidget {
                 ],
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FiltroChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _FiltroChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final chipColor = color ?? AppColors.primary;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.full),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: isSelected ? chipColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(
+            color: isSelected ? chipColor : AppColors.borderColor,
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? AppColors.white : AppColors.textSecondary,
+            fontFamily: 'Inter',
           ),
         ),
       ),

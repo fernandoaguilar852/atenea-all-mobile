@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import '../constants/api_constants.dart';
 import '../models/producto.dart';
 
@@ -14,6 +15,7 @@ class ProductoDatasource {
     int pageNumber = 1,
     int pageSize = 20,
     String? search,
+    int? tipoProductoId,
   }) async {
     final queryParams = <String, dynamic>{
       'clienteId': clienteId,
@@ -25,13 +27,22 @@ class ProductoDatasource {
       queryParams['search'] = search;
     }
 
+    if (tipoProductoId != null) {
+      queryParams['tipoProductoId'] = tipoProductoId;
+    }
+
+    debugPrint('🌐 DATASOURCE enviando petición GET /products con params:');
+    debugPrint('   $queryParams');
+
     final response = await _dio.get(
       ApiConstants.buildUrl('/products'),
       queryParameters: queryParams,
     );
 
     if (response.statusCode == 200) {
-      return ProductoResponse.fromJson(response.data);
+      final productoResponse = ProductoResponse.fromJson(response.data);
+      debugPrint('✅ Respuesta recibida: ${productoResponse.data.products.length} productos');
+      return productoResponse;
     } else {
       throw DioException(
         requestOptions: response.requestOptions,
@@ -66,6 +77,33 @@ class ProductoDatasource {
         requestOptions: response.requestOptions,
         response: response,
         message: 'Error al buscar productos',
+      );
+    }
+  }
+
+  /// Obtiene un producto específico por ID
+  Future<Producto> getProductoById({
+    required int productoId,
+    required int clienteId,
+  }) async {
+    debugPrint('🔍 DATASOURCE obteniendo producto ID: $productoId');
+
+    final response = await _dio.get(
+      ApiConstants.buildUrl('/products/$productoId'),
+      queryParameters: {
+        'clienteId': clienteId,
+      },
+    );
+
+    if (response.statusCode == 200 && response.data['data'] != null) {
+      final producto = Producto.fromJson(response.data['data']);
+      debugPrint('✅ Producto obtenido: ${producto.nombre}');
+      return producto;
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al obtener producto',
       );
     }
   }
