@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/config/theme_config.dart';
@@ -7,6 +8,33 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/movimiento_entity.dart';
 import '../providers/movimientos_provider.dart';
 import 'producto_autocomplete_widget.dart';
+
+/// Formatter que permite solo un separador decimal (. o ,)
+class SingleDecimalInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Permitir solo números, punto y coma
+    final text = newValue.text;
+    if (!RegExp(r'^[0-9.,]*$').hasMatch(text)) {
+      return oldValue;
+    }
+
+    // Contar separadores decimales (. y ,)
+    final dotCount = '.'.allMatches(text).length;
+    final commaCount = ','.allMatches(text).length;
+    final totalSeparators = dotCount + commaCount;
+
+    // Permitir máximo un separador
+    if (totalSeparators > 1) {
+      return oldValue;
+    }
+
+    return newValue;
+  }
+}
 
 /// Representa una línea de salida antes de ser guardada
 class SalidaLineItem {
@@ -63,7 +91,7 @@ class _SalidaFormWidgetState extends ConsumerState<SalidaFormWidget> {
 
     final lineItem = SalidaLineItem(
       producto: _productoSelected!,
-      cantidad: double.parse(_cantidadController.text),
+      cantidad: double.parse(_cantidadController.text.replaceAll(',', '.')),
       observacion: _observacionController.text.isEmpty
           ? null
           : _observacionController.text,
@@ -278,13 +306,16 @@ class _SalidaFormWidgetState extends ConsumerState<SalidaFormWidget> {
                               ),
                               helperText: 'Cantidad a retirar del inventario',
                             ),
-                            keyboardType: TextInputType.number,
-                                  textInputAction: TextInputAction.next,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            textInputAction: TextInputAction.next,
+                            inputFormatters: [
+                              SingleDecimalInputFormatter(),
+                            ],
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Ingresa la cantidad';
                               }
-                              if (double.tryParse(value) == null) {
+                              if (double.tryParse(value.replaceAll(',', '.')) == null) {
                                 return 'Cantidad inválida';
                               }
                               return null;

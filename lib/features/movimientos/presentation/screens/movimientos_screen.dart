@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +17,33 @@ import '../widgets/salida_form_widget.dart';
 import '../widgets/ingreso_form_widget.dart';
 import '../widgets/egreso_form_widget.dart';
 import '../widgets/producto_autocomplete_widget.dart';
+
+/// Formatter que permite solo un separador decimal (. o ,)
+class SingleDecimalInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Permitir solo números, punto y coma
+    final text = newValue.text;
+    if (!RegExp(r'^[0-9.,]*$').hasMatch(text)) {
+      return oldValue;
+    }
+
+    // Contar separadores decimales (. y ,)
+    final dotCount = '.'.allMatches(text).length;
+    final commaCount = ','.allMatches(text).length;
+    final totalSeparators = dotCount + commaCount;
+
+    // Permitir máximo un separador
+    if (totalSeparators > 1) {
+      return oldValue;
+    }
+
+    return newValue;
+  }
+}
 
 class MovimientosScreen extends ConsumerStatefulWidget {
   final bool showScaffold;
@@ -303,7 +331,10 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
                 labelText: 'Cantidad',
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                SingleDecimalInputFormatter(),
+              ],
             ),
             SizedBox(height: 16.h),
             TextField(
@@ -326,7 +357,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
               final user = ref.read(currentUserProvider);
               if (user == null) return;
 
-              final cantidad = double.tryParse(cantidadController.text);
+              final cantidad = double.tryParse(cantidadController.text.replaceAll(',', '.'));
               if (cantidad == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Cantidad inválida')),

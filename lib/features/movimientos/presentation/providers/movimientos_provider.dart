@@ -5,6 +5,7 @@ import '../../../../core/providers/dio_provider.dart';
 import '../../../../core/providers/cache_provider.dart';
 import '../../../../core/services/cache_service.dart';
 import '../../../../core/providers/catalogs_providers.dart';
+import '../../../productos/presentation/providers/productos_provider.dart';
 import '../../data/datasources/movimientos_remote_datasource.dart';
 import '../../data/repositories/movimientos_repository_impl.dart';
 import '../../domain/entities/movimiento_entity.dart';
@@ -222,6 +223,21 @@ class MovimientosNotifier extends StateNotifier<MovimientosState> {
       // Esto fuerza a Riverpod a recargar los datos desde el servidor
       _ref.invalidate(productosSearchProvider);
       debugPrint('Cache de productos invalidado por movimiento tipo ${tipo.displayName}');
+
+      // Limpiar cache RAM del provider principal de productos
+      _clearProductosProviderCache();
+    }
+  }
+
+  /// Limpia el caché RAM del provider de productos
+  void _clearProductosProviderCache() {
+    try {
+      // Acceder al provider de productos y limpiar su caché
+      final productosProviderRef = _ref.read(productosProvider.notifier);
+      productosProviderRef.clearCache();
+      debugPrint('✅ Cache RAM de productos limpiado después de movimiento de inventario');
+    } catch (e) {
+      debugPrint('⚠️ Error al limpiar cache de productos: $e');
     }
   }
 

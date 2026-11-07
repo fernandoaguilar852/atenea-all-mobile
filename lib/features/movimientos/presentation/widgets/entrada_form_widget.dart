@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +9,33 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/movimiento_entity.dart';
 import '../providers/movimientos_provider.dart';
 import 'producto_autocomplete_widget.dart';
+
+/// Formatter que permite solo un separador decimal (. o ,)
+class SingleDecimalInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Permitir solo números, punto y coma
+    final text = newValue.text;
+    if (!RegExp(r'^[0-9.,]*$').hasMatch(text)) {
+      return oldValue;
+    }
+
+    // Contar separadores decimales (. y ,)
+    final dotCount = '.'.allMatches(text).length;
+    final commaCount = ','.allMatches(text).length;
+    final totalSeparators = dotCount + commaCount;
+
+    // Permitir máximo un separador
+    if (totalSeparators > 1) {
+      return oldValue;
+    }
+
+    return newValue;
+  }
+}
 
 /// Representa una línea de entrada antes de ser guardada
 class EntradaLineItem {
@@ -87,10 +115,10 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
 
     final lineItem = EntradaLineItem(
       producto: _productoSelected!,
-      cantidad: double.parse(_cantidadController.text),
-      costo: double.parse(_costoController.text),
-      impuesto: double.parse(_impuestoController.text),
-      descuento: double.parse(_descuentoController.text),
+      cantidad: double.parse(_cantidadController.text.replaceAll(',', '.')),
+      costo: double.parse(_costoController.text.replaceAll(',', '.')),
+      impuesto: double.parse(_impuestoController.text.replaceAll(',', '.')),
+      descuento: double.parse(_descuentoController.text.replaceAll(',', '.')),
       observacion: _observacionController.text.isEmpty
           ? null
           : _observacionController.text,
@@ -311,13 +339,16 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
                                       borderSide: BorderSide(color: primaryColor, width: 2),
                                     ),
                                   ),
-                                  keyboardType: TextInputType.number,
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   textInputAction: TextInputAction.next,
+                                  inputFormatters: [
+                                    SingleDecimalInputFormatter(),
+                                  ],
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Requerido';
                                     }
-                                    if (double.tryParse(value) == null) {
+                                    if (double.tryParse(value.replaceAll(',', '.')) == null) {
                                       return 'Inválido';
                                     }
                                     return null;
@@ -342,11 +373,14 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
                                   ),
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   textInputAction: TextInputAction.next,
+                                  inputFormatters: [
+                                    SingleDecimalInputFormatter(),
+                                  ],
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Requerido';
                                     }
-                                    if (double.tryParse(value) == null) {
+                                    if (double.tryParse(value.replaceAll(',', '.')) == null) {
                                       return 'Inválido';
                                     }
                                     return null;
@@ -374,6 +408,9 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
                                   ),
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   textInputAction: TextInputAction.next,
+                                  inputFormatters: [
+                                    SingleDecimalInputFormatter(),
+                                  ],
                                 ),
                               ),
                               SizedBox(width: 12.w),
@@ -390,6 +427,9 @@ class _EntradaFormWidgetState extends ConsumerState<EntradaFormWidget> {
                                   ),
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   textInputAction: TextInputAction.next,
+                                  inputFormatters: [
+                                    SingleDecimalInputFormatter(),
+                                  ],
                                 ),
                               ),
                             ],
