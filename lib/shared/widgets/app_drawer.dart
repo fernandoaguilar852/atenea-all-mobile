@@ -141,9 +141,10 @@ class AppDrawer extends ConsumerWidget {
                       _DrawerSubItem(
                         icon: Icons.inventory_2_outlined,
                         title: 'Productos',
+                        isSelected: currentIndex == 6,
                         onTap: () {
                           Navigator.pop(context);
-                          context.push('/productos');
+                          ref.read(mainScreenIndexProvider.notifier).state = 6;
                         },
                       ),
                       _DrawerSubItem(

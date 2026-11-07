@@ -14,7 +14,9 @@ import '../widgets/crear_producto_dialog.dart';
 import '../widgets/editar_producto_dialog.dart';
 
 class ProductosScreen extends ConsumerStatefulWidget {
-  const ProductosScreen({super.key});
+  final bool showScaffold;
+
+  const ProductosScreen({super.key, this.showScaffold = true});
 
   @override
   ConsumerState<ProductosScreen> createState() => _ProductosScreenState();
@@ -160,6 +162,25 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
     }
   }
 
+  /// Método público para recargar datos
+  /// Llamado desde el MainScreen cuando se navega a esta pantalla
+  void reloadData() {
+    _loadData();
+  }
+
+  /// Método público para abrir el diálogo de crear producto
+  /// Llamado desde el MainScreen al presionar el botón +
+  void showCreateDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => const CrearProductoDialog(),
+    );
+
+    // Si se creó exitosamente, recargar la lista
+    if (result == true) {
+      _onRefresh();
+    }
+  }
 
   void _onEditProducto(Producto producto) async {
     final result = await showDialog<bool>(
@@ -766,6 +787,12 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
       ],
     );
 
+    // Si showScaffold es false, solo retornar el contenido (usado en MainScreen)
+    if (!widget.showScaffold) {
+      return bodyContent;
+    }
+
+    // Si showScaffold es true, retornar Scaffold completo (usado cuando se navega directamente)
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(

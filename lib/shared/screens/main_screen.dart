@@ -11,6 +11,7 @@ import '../../features/notificaciones/presentation/widgets/notificaciones_drawer
 import '../../features/notificaciones/presentation/providers/notificaciones_provider.dart';
 import '../../features/alertas_stock/presentation/screens/alertas_stock_screen.dart';
 import '../../features/resoluciones/presentation/screens/resoluciones_screen.dart';
+import '../../features/productos/presentation/screens/productos_screen.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../core/events/auth_events.dart';
 import '../../shared/widgets/app_drawer.dart';
@@ -33,6 +34,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   final dashboardKey = GlobalKey<ConsumerState<DashboardScreen>>();
   final resolucionesKey = GlobalKey<ConsumerState<ResolucionesScreen>>();
   final alertasStockKey = GlobalKey<ConsumerState<AlertasStockScreen>>();
+  final productosKey = GlobalKey<ConsumerState<ProductosScreen>>();
   StreamSubscription<void>? _unauthorizedSubscription;
 
   @override
@@ -129,6 +131,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             (resolucionesState as dynamic).reloadData();
           }
           break;
+        case 6: // Productos
+          final productosState = productosKey.currentState;
+          if (productosState != null && productosState.mounted) {
+            (productosState as dynamic).reloadData();
+          }
+          break;
       }
     });
 
@@ -139,6 +147,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       const ReportesScreen(showScaffold: false),
       AlertasStockScreen(key: alertasStockKey),
       ResolucionesScreen(key: resolucionesKey, showScaffold: false),
+      ProductosScreen(key: productosKey, showScaffold: false),
     ];
 
     final titles = const [
@@ -148,6 +157,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       'Reportes',
       'Alertas de Stock',
       'Resoluciones',
+      'Productos',
     ];
 
     return Scaffold(
@@ -174,6 +184,16 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               icon: const Icon(Icons.add),
               onPressed: () {
                 final state = resolucionesKey.currentState;
+                if (state != null && state.mounted) {
+                  (state as dynamic).showCreateDialog();
+                }
+              },
+            ),
+          if (currentIndex == 6) // Productos
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                final state = productosKey.currentState;
                 if (state != null && state.mounted) {
                   (state as dynamic).showCreateDialog();
                 }
@@ -249,7 +269,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: (currentIndex == 4 || currentIndex == 5) ? 2 : currentIndex,
+          currentIndex: (currentIndex >= 4) ? 2 : currentIndex,
           onTap: (index) {
             if (index == 4) {
               // Abrir ChatDialog en lugar de cambiar de pantalla
