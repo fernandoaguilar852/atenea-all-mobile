@@ -21,6 +21,7 @@ class ProductoWriteDatasource {
     required double stockMinimo,
     required bool manejaStock,
     required int ivaId,
+    required bool activo,
   }) async {
     final requestBody = {
       'clienteId': clienteId,
@@ -34,6 +35,7 @@ class ProductoWriteDatasource {
       'stockMinimo': stockMinimo,
       'manejaStock': manejaStock,
       'ivaId': ivaId,
+      'activo': activo,
     };
 
     final response = await _dio.post(
@@ -83,8 +85,8 @@ class ProductoWriteDatasource {
       'activo': activo,
     };
 
-    final response = await _dio.put(
-      ApiConstants.buildUrl('/products/$productoId'),
+    final response = await _dio.patch(
+      ApiConstants.buildUrl('/products/$productoId?clienteId=$clienteId'),
       data: requestBody,
     );
 
@@ -100,14 +102,17 @@ class ProductoWriteDatasource {
   }
 
   /// Elimina un producto (soft delete)
-  Future<void> deleteProducto({
+  Future<Producto> deleteProducto({
     required int productoId,
+    required int clienteId,
   }) async {
     final response = await _dio.delete(
-      ApiConstants.buildUrl('/products/$productoId'),
+      ApiConstants.buildUrl('/products/$productoId?clienteId=$clienteId'),
     );
 
-    if (response.statusCode != 200 && response.statusCode != 204) {
+    if (response.statusCode == 200 && response.data['data'] != null) {
+      return Producto.fromJson(response.data['data']);
+    } else {
       throw DioException(
         requestOptions: response.requestOptions,
         response: response,

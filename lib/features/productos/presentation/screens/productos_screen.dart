@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/productos_provider.dart';
 import '../widgets/crear_producto_dialog.dart';
+import '../widgets/editar_producto_dialog.dart';
 
 class ProductosScreen extends ConsumerStatefulWidget {
   const ProductosScreen({super.key});
@@ -110,14 +111,39 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
     _loadData();
   }
 
-  void _onEditProducto(Producto producto) {
-    // TODO: Navegar a pantalla de edición
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Editar producto: ${producto.nombre}')),
+  void _onEditProducto(Producto producto) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => EditarProductoDialog(producto: producto),
     );
+
+    // Si se editó exitosamente, recargar la lista
+    if (result == true) {
+      _onRefresh();
+    }
   }
 
   void _onDeleteProducto(Producto producto) async {
+    // Validar que el producto esté inactivo
+    if (producto.activo) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Producto Activo'),
+          content: const Text(
+            'No se puede eliminar un producto activo. Primero desactívalo desde la opción de editar.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -140,11 +166,33 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
     );
 
     if (confirm == true) {
-      // TODO: Implementar eliminación
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Producto "${producto.nombre}" eliminado')),
-        );
+      try {
+        final user = ref.read(currentUserProvider);
+        final clienteId = user?.clienteId ?? 0;
+
+        await ref.read(productosProvider.notifier).deleteProducto(
+              productoId: producto.productoId,
+              clienteId: clienteId,
+            );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Producto "${producto.nombre}" eliminado exitosamente'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          _onRefresh();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al eliminar producto: ${e.toString()}'),
+              backgroundColor: AppColors.danger,
+            ),
+          );
+        }
       }
     }
   }
@@ -389,8 +437,30 @@ class _ProductoCard extends StatelessWidget {
   });
 
   String _formatCurrency(double value) {
-    final format = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
-    return format.format(value);
+    // Formato español: punto (.) para miles, coma (,) para decimales
+    String valueStr = value.toString();
+
+    // Si es entero, formatear sin decimales
+    if (value == value.toInt()) {
+      return '\$${NumberFormat('#,###', 'es').format(value.toInt())}';
+    }
+
+    // Si tiene decimales, mantenerlos tal cual con coma decimal
+    // Separar parte entera y decimal
+    List<String> parts = valueStr.split('.');
+    String integerPart = NumberFormat('#,###', 'es').format(int.parse(parts[0]));
+    String decimalPart = parts.length > 1 ? parts[1] : '';
+
+    return '\$$integerPart${decimalPart.isNotEmpty ? ',$decimalPart' : ''}';
+  }
+
+  String _formatStock(double value) {
+    // Formato español: coma (,) para decimales
+    if (value == value.toInt()) {
+      return value.toInt().toString();
+    }
+    // Mantener los decimales con coma
+    return value.toString().replaceAll('.', ',');
   }
 
   @override
@@ -475,7 +545,7 @@ class _ProductoCard extends StatelessWidget {
                   child: _InfoItem(
                     icon: Icons.inventory_2_outlined,
                     label: 'Stock',
-                    value: producto.stockTotal.toStringAsFixed(0),
+                    value: _formatStock(producto.stockTotal),
                     color: producto.stockTotal <= producto.stockMinimo ? AppColors.danger : AppColors.info,
                   ),
                 ),

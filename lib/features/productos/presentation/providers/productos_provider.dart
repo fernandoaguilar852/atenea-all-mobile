@@ -186,6 +186,7 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
     required double stockMinimo,
     required bool manejaStock,
     required int ivaId,
+    required bool activo,
   }) async {
     final producto = await _writeDatasource.createProducto(
       clienteId: clienteId,
@@ -199,6 +200,61 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
       stockMinimo: stockMinimo,
       manejaStock: manejaStock,
       ivaId: ivaId,
+      activo: activo,
+    );
+
+    // Limpiar cache para forzar refresh en próxima consulta
+    clearCache();
+
+    return producto;
+  }
+
+  /// Actualiza un producto existente
+  Future<Producto> updateProducto({
+    required int productoId,
+    required int clienteId,
+    required int tipoProductoId,
+    required String nombre,
+    String? codExterno,
+    String? codBarras,
+    required double precio,
+    required String unidadMedida,
+    required double stockTotal,
+    required double stockMinimo,
+    required bool manejaStock,
+    required int ivaId,
+    required bool activo,
+  }) async {
+    final producto = await _writeDatasource.updateProducto(
+      productoId: productoId,
+      clienteId: clienteId,
+      tipoProductoId: tipoProductoId,
+      nombre: nombre,
+      codExterno: codExterno,
+      codBarras: codBarras,
+      precio: precio,
+      unidadMedida: unidadMedida,
+      stockTotal: stockTotal,
+      stockMinimo: stockMinimo,
+      manejaStock: manejaStock,
+      ivaId: ivaId,
+      activo: activo,
+    );
+
+    // Limpiar cache para forzar refresh en próxima consulta
+    clearCache();
+
+    return producto;
+  }
+
+  /// Elimina un producto (soft delete)
+  Future<Producto> deleteProducto({
+    required int productoId,
+    required int clienteId,
+  }) async {
+    final producto = await _writeDatasource.deleteProducto(
+      productoId: productoId,
+      clienteId: clienteId,
     );
 
     // Limpiar cache para forzar refresh en próxima consulta

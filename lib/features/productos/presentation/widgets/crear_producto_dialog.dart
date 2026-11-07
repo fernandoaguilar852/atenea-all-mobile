@@ -9,6 +9,33 @@ import '../../../../core/providers/catalogs_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/productos_provider.dart';
 
+/// Formatter que permite solo un separador decimal (. o ,)
+class SingleDecimalInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Permitir solo números, punto y coma
+    final text = newValue.text;
+    if (!RegExp(r'^[0-9.,]*$').hasMatch(text)) {
+      return oldValue;
+    }
+
+    // Contar separadores decimales (. y ,)
+    final dotCount = '.'.allMatches(text).length;
+    final commaCount = ','.allMatches(text).length;
+    final totalSeparators = dotCount + commaCount;
+
+    // Permitir máximo un separador
+    if (totalSeparators > 1) {
+      return oldValue;
+    }
+
+    return newValue;
+  }
+}
+
 class CrearProductoDialog extends ConsumerStatefulWidget {
   const CrearProductoDialog({super.key});
 
@@ -37,11 +64,12 @@ class _CrearProductoDialogState extends ConsumerState<CrearProductoDialog> {
   final List<String> _unidadesMedida = [
     'UNIDAD',
     'KILOGRAMO',
-    'GRAMO',
     'LITRO',
-    'MILILITRO',
     'METRO',
-    'CENTIMETRO',
+    'CAJA',
+    'PAR',
+    'PAQUETE',
+    'OTRO',
   ];
 
   @override
@@ -94,6 +122,7 @@ class _CrearProductoDialogState extends ConsumerState<CrearProductoDialog> {
         stockMinimo: double.parse(_stockMinimoController.text.replaceAll(',', '.')),
         manejaStock: _manejaStock,
         ivaId: _ivaSelected!.ivaId,
+        activo: true, // Nuevos productos siempre activos
       );
 
       if (mounted) {
@@ -288,7 +317,7 @@ class _CrearProductoDialogState extends ConsumerState<CrearProductoDialog> {
                         ),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                          SingleDecimalInputFormatter(),
                         ],
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -373,7 +402,7 @@ class _CrearProductoDialogState extends ConsumerState<CrearProductoDialog> {
                               ),
                               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
                               inputFormatters: [
-                                FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                                SingleDecimalInputFormatter(),
                               ],
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
@@ -401,7 +430,7 @@ class _CrearProductoDialogState extends ConsumerState<CrearProductoDialog> {
                               ),
                               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
                               inputFormatters: [
-                                FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                                SingleDecimalInputFormatter(),
                               ],
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
