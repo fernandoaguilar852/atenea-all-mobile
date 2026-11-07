@@ -67,12 +67,27 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
     final user = ref.read(currentUserProvider);
     final clienteId = user?.clienteId ?? 0;
 
+    // Convertir el filtro de estado a bool para el backend
+    bool? activoFilter;
+    switch (_estadoFiltro) {
+      case ProductoEstadoFiltro.activos:
+        activoFilter = true;
+        break;
+      case ProductoEstadoFiltro.inactivos:
+        activoFilter = false;
+        break;
+      case ProductoEstadoFiltro.todos:
+        activoFilter = null;
+        break;
+    }
+
     debugPrint('📡 Cargando datos con filtros:');
     debugPrint('   - clienteId: $clienteId');
     debugPrint('   - page: $_currentPage');
     debugPrint('   - search: $_searchQuery');
     debugPrint('   - tipoProductoId: $_selectedTipoProductoId');
     debugPrint('   - productoId: $_selectedProductoId');
+    debugPrint('   - activo: $activoFilter');
 
     if (clienteId > 0) {
       ref.read(productosProvider.notifier).loadProductos(
@@ -82,6 +97,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
             search: _searchQuery,
             tipoProductoId: _selectedTipoProductoId,
             productoId: _selectedProductoId,
+            activo: activoFilter,
           );
     }
   }
@@ -115,6 +131,20 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
     final user = ref.read(currentUserProvider);
     final clienteId = user?.clienteId ?? 0;
 
+    // Convertir el filtro de estado a bool para el backend
+    bool? activoFilter;
+    switch (_estadoFiltro) {
+      case ProductoEstadoFiltro.activos:
+        activoFilter = true;
+        break;
+      case ProductoEstadoFiltro.inactivos:
+        activoFilter = false;
+        break;
+      case ProductoEstadoFiltro.todos:
+        activoFilter = null;
+        break;
+    }
+
     if (clienteId > 0) {
       ref.read(productosProvider.notifier).clearCache();
       await ref.read(productosProvider.notifier).loadProductos(
@@ -124,6 +154,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
             search: _searchQuery,
             tipoProductoId: _selectedTipoProductoId,
             productoId: _selectedProductoId,
+            activo: activoFilter,
             forceRefresh: true,
           );
     }
@@ -143,26 +174,6 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
   }
 
   void _onDeleteProducto(Producto producto) async {
-    // Validar que el producto esté inactivo
-    if (producto.activo) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Producto Activo'),
-          content: const Text(
-            'No se puede eliminar un producto activo. Primero desactívalo desde la opción de editar.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Entendido'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -201,7 +212,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
               backgroundColor: AppColors.success,
             ),
           );
-          _onRefresh();
+          await _onRefresh();
         }
       } catch (e) {
         if (mounted) {
@@ -337,19 +348,6 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
     return '\$$integerPart${decimalPart.isNotEmpty ? ',$decimalPart' : ''}';
   }
 
-  List<Producto> _filtrarProductos(List<Producto> productos) {
-    // Los filtros de tipoProductoId y productoId se aplican desde el backend
-
-    // Solo filtrar por estado del lado del cliente
-    switch (_estadoFiltro) {
-      case ProductoEstadoFiltro.activos:
-        return productos.where((p) => p.activo).toList();
-      case ProductoEstadoFiltro.inactivos:
-        return productos.where((p) => !p.activo).toList();
-      case ProductoEstadoFiltro.todos:
-        return productos;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -359,8 +357,8 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
       TiposProductoParams(clienteId: user?.clienteId ?? 0),
     ));
 
-    // Filtrar productos
-    final productosFiltrados = _filtrarProductos(productosState.productos);
+    // Los productos ya vienen filtrados desde el backend
+    final productosFiltrados = productosState.productos;
 
     // Calcular total de páginas
     final totalPages = productosState.totalElements > 0
@@ -505,7 +503,13 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                       label: 'Todos',
                       isSelected: _estadoFiltro == ProductoEstadoFiltro.todos,
                       onTap: () {
-                        setState(() => _estadoFiltro = ProductoEstadoFiltro.todos);
+                        debugPrint('🎯 Filtro cambiado a: TODOS');
+                        setState(() {
+                          _estadoFiltro = ProductoEstadoFiltro.todos;
+                          _currentPage = 1;
+                        });
+                        ref.read(productosProvider.notifier).clearCache();
+                        _loadData();
                       },
                     ),
                     SizedBox(width: AppSpacing.sm),
@@ -513,7 +517,13 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                       label: 'Activos',
                       isSelected: _estadoFiltro == ProductoEstadoFiltro.activos,
                       onTap: () {
-                        setState(() => _estadoFiltro = ProductoEstadoFiltro.activos);
+                        debugPrint('🎯 Filtro cambiado a: ACTIVOS');
+                        setState(() {
+                          _estadoFiltro = ProductoEstadoFiltro.activos;
+                          _currentPage = 1;
+                        });
+                        ref.read(productosProvider.notifier).clearCache();
+                        _loadData();
                       },
                       color: AppColors.success,
                     ),
@@ -522,7 +532,13 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                       label: 'Inactivos',
                       isSelected: _estadoFiltro == ProductoEstadoFiltro.inactivos,
                       onTap: () {
-                        setState(() => _estadoFiltro = ProductoEstadoFiltro.inactivos);
+                        debugPrint('🎯 Filtro cambiado a: INACTIVOS');
+                        setState(() {
+                          _estadoFiltro = ProductoEstadoFiltro.inactivos;
+                          _currentPage = 1;
+                        });
+                        ref.read(productosProvider.notifier).clearCache();
+                        _loadData();
                       },
                       color: AppColors.grey400,
                     ),

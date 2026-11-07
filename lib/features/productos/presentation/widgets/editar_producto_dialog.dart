@@ -579,7 +579,7 @@ class _EditarProductoDialogState extends ConsumerState<EditarProductoDialog> {
                             )
                           : Icon(Icons.check, size: 20.sp),
                       label: Text(
-                        _isLoading ? 'Actualizando...' : 'Actualizar Producto',
+                        _isLoading ? 'Actualizando...' : 'Actualizar',
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,

@@ -16,6 +16,7 @@ class ProductoDatasource {
     int pageSize = 20,
     String? search,
     int? tipoProductoId,
+    bool? activo,
   }) async {
     final queryParams = <String, dynamic>{
       'clienteId': clienteId,
@@ -29,6 +30,10 @@ class ProductoDatasource {
 
     if (tipoProductoId != null) {
       queryParams['tipoProductoId'] = tipoProductoId;
+    }
+
+    if (activo != null) {
+      queryParams['activo'] = activo;
     }
 
     debugPrint('🌐 DATASOURCE enviando petición GET /products con params:');

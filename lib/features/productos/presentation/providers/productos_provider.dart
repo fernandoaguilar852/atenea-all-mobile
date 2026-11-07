@@ -89,8 +89,9 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
     String? search,
     int? tipoProductoId,
     int? productoId,
+    bool? activo,
   }) {
-    return 'productos_${clienteId}_page${pageNumber}_size${pageSize}_search${search ?? 'all'}_tipo${tipoProductoId ?? 'all'}_prod${productoId ?? 'all'}';
+    return 'productos_${clienteId}_page${pageNumber}_size${pageSize}_search${search ?? 'all'}_tipo${tipoProductoId ?? 'all'}_prod${productoId ?? 'all'}_activo${activo ?? 'all'}';
   }
 
   /// Carga la lista de productos con paginación y cache con TTL
@@ -101,6 +102,7 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
     String? search,
     int? tipoProductoId,
     int? productoId,
+    bool? activo,
     bool forceRefresh = false,
   }) async {
     debugPrint('🔥 PROVIDER loadProductos llamado con:');
@@ -109,6 +111,7 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
     debugPrint('   - search: $search');
     debugPrint('   - tipoProductoId: $tipoProductoId');
     debugPrint('   - productoId: $productoId');
+    debugPrint('   - activo: $activo');
 
     try {
       final cacheKey = _getCacheKey(
@@ -118,6 +121,7 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
         search: search,
         tipoProductoId: tipoProductoId,
         productoId: productoId,
+        activo: activo,
       );
 
       // ⚡ PASO 1: Verificar cache en RAM con TTL
@@ -163,6 +167,7 @@ class ProductosNotifier extends StateNotifier<ProductosState> {
           pageSize: pageSize,
           search: search,
           tipoProductoId: tipoProductoId,
+          activo: activo,
         );
         productos = response.data.products;
         totalElements = response.pagination?.totalElement ?? 0;
