@@ -206,6 +206,25 @@ class ConsumidoresNotifier extends StateNotifier<ConsumidoresState> {
     }
   }
 
+  /// Elimina un consumidor y limpia el cache del listado.
+  /// Devuelve null si salió bien, o el mensaje del error si falló.
+  Future<String?> eliminarConsumidor({
+    required int clienteId,
+    required int consumidorId,
+  }) async {
+    try {
+      await _repository.eliminarConsumidor(
+        clienteId: clienteId,
+        consumidorId: consumidorId,
+      );
+      await clearCache(clienteId);
+      return null;
+    } catch (e) {
+      debugPrint('Error eliminando consumidor: $e');
+      return _mensajeError(e);
+    }
+  }
+
   /// Extrae un mensaje legible del error (usa el del API si viene)
   String _mensajeError(Object e) {
     if (e is DioException) {

@@ -141,6 +141,84 @@ class _ConsumidoresScreenState extends ConsumerState<ConsumidoresScreen> {
     }
   }
 
+  void _editarConsumidor(ConsumidorEntity consumidor) {
+    // TODO: implementar edición de clientes (siguiente iteración)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Edición de clientes próximamente')),
+    );
+  }
+
+  /// Modal de confirmación antes de eliminar
+  void _showDeleteDialog(ConsumidorEntity consumidor) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar Cliente'),
+        content: Text(
+          '¿Está seguro de eliminar al cliente ${consumidor.nombreRazonSocial} '
+          '(${consumidor.tipoIdentificacion}: ${consumidor.identificacionCompleta})? '
+          'Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _eliminarConsumidor(consumidor);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _eliminarConsumidor(ConsumidorEntity consumidor) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final unicoEnPagina =
+        (ref.read(consumidoresProvider).data?.consumidores.length ?? 0) == 1;
+
+    final error =
+        await ref.read(consumidoresProvider.notifier).eliminarConsumidor(
+              clienteId: user.clienteId,
+              consumidorId: consumidor.consumidorId,
+            );
+
+    if (!mounted) return;
+
+    if (error != null) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('No se pudo eliminar: $error'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
+    // Si era el único de la página (y no es la primera), retrocede una página
+    if (unicoEnPagina && _currentPage > 1) {
+      setState(() => _currentPage--);
+    }
+    _loadData();
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('Cliente ${consumidor.nombreRazonSocial} eliminado'),
+        backgroundColor: AppColors.success,
+      ),
+    );
+  }
+
   // ===========================================================================
   // FILTROS
   // ===========================================================================
@@ -320,7 +398,11 @@ class _ConsumidoresScreenState extends ConsumerState<ConsumidoresScreen> {
                                       children: data.consumidores.map((consumidor) {
                                         return Padding(
                                           padding: EdgeInsets.only(bottom: AppSpacing.md),
-                                          child: _ConsumidorCard(consumidor: consumidor),
+                                          child: _ConsumidorCard(
+                                            consumidor: consumidor,
+                                            onEdit: () => _editarConsumidor(consumidor),
+                                            onDelete: () => _showDeleteDialog(consumidor),
+                                          ),
                                         );
                                       }).toList(),
                                     ),
@@ -495,8 +577,14 @@ class _ConsumidoresScreenState extends ConsumerState<ConsumidoresScreen> {
 /// Card individual para cada consumidor
 class _ConsumidorCard extends StatelessWidget {
   final ConsumidorEntity consumidor;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const _ConsumidorCard({required this.consumidor});
+  const _ConsumidorCard({
+    required this.consumidor,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   /// Fila con un icono y un texto de contacto
   Widget _infoRow(IconData icon, String texto) {
@@ -600,6 +688,28 @@ class _ConsumidorCard extends StatelessWidget {
               _infoRow(Icons.email_outlined, email),
             if (direccion != null && direccion.isNotEmpty)
               _infoRow(Icons.location_on_outlined, direccion),
+
+            // Acciones
+            SizedBox(height: 8.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  icon: Icon(Icons.edit, size: 16.sp),
+                  label: const Text('Editar'),
+                  onPressed: onEdit,
+                ),
+                SizedBox(width: 8.w),
+                TextButton.icon(
+                  icon: Icon(Icons.delete, size: 16.sp),
+                  label: const Text('Eliminar'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                  ),
+                  onPressed: onDelete,
+                ),
+              ],
+            ),
           ],
         ),
       ),

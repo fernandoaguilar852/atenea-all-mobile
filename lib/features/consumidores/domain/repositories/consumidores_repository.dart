@@ -17,4 +17,10 @@ abstract class ConsumidoresRepository {
     required int clienteId,
     required NuevoConsumidor consumidor,
   });
+
+  /// Elimina un consumidor
+  Future<void> eliminarConsumidor({
+    required int clienteId,
+    required int consumidorId,
+  });
 }

@@ -69,6 +69,26 @@ class ConsumidorDatasource {
     }
   }
 
+  /// DELETE /consumidores/:id - Elimina un consumidor
+  /// (la API responde con el consumidor, que queda con activo = false)
+  Future<void> deleteConsumidor({
+    required int clienteId,
+    required int consumidorId,
+  }) async {
+    final response = await _dio.delete(
+      ApiConstants.buildUrl('${ApiConstants.consumidores}/$consumidorId'),
+      queryParameters: {'clienteId': clienteId},
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al eliminar el consumidor',
+      );
+    }
+  }
+
   /// Busca consumidores por nombre
   Future<List<Consumidor>> searchConsumidores({
     required int clienteId,

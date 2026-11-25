@@ -43,6 +43,17 @@ class ConsumidoresRepositoryImpl implements ConsumidoresRepository {
     return ConsumidorMapper.toEntity(creado);
   }
 
+  @override
+  Future<void> eliminarConsumidor({
+    required int clienteId,
+    required int consumidorId,
+  }) async {
+    await _datasource.deleteConsumidor(
+      clienteId: clienteId,
+      consumidorId: consumidorId,
+    );
+  }
+
   /// Cuerpo del consumidor (sirve para crear y, más adelante, actualizar).
   /// Los campos opcionales solo se envían si tienen contenido.
   Map<String, dynamic> _datosConsumidor(int clienteId, NuevoConsumidor c) {
