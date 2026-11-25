@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../domain/entities/cotizacion_entity.dart';
 import '../models/cotizacion_detalle_model.dart';
+import '../models/cotizacion_impresion_model.dart';
 import '../models/cotizacion_model.dart';
 
 /// Datasource remoto para Cotizaciones
@@ -81,6 +82,27 @@ class CotizacionesRemoteDatasource {
         requestOptions: response.requestOptions,
         response: response,
         message: 'Error al obtener el detalle de la cotización',
+      );
+    }
+  }
+
+  /// GET /cotizaciones/:id/impresion - Datos para generar el PDF de la cotización
+  Future<CotizacionImpresionResponse> getCotizacionImpresion({
+    required int clienteId,
+    required int cotizacionId,
+  }) async {
+    final response = await _dio.get(
+      ApiConstants.buildUrl('${ApiConstants.cotizaciones}/$cotizacionId/impresion'),
+      queryParameters: {'clienteId': clienteId},
+    );
+
+    if (response.statusCode == 200 && response.data['data'] != null) {
+      return CotizacionImpresionResponse.fromJson(response.data);
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al obtener los datos de impresión de la cotización',
       );
     }
   }

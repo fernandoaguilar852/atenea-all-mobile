@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart' show Printing, networkImage;
 import '../../../../core/config/theme_config.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/cotizacion_detalle_entity.dart';
 import '../../domain/entities/cotizacion_entity.dart';
+import '../pdf/cotizacion_pdf_generator.dart';
 import '../providers/cotizaciones_provider.dart';
 
 class CotizacionDetalleScreen extends ConsumerStatefulWidget {
@@ -22,6 +25,7 @@ class _CotizacionDetalleScreenState
     extends ConsumerState<CotizacionDetalleScreen> {
   CotizacionDetalleEntity? _cotizacion;
   bool _isLoading = true;
+  bool _generandoPdf = false;
   String? _error;
 
   @override
@@ -61,6 +65,61 @@ class _CotizacionDetalleScreenState
     }
   }
 
+  /// Genera el PDF de la cotización y abre el menú de compartir/guardar
+  Future<void> _descargarPdf() async {
+    if (_generandoPdf) return;
+
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    // Referencias antes de los awaits
+    final messenger = ScaffoldMessenger.of(context);
+    final box = context.findRenderObject() as RenderBox?;
+    final bounds = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
+
+    setState(() => _generandoPdf = true);
+
+    try {
+      // 1. Datos de impresión
+      final impresion =
+          await ref.read(cotizacionesRepositoryProvider).getCotizacionImpresion(
+                clienteId: user.clienteId,
+                cotizacionId: widget.cotizacionId,
+              );
+
+      // 2. Logo (opcional: si falla, el PDF sale sin logo)
+      pw.ImageProvider? logo;
+      final logoUrl = impresion.logoUrl;
+      if (logoUrl != null && logoUrl.isNotEmpty) {
+        try {
+          logo = await networkImage(logoUrl);
+        } catch (e) {
+          debugPrint('No se pudo cargar el logo del PDF: $e');
+        }
+      }
+
+      // 3. Generar el PDF
+      final bytes = await CotizacionPdfGenerator.generar(impresion, logo: logo);
+
+      // 4. Compartir / guardar
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'Cotizacion_${impresion.numeroCotizacion}.pdf',
+        bounds: bounds,
+      );
+    } catch (e) {
+      debugPrint('Error al generar el PDF de la cotización: $e');
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('No se pudo generar el PDF: $e'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _generandoPdf = false);
+    }
+  }
+
   String _formatCurrency(double value) {
     return NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(value);
   }
@@ -95,6 +154,44 @@ class _CotizacionDetalleScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(_cotizacion?.numeroCotizacion ?? 'Detalle de Cotización'),
+        actions: [
+          if (_cotizacion != null)
+            Padding(
+              padding: EdgeInsets.only(right: 12.w),
+              child: Center(
+                child: Tooltip(
+                  message: 'Descargar PDF',
+                  child: Material(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: InkWell(
+                      onTap: _generandoPdf ? null : _descargarPdf,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: Padding(
+                        padding: EdgeInsets.all(7.w),
+                        child: _generandoPdf
+                            ? SizedBox(
+                                width: 26.sp,
+                                height: 26.sp,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.danger,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                Icons.picture_as_pdf,
+                                color: AppColors.danger,
+                                size: 26.sp,
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

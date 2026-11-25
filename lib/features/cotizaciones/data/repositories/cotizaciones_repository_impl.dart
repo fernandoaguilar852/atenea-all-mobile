@@ -1,5 +1,6 @@
 import '../../domain/entities/cotizacion_detalle_entity.dart';
 import '../../domain/entities/cotizacion_entity.dart';
+import '../../domain/entities/cotizacion_impresion_entity.dart';
 import '../../domain/repositories/cotizaciones_repository.dart';
 import '../datasources/cotizaciones_remote_datasource.dart';
 import '../mappers/cotizacion_mapper.dart';
@@ -45,5 +46,18 @@ class CotizacionesRepositoryImpl implements CotizacionesRepository {
     );
 
     return CotizacionMapper.toDetalleEntity(response.data);
+  }
+
+  @override
+  Future<CotizacionImpresionEntity> getCotizacionImpresion({
+    required int clienteId,
+    required int cotizacionId,
+  }) async {
+    final response = await _datasource.getCotizacionImpresion(
+      clienteId: clienteId,
+      cotizacionId: cotizacionId,
+    );
+
+    return CotizacionMapper.toImpresionEntity(response.data);
   }
 }

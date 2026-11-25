@@ -1,6 +1,8 @@
 import '../../domain/entities/cotizacion_detalle_entity.dart';
 import '../../domain/entities/cotizacion_entity.dart';
+import '../../domain/entities/cotizacion_impresion_entity.dart';
 import '../models/cotizacion_detalle_model.dart';
+import '../models/cotizacion_impresion_model.dart';
 import '../models/cotizacion_model.dart';
 
 /// Mapper para convertir DTOs a Entities
@@ -52,6 +54,85 @@ class CotizacionMapper {
       cotizaciones: toEntityList(response.data.cotizaciones),
       pagination: toPaginacionEntity(response.pagination),
     );
+  }
+
+  /// Convierte ImpresionDataModel a CotizacionImpresionEntity (para el PDF)
+  static CotizacionImpresionEntity toImpresionEntity(ImpresionDataModel model) {
+    final encabezado = model.encabezado;
+    final cotizacion = model.cotizacion;
+    final pie = model.piePagina;
+
+    // NIT con dígito de verificación: 37810503-3
+    String? nit;
+    if (encabezado.nit != null && encabezado.nit!.isNotEmpty) {
+      final dv = encabezado.digitoVerificacion;
+      nit = (dv != null && dv.isNotEmpty) ? '${encabezado.nit}-$dv' : encabezado.nit;
+    }
+
+    // Ciudad: "Bucaramanga - Santander"
+    String? ciudad;
+    final ciudadNombre = encabezado.ciudad?.nombre;
+    final departamento = encabezado.ciudad?.departamento;
+    if (ciudadNombre != null && ciudadNombre.isNotEmpty) {
+      ciudad = (departamento != null && departamento.isNotEmpty)
+          ? '$ciudadNombre - $departamento'
+          : ciudadNombre;
+    }
+
+    return CotizacionImpresionEntity(
+      empresaNombre: encabezado.nombre,
+      empresaNit: nit,
+      empresaDireccion: encabezado.direccion,
+      empresaTelefono: encabezado.telefono,
+      empresaEmail: encabezado.email,
+      empresaCiudad: ciudad,
+      logoUrl: encabezado.logoUrl,
+      numeroCotizacion: cotizacion.numeroCotizacion,
+      fechaCotizacion: DateTime.parse(cotizacion.fechaCotizacion),
+      fechaValidez: _parseFecha(cotizacion.fechaValidez),
+      observacion: cotizacion.observacion,
+      consumidorNombre: cotizacion.consumidor.nombre,
+      consumidorIdentificacion: cotizacion.consumidor.identificacion,
+      consumidorTelefono: cotizacion.consumidor.telefono,
+      consumidorEmail: cotizacion.consumidor.email,
+      lineas: model.detalle.map(toImpresionLineaEntity).toList(),
+      subtotal: model.totales.subtotalSinImpuestos,
+      totalDescuentos: model.totales.totalDescuentos,
+      totalIva: model.totales.totalIva,
+      total: model.totales.total,
+      facturaPiePagina: pie?.facturaPiePagina,
+      agradecimiento: pie?.agradecimiento,
+      notas: pie?.notas,
+      terminosCondiciones: pie?.terminosCondiciones,
+    );
+  }
+
+  /// Convierte ImpresionLineaModel a ImpresionLineaEntity
+  /// La referencia es el productoId y la descripción el nombre del producto
+  static ImpresionLineaEntity toImpresionLineaEntity(ImpresionLineaModel model) {
+    final productoId = model.productoId ?? model.producto?.productoId;
+    final descripcion = model.producto?.nombre ??
+        model.descripcion ??
+        model.observacionLinea ??
+        '';
+
+    return ImpresionLineaEntity(
+      cantidad: model.cantidad,
+      referencia: productoId?.toString() ?? '',
+      descripcion: descripcion,
+      precioUnitario: model.precioUnitario,
+      descuentoValor: model.descuentoValor,
+      porcentajeImpuesto: model.porcentajeImpuesto ?? 0,
+      totalLinea: model.totalLinea,
+    );
+  }
+
+  /// Parsea una fecha yyyy-MM-dd (o ISO) sin desfase de zona horaria
+  static DateTime? _parseFecha(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return null;
+    return parsed.isUtc ? parsed.toLocal() : parsed;
   }
 
   /// Convierte CotizacionLineaModel a CotizacionLineaEntity
