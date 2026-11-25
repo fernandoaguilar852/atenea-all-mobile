@@ -55,6 +55,12 @@ lib/
 - Android Studio / Xcode configurado
 - Dispositivo físico o emulador para pruebas
 
+### Versiones mínimas de plataforma
+
+- **Android**: 6.0 (API 23) o superior (`minSdk = 23`, `compileSdk = 36`).
+  Lo exige `flutter_secure_storage`, que guarda las credenciales cifradas.
+  Los equipos con Android 5.x (API 21-22) no pueden instalar la app.
+
 ### Instalación
 
 1. Clonar el repositorio (si aplica)
