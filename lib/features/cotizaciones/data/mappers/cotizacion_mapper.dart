@@ -1,6 +1,7 @@
 import '../../domain/entities/cotizacion_detalle_entity.dart';
 import '../../domain/entities/cotizacion_entity.dart';
 import '../../domain/entities/cotizacion_impresion_entity.dart';
+import '../../domain/entities/nueva_cotizacion_entity.dart';
 import '../models/cotizacion_detalle_model.dart';
 import '../models/cotizacion_impresion_model.dart';
 import '../models/cotizacion_model.dart';
@@ -53,6 +54,14 @@ class CotizacionMapper {
     return CotizacionesListEntity(
       cotizaciones: toEntityList(response.data.cotizaciones),
       pagination: toPaginacionEntity(response.pagination),
+    );
+  }
+
+  /// Convierte la respuesta de crear una cotización a CotizacionCreadaEntity
+  static CotizacionCreadaEntity toCreadaEntity(CotizacionDetalleModel model) {
+    return CotizacionCreadaEntity(
+      cotizacionId: model.cotizacionId,
+      numeroCotizacion: model.numeroCotizacion,
     );
   }
 

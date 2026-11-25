@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/cotizacion_entity.dart';
 import '../providers/cotizaciones_provider.dart';
+import '../widgets/crear_cotizacion_form.dart';
 import 'cotizacion_detalle_screen.dart';
 
 class CotizacionesScreen extends ConsumerStatefulWidget {
@@ -113,6 +114,25 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
   // Método público para recargar desde fuera
   void reloadData() {
     _loadData();
+  }
+
+  /// Abre el formulario de nueva cotización (hoja inferior).
+  /// Si se creó, limpia los filtros y recarga para que se vea la nueva
+  /// cotización arriba del listado.
+  Future<void> showCreateDialog() async {
+    final creada = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const FractionallySizedBox(
+        heightFactor: 0.9,
+        child: CrearCotizacionForm(),
+      ),
+    );
+
+    if (creada == true && mounted) {
+      _limpiarFiltros();
+    }
   }
 
   // ===========================================================================
@@ -577,6 +597,12 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cotizaciones'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: showCreateDialog,
+          ),
+        ],
       ),
       drawer: const AppDrawer(),
       body: bodyContent,

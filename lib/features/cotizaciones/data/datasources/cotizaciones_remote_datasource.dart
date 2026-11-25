@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../domain/entities/cotizacion_entity.dart';
+import '../models/cotizacion_detalle_creado_model.dart';
 import '../models/cotizacion_detalle_model.dart';
 import '../models/cotizacion_impresion_model.dart';
 import '../models/cotizacion_model.dart';
@@ -103,6 +104,51 @@ class CotizacionesRemoteDatasource {
         requestOptions: response.requestOptions,
         response: response,
         message: 'Error al obtener los datos de impresión de la cotización',
+      );
+    }
+  }
+
+  /// POST /cotizaciones - Crea la cabecera de una cotización
+  /// La respuesta tiene la misma forma que el detalle (sin líneas)
+  Future<CotizacionDetalleResponse> createCotizacion({
+    required int clienteId,
+    required Map<String, dynamic> data,
+  }) async {
+    final response = await _dio.post(
+      ApiConstants.buildUrl(ApiConstants.cotizaciones),
+      queryParameters: {'clienteId': clienteId},
+      data: data,
+    );
+
+    if (response.statusCode == 201 && response.data['data'] != null) {
+      return CotizacionDetalleResponse.fromJson(response.data);
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al crear la cotización',
+      );
+    }
+  }
+
+  /// POST /cotizacion-detalles - Crea UNA línea de una cotización existente
+  Future<CotizacionDetalleCreadoResponse> createCotizacionDetalle({
+    required int clienteId,
+    required Map<String, dynamic> data,
+  }) async {
+    final response = await _dio.post(
+      ApiConstants.buildUrl(ApiConstants.cotizacionDetalles),
+      queryParameters: {'clienteId': clienteId},
+      data: data,
+    );
+
+    if (response.statusCode == 201 && response.data['data'] != null) {
+      return CotizacionDetalleCreadoResponse.fromJson(response.data);
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al crear el detalle de la cotización',
       );
     }
   }

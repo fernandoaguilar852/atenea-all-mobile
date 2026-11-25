@@ -26,6 +26,7 @@ class ApiConstants {
   static const String cartera = '/cartera';
   static const String apartados = '/apartados';
   static const String cotizaciones = '/cotizaciones';
+  static const String cotizacionDetalles = '/cotizacion-detalles';
   static const String ordenesServicio = '/ordenes-servicio';
   static const String cajas = '/cajas';
   static const String arqueosCaja = '/arqueos-caja';

@@ -209,6 +209,16 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 }
               },
             ),
+          if (currentIndex == 7) // Cotizaciones
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                final state = cotizacionesKey.currentState;
+                if (state != null && state.mounted) {
+                  (state as dynamic).showCreateDialog();
+                }
+              },
+            ),
           // Notificaciones en TODAS las pantallas
           Builder(
             builder: (context) {
