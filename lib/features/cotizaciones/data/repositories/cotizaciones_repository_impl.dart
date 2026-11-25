@@ -15,11 +15,19 @@ class CotizacionesRepositoryImpl implements CotizacionesRepository {
     required int clienteId,
     int pageNumber = 1,
     int pageSize = 10,
+    String? search,
+    String origen = CotizacionOrigen.defaultOrigen,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     final response = await _datasource.getCotizaciones(
       clienteId: clienteId,
       pageNumber: pageNumber,
       pageSize: pageSize,
+      search: search,
+      origen: origen,
+      startDate: startDate,
+      endDate: endDate,
     );
 
     return CotizacionMapper.toListEntity(response);

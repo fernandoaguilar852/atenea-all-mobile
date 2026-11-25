@@ -219,8 +219,12 @@ class CacheKeys {
     required int clienteId,
     required int pageNumber,
     required int pageSize,
+    required String search,
+    required String origen,
+    required String startDate,
+    required String endDate,
   }) =>
-      '${prefix}cotizaciones_${clienteId}_p${pageNumber}_ps$pageSize';
+      '${prefix}cotizaciones_${clienteId}_p${pageNumber}_ps${pageSize}_s${search}_o${origen}_f${startDate}_$endDate';
 
   static String cotizacionesPrefix(int clienteId) => '${prefix}cotizaciones_$clienteId';
 

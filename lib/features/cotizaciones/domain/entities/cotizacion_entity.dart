@@ -1,10 +1,21 @@
+/// Valores válidos del filtro de origen de una cotización
+class CotizacionOrigen {
+  CotizacionOrigen._();
+
+  static const String posInterno = 'POS-INTERNO';
+  static const String webPublica = 'WEB-PUBLICA';
+
+  /// Origen por defecto cuando no se elige ninguno
+  static const String defaultOrigen = posInterno;
+}
+
 /// Entidad de dominio para Cotización
 class CotizacionEntity {
   final int cotizacionId;
   final int clienteId;
   final String numeroCotizacion;
   final String consumidorNombre;
-  final String consumidorIdentificacion;
+  final String? consumidorIdentificacion;
   final String? consumidorEmail;
   final String? consumidorTelefono;
   final DateTime fechaCotizacion;
@@ -19,7 +30,7 @@ class CotizacionEntity {
     required this.clienteId,
     required this.numeroCotizacion,
     required this.consumidorNombre,
-    required this.consumidorIdentificacion,
+    this.consumidorIdentificacion,
     this.consumidorEmail,
     this.consumidorTelefono,
     required this.fechaCotizacion,

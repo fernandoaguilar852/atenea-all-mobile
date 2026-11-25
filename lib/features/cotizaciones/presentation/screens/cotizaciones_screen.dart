@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -20,6 +21,16 @@ class CotizacionesScreen extends ConsumerStatefulWidget {
 class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
   int _currentPage = 1;
   final int _pageSize = 10;
+
+  // Filtros
+  String? _searchFilter; // Solo se aplica con 3 o más caracteres
+  String _origenFilter = CotizacionOrigen.defaultOrigen;
+  DateTime? _fechaDesde;
+  DateTime? _fechaHasta;
+
+  // Búsqueda con debounce
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   // Scroll controller para scroll-to-top
   final ScrollController _scrollController = ScrollController();
@@ -55,6 +66,8 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
 
   @override
   void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
     _scrollController.dispose();
     _lifecycleListener.dispose();
     super.dispose();
@@ -68,6 +81,10 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
           clienteId: user.clienteId,
           pageNumber: _currentPage,
           pageSize: _pageSize,
+          search: _searchFilter,
+          origen: _origenFilter,
+          startDate: _fechaDesde,
+          endDate: _fechaHasta,
         );
   }
 
@@ -84,6 +101,10 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
           clienteId: user.clienteId,
           pageNumber: _currentPage,
           pageSize: _pageSize,
+          search: _searchFilter,
+          origen: _origenFilter,
+          startDate: _fechaDesde,
+          endDate: _fechaHasta,
           forceRefresh: true,
         );
   }
@@ -91,6 +112,261 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
   // Método público para recargar desde fuera
   void reloadData() {
     _loadData();
+  }
+
+  // ===========================================================================
+  // FILTROS
+  // ===========================================================================
+
+  bool get _tieneFiltrosActivos =>
+      _searchController.text.isNotEmpty ||
+      _searchFilter != null ||
+      _origenFilter != CotizacionOrigen.defaultOrigen ||
+      _fechaDesde != null ||
+      _fechaHasta != null;
+
+  /// Búsqueda con debounce: solo consulta con 3 o más caracteres.
+  /// Si el texto baja de 3 caracteres y había búsqueda activa, la quita.
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+
+    // Refresca la visibilidad del botón "Limpiar filtros"
+    setState(() {});
+
+    final query = value.trim();
+    final nuevoFiltro = query.length >= 3 ? query : null;
+
+    // Sin cambio efectivo en el filtro: no consultar
+    if (nuevoFiltro == _searchFilter) return;
+
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      setState(() {
+        _searchFilter = nuevoFiltro;
+        _currentPage = 1;
+      });
+      _loadData();
+    });
+  }
+
+  void _limpiarFiltros() {
+    _debounce?.cancel();
+    setState(() {
+      _searchController.clear();
+      _searchFilter = null;
+      _origenFilter = CotizacionOrigen.defaultOrigen;
+      _fechaDesde = null;
+      _fechaHasta = null;
+      _currentPage = 1;
+    });
+    _loadData();
+  }
+
+  /// Selecciona fecha inicio o fin validando que inicio <= fin
+  Future<void> _seleccionarFecha({required bool esInicio}) async {
+    final actual = esInicio ? _fechaDesde : _fechaHasta;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: actual ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (picked == null || !mounted) return;
+
+    final inicio = esInicio ? picked : _fechaDesde;
+    final fin = esInicio ? _fechaHasta : picked;
+
+    if (inicio != null && fin != null && inicio.isAfter(fin)) {
+      _showFechaInvalidaDialog();
+      return;
+    }
+
+    setState(() {
+      if (esInicio) {
+        _fechaDesde = picked;
+      } else {
+        _fechaHasta = picked;
+      }
+      _currentPage = 1;
+    });
+    _loadData();
+  }
+
+  void _quitarFecha({required bool esInicio}) {
+    setState(() {
+      if (esInicio) {
+        _fechaDesde = null;
+      } else {
+        _fechaHasta = null;
+      }
+      _currentPage = 1;
+    });
+    _loadData();
+  }
+
+  /// Muestra un diálogo informando que la fecha inicio debe ser <= fecha fin
+  void _showFechaInvalidaDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rango de fechas inválido'),
+        content: const Text(
+          'La fecha de inicio debe ser menor o igual a la fecha fin.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFechaField({
+    required String label,
+    required DateTime? fecha,
+    required VoidCallback onTap,
+    required VoidCallback onClear,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          filled: true,
+          fillColor: AppColors.white,
+          suffixIcon: fecha != null
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: onClear,
+                )
+              : const Icon(Icons.calendar_today),
+        ),
+        child: Text(
+          fecha != null ? DateFormat('dd/MM/yyyy').format(fecha) : 'Todas',
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w400,
+            color: fecha != null ? AppColors.textPrimary : AppColors.textSecondary,
+            fontFamily: 'Inter',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFiltros() {
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.md),
+      color: AppColors.surfaceVariant,
+      child: Column(
+        children: [
+          // Búsqueda
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              labelText: 'Buscar cotización',
+              hintText: 'Digite al menos 3 caracteres...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              filled: true,
+              fillColor: AppColors.white,
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        _onSearchChanged('');
+                      },
+                    )
+                  : null,
+            ),
+            onChanged: _onSearchChanged,
+          ),
+          SizedBox(height: AppSpacing.md),
+
+          // Filtro por origen (uno u otro)
+          DropdownButtonFormField<String>(
+            value: _origenFilter,
+            decoration: InputDecoration(
+              labelText: 'Origen',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              filled: true,
+              fillColor: AppColors.white,
+            ),
+            items: const [
+              DropdownMenuItem<String>(
+                value: CotizacionOrigen.posInterno,
+                child: Text('POS interno'),
+              ),
+              DropdownMenuItem<String>(
+                value: CotizacionOrigen.webPublica,
+                child: Text('Web pública'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() {
+                _origenFilter = value;
+                _currentPage = 1;
+              });
+              _loadData();
+            },
+          ),
+          SizedBox(height: AppSpacing.md),
+
+          // Filtro de fechas (inicio y fin)
+          Row(
+            children: [
+              Expanded(
+                child: _buildFechaField(
+                  label: 'Fecha inicio',
+                  fecha: _fechaDesde,
+                  onTap: () => _seleccionarFecha(esInicio: true),
+                  onClear: () => _quitarFecha(esInicio: true),
+                ),
+              ),
+              SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: _buildFechaField(
+                  label: 'Fecha fin',
+                  fecha: _fechaHasta,
+                  onTap: () => _seleccionarFecha(esInicio: false),
+                  onClear: () => _quitarFecha(esInicio: false),
+                ),
+              ),
+            ],
+          ),
+
+          // Botón limpiar filtros
+          if (_tieneFiltrosActivos) ...[
+            SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _limpiarFiltros,
+                icon: const Icon(Icons.clear_all),
+                label: const Text('Limpiar filtros'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.danger,
+                  side: BorderSide(color: AppColors.danger),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -107,6 +383,9 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               children: [
+                // Filtros
+                _buildFiltros(),
+
                 // Lista de cotizaciones o estados (loading/error/empty)
                 Padding(
                   padding: EdgeInsets.all(AppSpacing.md),
@@ -392,15 +671,18 @@ class _CotizacionCard extends StatelessWidget {
                 fontFamily: 'Inter',
               ),
             ),
-            SizedBox(height: 2.h),
-            Text(
-              'ID: ${cotizacion.consumidorIdentificacion}',
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: AppColors.textSecondary,
-                fontFamily: 'Inter',
+            if (cotizacion.consumidorIdentificacion != null &&
+                cotizacion.consumidorIdentificacion!.isNotEmpty) ...[
+              SizedBox(height: 2.h),
+              Text(
+                'ID: ${cotizacion.consumidorIdentificacion}',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppColors.textSecondary,
+                  fontFamily: 'Inter',
+                ),
               ),
-            ),
+            ],
             if (cotizacion.consumidorTelefono != null &&
                 cotizacion.consumidorTelefono!.isNotEmpty) ...[
               SizedBox(height: 2.h),

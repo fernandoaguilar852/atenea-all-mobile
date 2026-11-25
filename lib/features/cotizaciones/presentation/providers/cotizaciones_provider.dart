@@ -71,11 +71,19 @@ class CotizacionesNotifier extends StateNotifier<CotizacionesState> {
     required int clienteId,
     required int pageNumber,
     required int pageSize,
+    String? search,
+    required String origen,
+    DateTime? startDate,
+    DateTime? endDate,
   }) {
     return CacheKeys.cotizaciones(
       clienteId: clienteId,
       pageNumber: pageNumber,
       pageSize: pageSize,
+      search: (search ?? '').trim().toLowerCase(),
+      origen: origen,
+      startDate: startDate?.toIso8601String().split('T')[0] ?? 'all',
+      endDate: endDate?.toIso8601String().split('T')[0] ?? 'all',
     );
   }
 
@@ -84,6 +92,10 @@ class CotizacionesNotifier extends StateNotifier<CotizacionesState> {
     required int clienteId,
     int pageNumber = 1,
     int pageSize = 10,
+    String? search,
+    String origen = CotizacionOrigen.defaultOrigen,
+    DateTime? startDate,
+    DateTime? endDate,
     bool forceRefresh = false,
   }) async {
     try {
@@ -92,6 +104,10 @@ class CotizacionesNotifier extends StateNotifier<CotizacionesState> {
         clienteId: clienteId,
         pageNumber: pageNumber,
         pageSize: pageSize,
+        search: search,
+        origen: origen,
+        startDate: startDate,
+        endDate: endDate,
       );
 
       // Determinar tipo de loading: si hay datos, usar isLoadingMore (no bloquea UI)
@@ -129,6 +145,10 @@ class CotizacionesNotifier extends StateNotifier<CotizacionesState> {
         clienteId: clienteId,
         pageNumber: pageNumber,
         pageSize: pageSize,
+        search: search,
+        origen: origen,
+        startDate: startDate,
+        endDate: endDate,
       );
 
       // Paso 3: Guardar en cache y actualizar UI

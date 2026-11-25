@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../domain/entities/cotizacion_entity.dart';
 import '../models/cotizacion_model.dart';
 
 /// Datasource remoto para Cotizaciones
@@ -7,23 +8,44 @@ import '../models/cotizacion_model.dart';
 class CotizacionesRemoteDatasource {
   final Dio _dio;
 
-  // Origen fijo por ahora (se convertirá en filtro en una próxima iteración)
-  static const String _origenPosInterno = 'POS-INTERNO';
-
   CotizacionesRemoteDatasource(this._dio);
 
-  /// GET /cotizaciones - Lista cotizaciones con paginación
+  /// Formatea una fecha como yyyy-MM-dd
+  String _formatDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
+  }
+
+  /// GET /cotizaciones - Lista cotizaciones con paginación y filtros
   Future<CotizacionesResponse> getCotizaciones({
     required int clienteId,
     int pageNumber = 1,
     int pageSize = 10,
+    String? search,
+    String origen = CotizacionOrigen.defaultOrigen,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     final queryParams = <String, dynamic>{
       'clienteId': clienteId,
       'pageNumber': pageNumber,
       'pageSize': pageSize,
-      'origen': _origenPosInterno,
+      'origen': origen,
     };
+
+    // Solo se envía el filtro de búsqueda si tiene contenido
+    if (search != null && search.trim().isNotEmpty) {
+      queryParams['search'] = search.trim();
+    }
+
+    // Las fechas se envían como yyyy-MM-dd y solo si tienen valor
+    if (startDate != null) {
+      queryParams['startDate'] = _formatDate(startDate);
+    }
+    if (endDate != null) {
+      queryParams['endDate'] = _formatDate(endDate);
+    }
 
     final response = await _dio.get(
       ApiConstants.buildUrl(ApiConstants.cotizaciones),

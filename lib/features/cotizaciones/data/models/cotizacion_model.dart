@@ -6,13 +6,13 @@ part 'cotizacion_model.g.dart';
 @JsonSerializable()
 class ConsumidorModel {
   final String nombre;
-  final String identificacion;
+  final String? identificacion; // Puede venir null (cotizaciones web)
   final String? email;
   final String? telefono;
 
   const ConsumidorModel({
     required this.nombre,
-    required this.identificacion,
+    this.identificacion,
     this.email,
     this.telefono,
   });
