@@ -228,6 +228,20 @@ class CacheKeys {
 
   static String cotizacionesPrefix(int clienteId) => '${prefix}cotizaciones_$clienteId';
 
+  // Consumidores - listado del módulo Clientes
+  // (nombre distinto a consumidores(clienteId), que usa el autocompletado)
+  static String consumidoresLista({
+    required int clienteId,
+    required int pageNumber,
+    required int pageSize,
+    required String search,
+    required String activo,
+  }) =>
+      '${prefix}consumidores_lista_${clienteId}_p${pageNumber}_ps${pageSize}_s${search}_a$activo';
+
+  static String consumidoresListaPrefix(int clienteId) =>
+      '${prefix}consumidores_lista_$clienteId';
+
   // Reportes
   static String reportes(int clienteId, String type) => '${prefix}reportes_${clienteId}_$type';
 

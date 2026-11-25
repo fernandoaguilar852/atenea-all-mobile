@@ -13,6 +13,7 @@ import '../../features/alertas_stock/presentation/screens/alertas_stock_screen.d
 import '../../features/resoluciones/presentation/screens/resoluciones_screen.dart';
 import '../../features/productos/presentation/screens/productos_screen.dart';
 import '../../features/cotizaciones/presentation/screens/cotizaciones_screen.dart';
+import '../../features/consumidores/presentation/screens/consumidores_screen.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../core/events/auth_events.dart';
 import '../../shared/widgets/app_drawer.dart';
@@ -37,6 +38,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   final alertasStockKey = GlobalKey<ConsumerState<AlertasStockScreen>>();
   final productosKey = GlobalKey<ConsumerState<ProductosScreen>>();
   final cotizacionesKey = GlobalKey<ConsumerState<CotizacionesScreen>>();
+  final consumidoresKey = GlobalKey<ConsumerState<ConsumidoresScreen>>();
   StreamSubscription<void>? _unauthorizedSubscription;
 
   @override
@@ -145,6 +147,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             (cotizacionesState as dynamic).reloadData();
           }
           break;
+        case 8: // Clientes (consumidores)
+          final consumidoresState = consumidoresKey.currentState;
+          if (consumidoresState != null && consumidoresState.mounted) {
+            (consumidoresState as dynamic).reloadData();
+          }
+          break;
       }
     });
 
@@ -157,6 +165,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ResolucionesScreen(key: resolucionesKey, showScaffold: false),
       ProductosScreen(key: productosKey, showScaffold: false),
       CotizacionesScreen(key: cotizacionesKey, showScaffold: false),
+      ConsumidoresScreen(key: consumidoresKey, showScaffold: false),
     ];
 
     final titles = const [
@@ -168,6 +177,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       'Resoluciones',
       'Productos',
       'Cotizaciones',
+      'Clientes',
     ];
 
     return Scaffold(

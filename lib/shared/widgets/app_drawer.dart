@@ -188,16 +188,11 @@ class AppDrawer extends ConsumerWidget {
                 _DrawerItem(
                   icon: Icons.people_outline,
                   title: 'Clientes',
-                  isDisabled: true,
+                  isSelected: currentIndex == 8,
                   onTap: () {
-                    // TODO: Implementar navegación a Clientes
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Módulo en desarrollo'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
+                    Navigator.pop(context); // Cerrar drawer
+                    ref.read(mainScreenIndexProvider.notifier).state = 8;
+                    context.go('/');
                   },
                 ),
               ],
