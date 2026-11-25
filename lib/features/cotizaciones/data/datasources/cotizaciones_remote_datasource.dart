@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../domain/entities/cotizacion_entity.dart';
+import '../models/cotizacion_detalle_model.dart';
 import '../models/cotizacion_model.dart';
 
 /// Datasource remoto para Cotizaciones
@@ -59,6 +60,27 @@ class CotizacionesRemoteDatasource {
         requestOptions: response.requestOptions,
         response: response,
         message: 'Error al obtener cotizaciones',
+      );
+    }
+  }
+
+  /// GET /cotizaciones/:id/detalles - Obtiene una cotización con sus detalles
+  Future<CotizacionDetalleResponse> getCotizacionDetalle({
+    required int clienteId,
+    required int cotizacionId,
+  }) async {
+    final response = await _dio.get(
+      ApiConstants.buildUrl('${ApiConstants.cotizaciones}/$cotizacionId/detalles'),
+      queryParameters: {'clienteId': clienteId},
+    );
+
+    if (response.statusCode == 200 && response.data['data'] != null) {
+      return CotizacionDetalleResponse.fromJson(response.data);
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al obtener el detalle de la cotización',
       );
     }
   }

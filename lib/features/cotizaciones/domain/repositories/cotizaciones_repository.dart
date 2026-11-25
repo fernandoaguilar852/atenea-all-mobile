@@ -1,3 +1,4 @@
+import '../entities/cotizacion_detalle_entity.dart';
 import '../entities/cotizacion_entity.dart';
 
 /// Contrato del repositorio de Cotizaciones
@@ -11,5 +12,11 @@ abstract class CotizacionesRepository {
     String origen = CotizacionOrigen.defaultOrigen,
     DateTime? startDate,
     DateTime? endDate,
+  });
+
+  /// Obtiene el detalle completo de una cotización (con sus productos)
+  Future<CotizacionDetalleEntity> getCotizacionDetalle({
+    required int clienteId,
+    required int cotizacionId,
   });
 }

@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/cotizacion_entity.dart';
 import '../providers/cotizaciones_provider.dart';
+import 'cotizacion_detalle_screen.dart';
 
 class CotizacionesScreen extends ConsumerStatefulWidget {
   final bool showScaffold;
@@ -619,7 +620,18 @@ class _CotizacionCard extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: Padding(
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => CotizacionDetalleScreen(
+                cotizacionId: cotizacion.cotizacionId,
+              ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
         padding: EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -749,6 +761,7 @@ class _CotizacionCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
