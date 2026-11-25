@@ -1,5 +1,6 @@
 import '../../../../core/datasources/consumidor_datasource.dart';
 import '../../domain/entities/consumidor_entity.dart';
+import '../../domain/entities/nuevo_consumidor_entity.dart';
 import '../../domain/repositories/consumidores_repository.dart';
 import '../mappers/consumidor_mapper.dart';
 
@@ -27,5 +28,38 @@ class ConsumidoresRepositoryImpl implements ConsumidoresRepository {
     );
 
     return ConsumidorMapper.toListEntity(response);
+  }
+
+  @override
+  Future<ConsumidorEntity> crearConsumidor({
+    required int clienteId,
+    required NuevoConsumidor consumidor,
+  }) async {
+    final creado = await _datasource.createConsumidor(
+      clienteId: clienteId,
+      data: _datosConsumidor(clienteId, consumidor),
+    );
+
+    return ConsumidorMapper.toEntity(creado);
+  }
+
+  /// Cuerpo del consumidor (sirve para crear y, más adelante, actualizar).
+  /// Los campos opcionales solo se envían si tienen contenido.
+  Map<String, dynamic> _datosConsumidor(int clienteId, NuevoConsumidor c) {
+    bool hayTexto(String? v) => v != null && v.trim().isNotEmpty;
+
+    return <String, dynamic>{
+      'clienteId': clienteId,
+      'tipoIdentificacion': c.tipoIdentificacion,
+      'numeroIdentificacion': c.numeroIdentificacion.trim(),
+      if (hayTexto(c.digitoVerificacion))
+        'digitoVerificacion': c.digitoVerificacion!.trim(),
+      'nombreRazonSocial': c.nombreRazonSocial.trim(),
+      if (hayTexto(c.direccion)) 'direccion': c.direccion!.trim(),
+      if (hayTexto(c.email)) 'email': c.email!.trim(),
+      if (hayTexto(c.telefono)) 'telefono': c.telefono!.trim(),
+      'ciudadId': c.ciudadId,
+      'activo': c.activo,
+    };
   }
 }

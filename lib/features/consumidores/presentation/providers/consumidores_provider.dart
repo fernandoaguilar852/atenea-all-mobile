@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/cache_provider.dart';
@@ -5,6 +6,7 @@ import '../../../../core/providers/catalogs_providers.dart';
 import '../../../../core/services/cache_service.dart';
 import '../../data/repositories/consumidores_repository_impl.dart';
 import '../../domain/entities/consumidor_entity.dart';
+import '../../domain/entities/nuevo_consumidor_entity.dart';
 import '../../domain/repositories/consumidores_repository.dart';
 
 // ============================================================================
@@ -182,6 +184,43 @@ class ConsumidoresNotifier extends StateNotifier<ConsumidoresState> {
     } catch (e) {
       debugPrint('Error clearing consumidores cache: $e');
     }
+  }
+
+  /// Crea un consumidor y limpia el cache del listado.
+  /// Devuelve null si salió bien, o el mensaje del error si falló
+  /// (por ejemplo, un documento repetido).
+  Future<String?> crearConsumidor({
+    required int clienteId,
+    required NuevoConsumidor consumidor,
+  }) async {
+    try {
+      await _repository.crearConsumidor(
+        clienteId: clienteId,
+        consumidor: consumidor,
+      );
+      await clearCache(clienteId);
+      return null;
+    } catch (e) {
+      debugPrint('Error creando consumidor: $e');
+      return _mensajeError(e);
+    }
+  }
+
+  /// Extrae un mensaje legible del error (usa el del API si viene)
+  String _mensajeError(Object e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map && data['messageResponse'] is Map) {
+        final msg = data['messageResponse'] as Map;
+        final detalle = msg['responseDetails'] ?? msg['responseMessage'];
+        if (detalle != null && detalle.toString().isNotEmpty) {
+          return detalle.toString();
+        }
+      }
+      if (e.response == null) return 'Sin conexión con el servidor';
+      return e.message ?? 'Error ${e.response?.statusCode}';
+    }
+    return e.toString();
   }
 }
 

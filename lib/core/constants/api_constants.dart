@@ -23,6 +23,8 @@ class ApiConstants {
   static const String products = '/products';
   static const String clientes = '/clientes';
   static const String consumidores = '/consumidores';
+  static const String departamentos = '/departamentos';
+  static const String ciudades = '/ciudades';
   static const String cartera = '/cartera';
   static const String apartados = '/apartados';
   static const String cotizaciones = '/cotizaciones';

@@ -5,8 +5,11 @@ import '../datasources/iva_datasource.dart';
 import '../datasources/producto_datasource.dart';
 import '../datasources/proveedor_datasource.dart';
 import '../datasources/tipo_producto_datasource.dart';
+import '../datasources/ubicacion_datasource.dart';
 import '../models/caja.dart';
+import '../models/ciudad.dart';
 import '../models/consumidor.dart';
+import '../models/departamento.dart';
 import '../models/iva.dart';
 import '../models/producto.dart';
 import '../models/proveedor.dart';
@@ -45,6 +48,11 @@ final proveedorDatasourceProvider = Provider<ProveedorDatasource>((ref) {
 final ivaDatasourceProvider = Provider<IvaDatasource>((ref) {
   final dioClient = ref.watch(dioClientProvider);
   return IvaDatasource(dioClient.dio);
+});
+
+final ubicacionDatasourceProvider = Provider<UbicacionDatasource>((ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return UbicacionDatasource(dioClient.dio);
 });
 
 // ============================================================================
@@ -255,6 +263,21 @@ final proveedoresSearchProvider =
       search: params.searchTerm,
       pageSize: params.pageSize,
     );
+  },
+);
+
+/// Provider para obtener todos los departamentos (catálogo, se guarda en memoria)
+final departamentosProvider = FutureProvider<List<Departamento>>((ref) async {
+  final datasource = ref.watch(ubicacionDatasourceProvider);
+  return await datasource.getDepartamentos();
+});
+
+/// Provider para obtener todas las ciudades de un departamento
+/// Recibe el departamentoId como parámetro
+final ciudadesProvider = FutureProvider.family<List<Ciudad>, int>(
+  (ref, departamentoId) async {
+    final datasource = ref.watch(ubicacionDatasourceProvider);
+    return await datasource.getCiudades(departamentoId: departamentoId);
   },
 );
 

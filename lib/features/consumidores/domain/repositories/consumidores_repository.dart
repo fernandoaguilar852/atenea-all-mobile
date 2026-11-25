@@ -1,4 +1,5 @@
 import '../entities/consumidor_entity.dart';
+import '../entities/nuevo_consumidor_entity.dart';
 
 /// Contrato del repositorio de Consumidores
 abstract class ConsumidoresRepository {
@@ -9,5 +10,11 @@ abstract class ConsumidoresRepository {
     int pageSize = 10,
     String? search,
     bool? activo,
+  });
+
+  /// Crea un consumidor y devuelve el creado
+  Future<ConsumidorEntity> crearConsumidor({
+    required int clienteId,
+    required NuevoConsumidor consumidor,
   });
 }

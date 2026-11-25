@@ -47,6 +47,28 @@ class ConsumidorDatasource {
     }
   }
 
+  /// POST /consumidores - Crea un consumidor
+  Future<Consumidor> createConsumidor({
+    required int clienteId,
+    required Map<String, dynamic> data,
+  }) async {
+    final response = await _dio.post(
+      ApiConstants.buildUrl(ApiConstants.consumidores),
+      queryParameters: {'clienteId': clienteId},
+      data: data,
+    );
+
+    if (response.statusCode == 201 && response.data['data'] != null) {
+      return Consumidor.fromJson(response.data['data']);
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al crear el consumidor',
+      );
+    }
+  }
+
   /// Busca consumidores por nombre
   Future<List<Consumidor>> searchConsumidores({
     required int clienteId,

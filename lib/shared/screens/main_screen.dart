@@ -229,6 +229,16 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 }
               },
             ),
+          if (currentIndex == 8) // Clientes
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                final state = consumidoresKey.currentState;
+                if (state != null && state.mounted) {
+                  (state as dynamic).showCreateDialog();
+                }
+              },
+            ),
           // Notificaciones en TODAS las pantallas
           Builder(
             builder: (context) {

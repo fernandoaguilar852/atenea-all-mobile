@@ -7,6 +7,7 @@ import '../../../../shared/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/consumidor_entity.dart';
 import '../providers/consumidores_provider.dart';
+import '../widgets/consumidor_form_dialog.dart';
 
 /// Listado de consumidores (en el menú se llama "Clientes")
 class ConsumidoresScreen extends ConsumerStatefulWidget {
@@ -106,6 +107,38 @@ class _ConsumidoresScreenState extends ConsumerState<ConsumidoresScreen> {
   // Método público para recargar desde fuera
   void reloadData() {
     _loadData();
+  }
+
+  /// Abre el diálogo de nuevo cliente. Si se crea, vuelve a la primera página
+  /// (conservando los filtros) y recarga el listado.
+  Future<void> showCreateDialog() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    final creado = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => ConsumidorFormDialog(
+        onGuardar: (consumidor) =>
+            ref.read(consumidoresProvider.notifier).crearConsumidor(
+                  clienteId: user.clienteId,
+                  consumidor: consumidor,
+                ),
+      ),
+    );
+
+    if (creado == true && mounted) {
+      setState(() => _currentPage = 1);
+      _loadData();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Cliente creado exitosamente'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
   }
 
   // ===========================================================================
@@ -446,6 +479,12 @@ class _ConsumidoresScreenState extends ConsumerState<ConsumidoresScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Clientes'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: showCreateDialog,
+          ),
+        ],
       ),
       drawer: const AppDrawer(),
       body: bodyContent,
