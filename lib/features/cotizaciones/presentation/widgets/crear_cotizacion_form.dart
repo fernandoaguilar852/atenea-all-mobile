@@ -9,17 +9,25 @@ import '../../../../core/utils/single_decimal_input_formatter.dart';
 import '../../../../shared/widgets/consumidor_autocomplete_widget.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../movimientos/presentation/widgets/producto_autocomplete_widget.dart';
+import '../../domain/entities/cotizacion_editable_entity.dart';
 import '../../domain/entities/nueva_cotizacion_entity.dart';
 import '../providers/cotizaciones_provider.dart';
 
-/// Formulario para CREAR una cotización (hoja inferior).
+/// Formulario para CREAR o EDITAR una cotización (hoja inferior).
 ///
 /// Toda la cotización se arma en pantalla: datos del cliente y una lista de
 /// productos que se van agregando uno a uno. La pantalla calcula los totales a
-/// partir de las líneas. Al guardar, primero se crea la cabecera y luego cada
-/// línea, una por una.
+/// partir de las líneas.
+///
+/// - Crear: primero se crea la cabecera y luego cada línea, una por una.
+/// - Editar (si viene [cotizacionId]): se cargan los datos guardados; al
+///   guardar se eliminan/actualizan/crean las líneas y, al final, se actualiza
+///   la cabecera con los totales recalculados.
 class CrearCotizacionForm extends ConsumerStatefulWidget {
-  const CrearCotizacionForm({super.key});
+  /// Si viene, el formulario edita esa cotización (modo edición)
+  final int? cotizacionId;
+
+  const CrearCotizacionForm({super.key, this.cotizacionId});
 
   @override
   ConsumerState<CrearCotizacionForm> createState() =>
@@ -55,6 +63,27 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
 
   bool _isLoading = false;
 
+  // ---- Modo edición ----
+  bool get _esEdicion => widget.cotizacionId != null;
+
+  /// Cargando los datos de la cotización a editar
+  bool _cargando = false;
+  String? _errorCarga;
+
+  /// Cotización cargada (para mostrar su número)
+  CotizacionEditable? _editable;
+
+  /// Líneas tal como estaban al abrir la edición (para detectar cambios)
+  List<NuevaLineaCotizacion> _lineasOriginales = [];
+
+  /// Ids de líneas guardadas que el usuario quitó (se eliminan al guardar)
+  final List<int> _detallesEliminados = [];
+
+  /// Índice de la línea que se está editando en el formulario de abajo
+  int? _indiceLineaEditando;
+
+  final _observacionController = TextEditingController();
+
   /// Mensaje de error visible dentro de la hoja (un SnackBar quedaría oculto
   /// detrás de ella)
   String? _errorMensaje;
@@ -78,6 +107,12 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
     final hoy = DateTime.now();
     _fechaCotizacion = DateTime(hoy.year, hoy.month, hoy.day);
     _fechaValidez = _unMesDespues(_fechaCotizacion);
+
+    // En modo edición se cargan los datos guardados de la cotización
+    if (_esEdicion) {
+      _cargando = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _cargarCotizacion());
+    }
   }
 
   @override
@@ -92,6 +127,7 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
     _precioController.dispose();
     _descuentoController.dispose();
     _ivaController.dispose();
+    _observacionController.dispose();
     super.dispose();
   }
 
@@ -152,6 +188,24 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
   void _agregarLinea() {
     if (!_lineaFormKey.currentState!.validate()) return;
 
+    // Modo "actualizar línea": cambia cantidad, precio y descuento de la línea
+    // elegida (el producto y su IVA no cambian)
+    final editando = _indiceLineaEditando;
+    if (editando != null) {
+      final texto = _descuentoController.text.trim();
+      setState(() {
+        _lineas[editando] = _lineas[editando].copyWith(
+          cantidad: parseDecimal(_cantidadController.text)!,
+          precioUnitario: parseDecimal(_precioController.text)!,
+          descuentoPorcentaje: texto.isEmpty ? 0 : (parseDecimal(texto) ?? 0),
+        );
+        _errorMensaje = null;
+      });
+      _cancelarEdicionLinea();
+      FocusScope.of(context).unfocus();
+      return;
+    }
+
     final producto = _productoSelected;
     if (producto == null) {
       setState(() => _errorMensaje = 'Selecciona un producto');
@@ -185,8 +239,80 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
     FocusScope.of(context).unfocus();
   }
 
-  void _eliminarLinea(int index) {
-    setState(() => _lineas.removeAt(index));
+  /// Carga una línea en el formulario de abajo para cambiar su cantidad,
+  /// precio o descuento (el producto queda fijo)
+  void _editarLinea(int index) {
+    final linea = _lineas[index];
+    setState(() {
+      _indiceLineaEditando = index;
+      _productoSelected = null;
+      _productoSearchController.clear();
+      _cantidadController.text = formatDecimal(linea.cantidad);
+      _precioController.text = formatDecimal(linea.precioUnitario);
+      _descuentoController.text = formatDecimal(linea.descuentoPorcentaje);
+      _ivaController.text = '${formatDecimal(linea.porcentajeImpuesto)} %';
+      _errorMensaje = null;
+    });
+    _mostrarSeccionProducto();
+  }
+
+  /// Sale del modo "actualizar línea" y limpia el formulario de la línea
+  void _cancelarEdicionLinea() {
+    setState(() {
+      _indiceLineaEditando = null;
+      _productoSelected = null;
+      _productoSearchController.clear();
+      _cantidadController.clear();
+      _precioController.clear();
+      _descuentoController.text = '0';
+      _ivaController.clear();
+    });
+  }
+
+  /// Quita una línea. Si ya estaba guardada en el servidor (modo edición),
+  /// pide confirmación; se elimina de verdad al guardar los cambios.
+  Future<void> _confirmarQuitarLinea(int index) async {
+    final linea = _lineas[index];
+
+    if (!(_esEdicion && linea.estaGuardada)) {
+      _quitarLinea(index);
+      return;
+    }
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Quitar producto'),
+        content: Text(
+          '¿Quitar "${linea.productoNombre}" de la cotización? '
+          'Se eliminará al guardar los cambios.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('Quitar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true && mounted) _quitarLinea(index);
+  }
+
+  void _quitarLinea(int index) {
+    final linea = _lineas[index];
+    _cancelarEdicionLinea();
+    setState(() {
+      _lineas.removeAt(index);
+      if (linea.estaGuardada) {
+        _detallesEliminados.add(linea.cotizacionDetalleId!);
+      }
+    });
   }
 
   // ===========================================================================
@@ -296,6 +422,25 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
 
     final user = ref.read(currentUserProvider);
     if (user == null) return;
+
+    // Modo edición: eliminar/actualizar/crear líneas y, al final, la cabecera
+    if (_esEdicion) {
+      setState(() => _isLoading = true);
+
+      final resultado =
+          await ref.read(cotizacionesProvider.notifier).actualizarCotizacionCompleta(
+                clienteId: user.clienteId,
+                cotizacionId: widget.cotizacionId!,
+                cotizacion: _construirCotizacion(),
+                lineasOriginales: _lineasOriginales,
+                detallesEliminados: List.of(_detallesEliminados),
+                observacion: _observacionController.text,
+              );
+
+      if (!mounted) return;
+      await _procesarResultadoEdicion(resultado, user.clienteId);
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -426,6 +571,155 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
   }
 
   // ===========================================================================
+  // EDICIÓN
+  // ===========================================================================
+
+  /// Carga la cotización a editar y rellena el formulario
+  Future<void> _cargarCotizacion() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    setState(() {
+      _cargando = true;
+      _errorCarga = null;
+    });
+
+    final (editable, error) =
+        await ref.read(cotizacionesProvider.notifier).obtenerCotizacionParaEditar(
+              clienteId: user.clienteId,
+              cotizacionId: widget.cotizacionId!,
+            );
+
+    if (!mounted) return;
+
+    if (editable == null) {
+      setState(() {
+        _cargando = false;
+        _errorCarga = error ?? 'No se pudo cargar la cotización';
+      });
+      return;
+    }
+
+    setState(() {
+      _editable = editable;
+      _nombreController.text = editable.consumidorNombre;
+      _identificacionController.text = editable.consumidorIdentificacion;
+      _emailController.text = editable.consumidorEmail ?? '';
+      _telefonoController.text = editable.consumidorTelefono ?? '';
+      _observacionController.text = editable.observacion ?? '';
+      _lineas
+        ..clear()
+        ..addAll(editable.lineas);
+      _lineasOriginales = List.of(editable.lineas);
+      _detallesEliminados.clear();
+      _cargando = false;
+    });
+  }
+
+  /// Resultado de guardar los cambios: éxito o pendientes (con reintento)
+  Future<void> _procesarResultadoEdicion(
+    ActualizarCotizacionResultado resultado,
+    int clienteId,
+  ) async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final numero = _editable?.numeroCotizacion ?? '';
+
+    if (resultado.completo) {
+      navigator.pop(true);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Cotización $numero actualizada'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = false);
+    final reintentar = await _mostrarDialogoPendientesEdicion(resultado);
+    if (!mounted) return;
+
+    if (reintentar == true) {
+      setState(() => _isLoading = true);
+      final nuevo =
+          await ref.read(cotizacionesProvider.notifier).reintentarActualizacion(
+                clienteId: clienteId,
+                cotizacionId: widget.cotizacionId!,
+                pendientes: resultado.pendientes,
+              );
+      if (!mounted) return;
+      await _procesarResultadoEdicion(nuevo, clienteId);
+      return;
+    }
+
+    // Cerrar sin reintentar: algo pudo cambiar, hay que recargar el listado
+    navigator.pop(true);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          'Cotización $numero con cambios incompletos '
+          '(faltan ${resultado.pendientes.length} paso(s))',
+        ),
+        backgroundColor: AppColors.warning,
+        duration: const Duration(seconds: 6),
+      ),
+    );
+  }
+
+  /// Lista los pasos que no se pudieron guardar. true = reintentar.
+  Future<bool?> _mostrarDialogoPendientesEdicion(
+    ActualizarCotizacionResultado resultado,
+  ) {
+    final numero = _editable?.numeroCotizacion ?? '';
+
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cambios incompletos'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'No se pudieron guardar todos los cambios de la cotización '
+                '$numero. Faltan estos pasos:',
+              ),
+              SizedBox(height: 8.h),
+              ...resultado.pendientes.map((op) => Text('• ${op.descripcion}')),
+              if (resultado.error != null) ...[
+                SizedBox(height: 8.h),
+                Text(
+                  'Error: ${resultado.error}',
+                  style: const TextStyle(color: AppColors.danger),
+                ),
+              ],
+              SizedBox(height: 8.h),
+              Text(
+                'Los totales se actualizan al final, así que hasta completar '
+                'los pasos pueden no coincidir con los productos.',
+                style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cerrar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Reintentar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
   // UI
   // ===========================================================================
 
@@ -442,21 +736,7 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
         child: Column(
           children: [
             _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSeccionCliente(),
-                    Divider(height: 1.h, color: AppColors.grey300),
-                    _buildSeccionFechas(),
-                    Divider(height: 1.h, color: AppColors.grey300),
-                    _buildSeccionLinea(),
-                    _buildListaLineas(),
-                  ],
-                ),
-              ),
-            ),
+            Expanded(child: _buildCuerpo()),
             _buildFooter(),
           ],
         ),
@@ -487,7 +767,7 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Nueva Cotización',
+                  _esEdicion ? 'Editar Cotización' : 'Nueva Cotización',
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w700,
@@ -495,7 +775,9 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
                   ),
                 ),
                 Text(
-                  'Cliente y productos',
+                  _esEdicion
+                      ? (_editable?.numeroCotizacion ?? 'Cargando...')
+                      : 'Cliente y productos',
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: AppColors.textSecondary,
@@ -650,6 +932,118 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
     );
   }
 
+  /// Cuerpo del formulario: cargando, error de carga o el formulario completo
+  Widget _buildCuerpo() {
+    if (_cargando) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorCarga != null) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, size: 48.sp, color: AppColors.danger),
+              SizedBox(height: 16.h),
+              Text(
+                'No se pudo cargar la cotización: $_errorCarga',
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cerrar'),
+                  ),
+                  SizedBox(width: 12.w),
+                  ElevatedButton(
+                    onPressed: _cargarCotizacion,
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSeccionCliente(),
+          Divider(height: 1.h, color: AppColors.grey300),
+          // Las fechas solo se muestran al crear; al editar va la observación
+          if (_esEdicion) _buildSeccionObservacion() else _buildSeccionFechas(),
+          Divider(height: 1.h, color: AppColors.grey300),
+          _buildSeccionLinea(),
+          _buildListaLineas(),
+        ],
+      ),
+    );
+  }
+
+  /// Observación general de la cotización (solo en modo edición)
+  Widget _buildSeccionObservacion() {
+    return Padding(
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTituloSeccion('Observación'),
+          SizedBox(height: 12.h),
+          TextFormField(
+            controller: _observacionController,
+            decoration: _decoration('Observación', icon: Icons.notes, hint: 'Notas...'),
+            maxLines: 3,
+            maxLength: 200,
+            textInputAction: TextInputAction.done,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Aviso de que se está editando una línea (en lugar del buscador de producto)
+  Widget _bannerEdicionLinea() {
+    final nombre = _lineas[_indiceLineaEditando!].productoNombre;
+
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: _primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: _primary),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.edit, color: _primary, size: 20.sp),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              'Editando: $nombre',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: _primary,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close, size: 18.sp),
+            tooltip: 'Cancelar edición',
+            onPressed: _cancelarEdicionLinea,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSeccionLinea() {
     final user = ref.watch(currentUserProvider);
 
@@ -661,10 +1055,14 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTituloSeccion('Agregar producto'),
+            _buildTituloSeccion(
+              _indiceLineaEditando != null ? 'Editar producto' : 'Agregar producto',
+            ),
             SizedBox(height: 12.h),
 
-            if (user != null)
+            if (_indiceLineaEditando != null)
+              _bannerEdicionLinea()
+            else if (user != null)
               Focus(
                 canRequestFocus: false,
                 skipTraversal: true,
@@ -768,9 +1166,12 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                 ),
-                icon: const Icon(Icons.add, color: Colors.white),
+                icon: Icon(
+                  _indiceLineaEditando != null ? Icons.check : Icons.add,
+                  color: Colors.white,
+                ),
                 label: Text(
-                  'Agregar a la Lista',
+                  _indiceLineaEditando != null ? 'Actualizar línea' : 'Agregar a la Lista',
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
@@ -838,7 +1239,9 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
               linea: _lineas[index],
               index: index,
               money: _money,
-              onRemove: _isLoading ? null : () => _eliminarLinea(index),
+              onRemove: _isLoading ? null : () => _confirmarQuitarLinea(index),
+              // El lápiz solo se ofrece al editar una cotización
+              onEdit: (_esEdicion && !_isLoading) ? () => _editarLinea(index) : null,
             );
           },
         ),
@@ -850,7 +1253,9 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
   Widget _buildFooter() {
     // Con el teclado abierto se oculta el pie (totales y botón) para dejar
     // espacio al formulario y que se vean los resultados de las búsquedas
-    if (MediaQuery.of(context).viewInsets.bottom > 0) {
+    if (MediaQuery.of(context).viewInsets.bottom > 0 ||
+        _cargando ||
+        _errorCarga != null) {
       return const SizedBox.shrink();
     }
 
@@ -940,7 +1345,9 @@ class _CrearCotizacionFormState extends ConsumerState<CrearCotizacionForm> {
                       ),
                     )
                   : Text(
-                      'Crear Cotización (${_lineas.length})',
+                      _esEdicion
+                          ? 'Guardar Cambios'
+                          : 'Crear Cotización (${_lineas.length})',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -961,12 +1368,14 @@ class _LineaCard extends StatelessWidget {
   final int index;
   final NumberFormat money;
   final VoidCallback? onRemove;
+  final VoidCallback? onEdit;
 
   const _LineaCard({
     required this.linea,
     required this.index,
     required this.money,
     required this.onRemove,
+    this.onEdit,
   });
 
   @override
@@ -993,6 +1402,15 @@ class _LineaCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (onEdit != null) ...[
+                  IconButton(
+                    icon: Icon(Icons.edit, color: AppColors.primary, size: 20.sp),
+                    onPressed: onEdit,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  SizedBox(width: 16.w),
+                ],
                 IconButton(
                   icon: Icon(Icons.delete, color: AppColors.danger, size: 20.sp),
                   onPressed: onRemove,

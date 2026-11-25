@@ -181,4 +181,84 @@ class CotizacionesRemoteDatasource {
       );
     }
   }
+
+  /// PATCH /cotizaciones/:id - Actualiza la cabecera (cliente, totales, observación)
+  /// La respuesta tiene la misma forma que el detalle (sin líneas)
+  Future<CotizacionDetalleResponse> updateCotizacion({
+    required int clienteId,
+    required int cotizacionId,
+    required Map<String, dynamic> data,
+  }) async {
+    final response = await _dio.patch(
+      ApiConstants.buildUrl('${ApiConstants.cotizaciones}/$cotizacionId'),
+      queryParameters: {'clienteId': clienteId},
+      data: data,
+    );
+
+    if (response.statusCode == 200 && response.data['data'] != null) {
+      return CotizacionDetalleResponse.fromJson(response.data);
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al actualizar la cotización',
+      );
+    }
+  }
+
+  /// PATCH /cotizacion-detalles/:id - Actualiza UNA línea de una cotización
+  Future<CotizacionDetalleCreadoResponse> updateCotizacionDetalle({
+    required int clienteId,
+    required int cotizacionDetalleId,
+    required Map<String, dynamic> data,
+  }) async {
+    final response = await _dio.patch(
+      ApiConstants.buildUrl(
+        '${ApiConstants.cotizacionDetalles}/$cotizacionDetalleId',
+      ),
+      queryParameters: {'clienteId': clienteId},
+      data: data,
+    );
+
+    if (response.statusCode == 200 && response.data['data'] != null) {
+      return CotizacionDetalleCreadoResponse.fromJson(response.data);
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al actualizar el detalle de la cotización',
+      );
+    }
+  }
+
+  /// DELETE /cotizacion-detalles/:id - Elimina UNA línea de una cotización
+  Future<void> deleteCotizacionDetalle({
+    required int clienteId,
+    required int cotizacionDetalleId,
+  }) async {
+    final response = await _dio.delete(
+      ApiConstants.buildUrl(
+        '${ApiConstants.cotizacionDetalles}/$cotizacionDetalleId',
+      ),
+      queryParameters: {'clienteId': clienteId},
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al eliminar el detalle de la cotización',
+      );
+    }
+
+    // La API responde data.deleted = true cuando se eliminó
+    final body = response.data;
+    if (body is Map && body['data'] is Map && body['data']['deleted'] == false) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'No se pudo eliminar el detalle de la cotización',
+      );
+    }
+  }
 }

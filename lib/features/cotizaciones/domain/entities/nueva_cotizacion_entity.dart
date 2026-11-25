@@ -18,6 +18,13 @@ class NuevaLineaCotizacion {
   /// IVA del producto (no editable en el formulario)
   final double porcentajeImpuesto;
 
+  /// Id de la línea ya guardada en el servidor. Es null para líneas nuevas.
+  /// (Solo se usa al editar una cotización.)
+  final int? cotizacionDetalleId;
+
+  /// Observación de la línea (se conserva al editar)
+  final String? observacionLinea;
+
   const NuevaLineaCotizacion({
     required this.productoId,
     required this.productoNombre,
@@ -25,7 +32,31 @@ class NuevaLineaCotizacion {
     required this.precioUnitario,
     this.descuentoPorcentaje = 0,
     this.porcentajeImpuesto = 0,
+    this.cotizacionDetalleId,
+    this.observacionLinea,
   });
+
+  /// true si la línea ya existe en el servidor (viene de una cotización guardada)
+  bool get estaGuardada => cotizacionDetalleId != null;
+
+  /// Copia de la línea con otros valores editables (el producto y el IVA no
+  /// cambian: para otro producto se elimina la línea y se agrega una nueva)
+  NuevaLineaCotizacion copyWith({
+    double? cantidad,
+    double? precioUnitario,
+    double? descuentoPorcentaje,
+  }) {
+    return NuevaLineaCotizacion(
+      productoId: productoId,
+      productoNombre: productoNombre,
+      cantidad: cantidad ?? this.cantidad,
+      precioUnitario: precioUnitario ?? this.precioUnitario,
+      descuentoPorcentaje: descuentoPorcentaje ?? this.descuentoPorcentaje,
+      porcentajeImpuesto: porcentajeImpuesto,
+      cotizacionDetalleId: cotizacionDetalleId,
+      observacionLinea: observacionLinea,
+    );
+  }
 
   double get subtotal => _redondear(cantidad * precioUnitario);
 

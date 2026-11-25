@@ -46,4 +46,25 @@ abstract class CotizacionesRepository {
     required int clienteId,
     required int cotizacionId,
   });
+
+  /// Actualiza la cabecera de una cotización (cliente, totales y observación)
+  Future<void> actualizarCotizacion({
+    required int clienteId,
+    required int cotizacionId,
+    required NuevaCotizacion cotizacion,
+    String? observacion,
+  });
+
+  /// Actualiza UNA línea de una cotización (usa linea.cotizacionDetalleId)
+  Future<void> actualizarDetalle({
+    required int clienteId,
+    required int cotizacionId,
+    required NuevaLineaCotizacion linea,
+  });
+
+  /// Elimina UNA línea de una cotización
+  Future<void> eliminarDetalle({
+    required int clienteId,
+    required int cotizacionDetalleId,
+  });
 }

@@ -67,7 +67,90 @@ class CotizacionesRepositoryImpl implements CotizacionesRepository {
     required int clienteId,
     required NuevaCotizacion cotizacion,
   }) async {
-    final data = <String, dynamic>{
+    final response = await _datasource.createCotizacion(
+      clienteId: clienteId,
+      data: _datosCabecera(cotizacion),
+    );
+
+    return CotizacionMapper.toCreadaEntity(response.data);
+  }
+
+  @override
+  Future<int> crearDetalle({
+    required int clienteId,
+    required int cotizacionId,
+    required NuevaLineaCotizacion linea,
+  }) async {
+    final response = await _datasource.createCotizacionDetalle(
+      clienteId: clienteId,
+      data: _datosLinea(cotizacionId, linea),
+    );
+
+    return response.data.cotizacionDetalleId;
+  }
+
+  @override
+  Future<void> eliminarCotizacion({
+    required int clienteId,
+    required int cotizacionId,
+  }) async {
+    await _datasource.deleteCotizacion(
+      clienteId: clienteId,
+      cotizacionId: cotizacionId,
+    );
+  }
+
+  @override
+  Future<void> actualizarCotizacion({
+    required int clienteId,
+    required int cotizacionId,
+    required NuevaCotizacion cotizacion,
+    String? observacion,
+  }) async {
+    final data = _datosCabecera(cotizacion);
+    if (observacion != null) {
+      data['observacion'] = observacion.trim();
+    }
+
+    await _datasource.updateCotizacion(
+      clienteId: clienteId,
+      cotizacionId: cotizacionId,
+      data: data,
+    );
+  }
+
+  @override
+  Future<void> actualizarDetalle({
+    required int clienteId,
+    required int cotizacionId,
+    required NuevaLineaCotizacion linea,
+  }) async {
+    final detalleId = linea.cotizacionDetalleId;
+    if (detalleId == null) {
+      throw ArgumentError('La línea no tiene cotizacionDetalleId: no se puede actualizar');
+    }
+
+    await _datasource.updateCotizacionDetalle(
+      clienteId: clienteId,
+      cotizacionDetalleId: detalleId,
+      data: _datosLinea(cotizacionId, linea),
+    );
+  }
+
+  @override
+  Future<void> eliminarDetalle({
+    required int clienteId,
+    required int cotizacionDetalleId,
+  }) async {
+    await _datasource.deleteCotizacionDetalle(
+      clienteId: clienteId,
+      cotizacionDetalleId: cotizacionDetalleId,
+    );
+  }
+
+  /// Cuerpo de la cabecera (sirve para crear y para actualizar)
+  Map<String, dynamic> _datosCabecera(NuevaCotizacion cotizacion) {
+    return <String, dynamic>{
       'consumidorNombre': cotizacion.consumidorNombre,
       'consumidorIdentificacion': cotizacion.consumidorIdentificacion,
       // Email y teléfono solo se envían si tienen contenido
@@ -85,22 +168,11 @@ class CotizacionesRepositoryImpl implements CotizacionesRepository {
       'totalIca': cotizacion.totalIca,
       'total': cotizacion.total,
     };
-
-    final response = await _datasource.createCotizacion(
-      clienteId: clienteId,
-      data: data,
-    );
-
-    return CotizacionMapper.toCreadaEntity(response.data);
   }
 
-  @override
-  Future<int> crearDetalle({
-    required int clienteId,
-    required int cotizacionId,
-    required NuevaLineaCotizacion linea,
-  }) async {
-    final data = <String, dynamic>{
+  /// Cuerpo de una línea (sirve para crear y para actualizar)
+  Map<String, dynamic> _datosLinea(int cotizacionId, NuevaLineaCotizacion linea) {
+    return <String, dynamic>{
       'cotizacionId': cotizacionId,
       'productoId': linea.productoId,
       'cantidad': linea.cantidad,
@@ -109,25 +181,7 @@ class CotizacionesRepositoryImpl implements CotizacionesRepository {
       'codigoImpuesto': linea.codigoImpuesto,
       'porcentajeImpuesto':
           linea.porcentajeImpuesto > 0 ? linea.porcentajeImpuesto : null,
-      'observacionLinea': null,
+      'observacionLinea': linea.observacionLinea,
     };
-
-    final response = await _datasource.createCotizacionDetalle(
-      clienteId: clienteId,
-      data: data,
-    );
-
-    return response.data.cotizacionDetalleId;
-  }
-
-  @override
-  Future<void> eliminarCotizacion({
-    required int clienteId,
-    required int cotizacionId,
-  }) async {
-    await _datasource.deleteCotizacion(
-      clienteId: clienteId,
-      cotizacionId: cotizacionId,
-    );
   }
 }

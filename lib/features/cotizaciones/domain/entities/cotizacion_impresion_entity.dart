@@ -8,6 +8,12 @@ class ImpresionLineaEntity {
   final double porcentajeImpuesto;
   final double totalLinea;
 
+  // Datos para editar la cotización (el PDF no los usa)
+  final int? cotizacionDetalleId;
+  final int? productoId;
+  final double descuentoPorcentaje;
+  final String? observacionLinea;
+
   const ImpresionLineaEntity({
     required this.cantidad,
     required this.referencia,
@@ -16,6 +22,10 @@ class ImpresionLineaEntity {
     required this.descuentoValor,
     required this.porcentajeImpuesto,
     required this.totalLinea,
+    this.cotizacionDetalleId,
+    this.productoId,
+    this.descuentoPorcentaje = 0,
+    this.observacionLinea,
   });
 }
 
@@ -31,6 +41,7 @@ class CotizacionImpresionEntity {
   final String? logoUrl;
 
   // Cotización
+  final int cotizacionId;
   final String numeroCotizacion;
   final DateTime fechaCotizacion;
   final DateTime? fechaValidez;
@@ -63,6 +74,7 @@ class CotizacionImpresionEntity {
     this.empresaEmail,
     this.empresaCiudad,
     this.logoUrl,
+    required this.cotizacionId,
     required this.numeroCotizacion,
     required this.fechaCotizacion,
     this.fechaValidez,

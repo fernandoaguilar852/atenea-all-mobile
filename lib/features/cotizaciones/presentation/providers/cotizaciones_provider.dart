@@ -6,6 +6,7 @@ import '../../../../core/providers/cache_provider.dart';
 import '../../../../core/services/cache_service.dart';
 import '../../data/datasources/cotizaciones_remote_datasource.dart';
 import '../../data/repositories/cotizaciones_repository_impl.dart';
+import '../../domain/entities/cotizacion_editable_entity.dart';
 import '../../domain/entities/cotizacion_entity.dart';
 import '../../domain/entities/nueva_cotizacion_entity.dart';
 import '../../domain/repositories/cotizaciones_repository.dart';
@@ -54,6 +55,62 @@ class CrearCotizacionResultado {
 
   /// Cabecera creada y todas las líneas guardadas
   bool get completo => cotizacion != null && lineasPendientes.isEmpty;
+}
+
+/// Tipo de operación al editar una cotización
+enum TipoOperacionCotizacion {
+  eliminarLinea,
+  actualizarLinea,
+  crearLinea,
+  actualizarCabecera,
+}
+
+/// Una operación pendiente o ya ejecutada al guardar los cambios de una
+/// cotización. Lleva todos los datos para poder reintentarse.
+class OperacionCotizacion {
+  final TipoOperacionCotizacion tipo;
+
+  /// Texto para mostrar al usuario (ej. 'Eliminar "POLO INEM"')
+  final String descripcion;
+
+  /// Para eliminarLinea
+  final int? cotizacionDetalleId;
+
+  /// Para actualizarLinea y crearLinea
+  final NuevaLineaCotizacion? linea;
+
+  /// Para actualizarCabecera
+  final NuevaCotizacion? cotizacion;
+  final String? observacion;
+
+  const OperacionCotizacion({
+    required this.tipo,
+    required this.descripcion,
+    this.cotizacionDetalleId,
+    this.linea,
+    this.cotizacion,
+    this.observacion,
+  });
+}
+
+/// Resultado de guardar los cambios de una cotización
+class ActualizarCotizacionResultado {
+  /// Operaciones ejecutadas correctamente en esta llamada
+  final int operacionesHechas;
+
+  /// Operaciones que faltan (vacío si todo salió bien)
+  final List<OperacionCotizacion> pendientes;
+
+  /// Mensaje del primer error ocurrido (null si todo salió bien)
+  final String? error;
+
+  const ActualizarCotizacionResultado({
+    required this.operacionesHechas,
+    required this.pendientes,
+    this.error,
+  });
+
+  bool get completo => pendientes.isEmpty;
 }
 
 /// Estado de la lista de cotizaciones
@@ -282,6 +339,167 @@ class CotizacionesNotifier extends StateNotifier<CotizacionesState> {
     await clearCache(clienteId);
 
     return resultado;
+  }
+
+  /// Carga una cotización para editarla: cliente, observación y líneas con sus
+  /// ids y porcentajes. Devuelve (cotización, null) o (null, mensaje de error).
+  Future<(CotizacionEditable?, String?)> obtenerCotizacionParaEditar({
+    required int clienteId,
+    required int cotizacionId,
+  }) async {
+    try {
+      final impresion = await _repository.getCotizacionImpresion(
+        clienteId: clienteId,
+        cotizacionId: cotizacionId,
+      );
+      return (CotizacionEditable.fromImpresion(impresion), null);
+    } catch (e) {
+      debugPrint('Error cargando cotización para editar: $e');
+      return (null, _mensajeError(e));
+    }
+  }
+
+  /// Guarda los cambios de una cotización existente.
+  ///
+  /// Arma una lista ordenada de operaciones y las ejecuta una por una:
+  ///   1. eliminar las líneas quitadas,
+  ///   2. actualizar las líneas que cambiaron,
+  ///   3. crear las líneas nuevas,
+  ///   4. actualizar la cabecera con los totales recalculados (siempre al final).
+  /// Se detiene en la primera que falla y devuelve las pendientes, de modo que
+  /// los totales de la cabecera solo cambian si todas las líneas quedaron bien.
+  ///
+  /// [cotizacion] trae los datos del cliente y las líneas ACTUALES (las
+  /// guardadas con su cotizacionDetalleId y las nuevas sin id).
+  /// [lineasOriginales] son las líneas tal como estaban al abrir la edición.
+  Future<ActualizarCotizacionResultado> actualizarCotizacionCompleta({
+    required int clienteId,
+    required int cotizacionId,
+    required NuevaCotizacion cotizacion,
+    required List<NuevaLineaCotizacion> lineasOriginales,
+    required List<int> detallesEliminados,
+    String? observacion,
+  }) async {
+    final originalesPorId = {
+      for (final l in lineasOriginales)
+        if (l.cotizacionDetalleId != null) l.cotizacionDetalleId!: l,
+    };
+
+    bool cambio(NuevaLineaCotizacion actual) {
+      final o = originalesPorId[actual.cotizacionDetalleId];
+      if (o == null) return true;
+      return o.cantidad != actual.cantidad ||
+          o.precioUnitario != actual.precioUnitario ||
+          o.descuentoPorcentaje != actual.descuentoPorcentaje;
+    }
+
+    final operaciones = <OperacionCotizacion>[
+      // 1. Eliminar las líneas quitadas
+      for (final id in detallesEliminados)
+        OperacionCotizacion(
+          tipo: TipoOperacionCotizacion.eliminarLinea,
+          descripcion: 'Eliminar "${originalesPorId[id]?.productoNombre ?? 'línea $id'}"',
+          cotizacionDetalleId: id,
+        ),
+      // 2. Actualizar las líneas guardadas que cambiaron
+      for (final l in cotizacion.lineas)
+        if (l.estaGuardada && cambio(l))
+          OperacionCotizacion(
+            tipo: TipoOperacionCotizacion.actualizarLinea,
+            descripcion: 'Actualizar "${l.productoNombre}"',
+            linea: l,
+          ),
+      // 3. Crear las líneas nuevas
+      for (final l in cotizacion.lineas)
+        if (!l.estaGuardada)
+          OperacionCotizacion(
+            tipo: TipoOperacionCotizacion.crearLinea,
+            descripcion: 'Agregar "${l.productoNombre}"',
+            linea: l,
+          ),
+      // 4. Cabecera con los totales recalculados (siempre al final)
+      OperacionCotizacion(
+        tipo: TipoOperacionCotizacion.actualizarCabecera,
+        descripcion: 'Actualizar datos y totales de la cotización',
+        cotizacion: cotizacion,
+        observacion: observacion,
+      ),
+    ];
+
+    return _ejecutarOperaciones(
+      clienteId: clienteId,
+      cotizacionId: cotizacionId,
+      operaciones: operaciones,
+    );
+  }
+
+  /// Continúa con las operaciones pendientes (sin repetir las ya hechas)
+  Future<ActualizarCotizacionResultado> reintentarActualizacion({
+    required int clienteId,
+    required int cotizacionId,
+    required List<OperacionCotizacion> pendientes,
+  }) {
+    return _ejecutarOperaciones(
+      clienteId: clienteId,
+      cotizacionId: cotizacionId,
+      operaciones: pendientes,
+    );
+  }
+
+  /// Ejecuta las operaciones en orden; se detiene en la primera que falla
+  Future<ActualizarCotizacionResultado> _ejecutarOperaciones({
+    required int clienteId,
+    required int cotizacionId,
+    required List<OperacionCotizacion> operaciones,
+  }) async {
+    var hechas = 0;
+
+    try {
+      for (final op in operaciones) {
+        switch (op.tipo) {
+          case TipoOperacionCotizacion.eliminarLinea:
+            await _repository.eliminarDetalle(
+              clienteId: clienteId,
+              cotizacionDetalleId: op.cotizacionDetalleId!,
+            );
+          case TipoOperacionCotizacion.actualizarLinea:
+            await _repository.actualizarDetalle(
+              clienteId: clienteId,
+              cotizacionId: cotizacionId,
+              linea: op.linea!,
+            );
+          case TipoOperacionCotizacion.crearLinea:
+            await _repository.crearDetalle(
+              clienteId: clienteId,
+              cotizacionId: cotizacionId,
+              linea: op.linea!,
+            );
+          case TipoOperacionCotizacion.actualizarCabecera:
+            await _repository.actualizarCotizacion(
+              clienteId: clienteId,
+              cotizacionId: cotizacionId,
+              cotizacion: op.cotizacion!,
+              observacion: op.observacion,
+            );
+        }
+        hechas++;
+      }
+    } catch (e) {
+      debugPrint('Error actualizando cotización (${operaciones[hechas].descripcion}): $e');
+      // Algo pudo haber cambiado en el servidor: limpiar el cache
+      await clearCache(clienteId);
+      return ActualizarCotizacionResultado(
+        operacionesHechas: hechas,
+        pendientes: operaciones.sublist(hechas),
+        error: _mensajeError(e),
+      );
+    }
+
+    await clearCache(clienteId);
+    return ActualizarCotizacionResultado(
+      operacionesHechas: hechas,
+      pendientes: const [],
+    );
   }
 
   /// Elimina una cotización y limpia el cache.

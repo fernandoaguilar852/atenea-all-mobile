@@ -96,6 +96,7 @@ class CotizacionMapper {
       empresaEmail: encabezado.email,
       empresaCiudad: ciudad,
       logoUrl: encabezado.logoUrl,
+      cotizacionId: cotizacion.cotizacionId,
       numeroCotizacion: cotizacion.numeroCotizacion,
       fechaCotizacion: DateTime.parse(cotizacion.fechaCotizacion),
       fechaValidez: _parseFecha(cotizacion.fechaValidez),
@@ -133,7 +134,20 @@ class CotizacionMapper {
       descuentoValor: model.descuentoValor,
       porcentajeImpuesto: model.porcentajeImpuesto ?? 0,
       totalLinea: model.totalLinea,
+      cotizacionDetalleId: model.cotizacionDetalleId,
+      productoId: productoId,
+      descuentoPorcentaje: _porcentajeDescuento(model),
+      observacionLinea: model.observacionLinea,
     );
+  }
+
+  /// Porcentaje de descuento: el que trae el API o, si no viene, el calculado
+  /// a partir del valor del descuento y el subtotal de la línea.
+  static double _porcentajeDescuento(ImpresionLineaModel model) {
+    final porcentaje = model.descuentoPorcentaje;
+    if (porcentaje != null) return porcentaje;
+    if (model.subtotal <= 0 || model.descuentoValor <= 0) return 0;
+    return ((model.descuentoValor / model.subtotal) * 10000).roundToDouble() / 100;
   }
 
   /// Parsea una fecha yyyy-MM-dd (o ISO) sin desfase de zona horaria

@@ -126,6 +126,8 @@ class ImpresionLineaModel {
   @JsonKey(fromJson: _toDouble)
   final double descuentoValor;
   @JsonKey(fromJson: _toDoubleOrNull)
+  final double? descuentoPorcentaje;
+  @JsonKey(fromJson: _toDoubleOrNull)
   final double? porcentajeImpuesto;
   @JsonKey(fromJson: _toDouble)
   final double valorImpuesto;
@@ -142,6 +144,7 @@ class ImpresionLineaModel {
     required this.precioUnitario,
     required this.subtotal,
     required this.descuentoValor,
+    this.descuentoPorcentaje,
     this.porcentajeImpuesto,
     required this.valorImpuesto,
     required this.totalLinea,

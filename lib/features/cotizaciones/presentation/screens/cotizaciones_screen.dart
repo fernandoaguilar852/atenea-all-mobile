@@ -135,11 +135,23 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
     }
   }
 
-  void _editarCotizacion(CotizacionEntity cotizacion) {
-    // TODO: implementar edición de cotizaciones (siguiente iteración)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edición de cotizaciones próximamente')),
+  /// Abre el formulario en modo edición con la cotización ya cargada.
+  /// Si se guardó (total o parcialmente) recarga el listado conservando la
+  /// página y los filtros actuales.
+  Future<void> _editarCotizacion(CotizacionEntity cotizacion) async {
+    final guardada = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FractionallySizedBox(
+        heightFactor: 0.9,
+        child: CrearCotizacionForm(cotizacionId: cotizacion.cotizacionId),
+      ),
     );
+
+    if (guardada == true && mounted) {
+      _loadData();
+    }
   }
 
   /// Modal de confirmación antes de eliminar
