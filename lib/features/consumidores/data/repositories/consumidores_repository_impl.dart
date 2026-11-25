@@ -31,6 +31,19 @@ class ConsumidoresRepositoryImpl implements ConsumidoresRepository {
   }
 
   @override
+  Future<ConsumidorEntity> getConsumidor({
+    required int clienteId,
+    required int consumidorId,
+  }) async {
+    final consumidor = await _datasource.getConsumidorById(
+      clienteId: clienteId,
+      consumidorId: consumidorId,
+    );
+
+    return ConsumidorMapper.toEntity(consumidor);
+  }
+
+  @override
   Future<ConsumidorEntity> crearConsumidor({
     required int clienteId,
     required NuevoConsumidor consumidor,
@@ -44,6 +57,21 @@ class ConsumidoresRepositoryImpl implements ConsumidoresRepository {
   }
 
   @override
+  Future<ConsumidorEntity> actualizarConsumidor({
+    required int clienteId,
+    required int consumidorId,
+    required NuevoConsumidor consumidor,
+  }) async {
+    final actualizado = await _datasource.updateConsumidor(
+      clienteId: clienteId,
+      consumidorId: consumidorId,
+      data: _datosConsumidor(clienteId, consumidor, esActualizacion: true),
+    );
+
+    return ConsumidorMapper.toEntity(actualizado);
+  }
+
+  @override
   Future<void> eliminarConsumidor({
     required int clienteId,
     required int consumidorId,
@@ -54,23 +82,39 @@ class ConsumidoresRepositoryImpl implements ConsumidoresRepository {
     );
   }
 
-  /// Cuerpo del consumidor (sirve para crear y, más adelante, actualizar).
-  /// Los campos opcionales solo se envían si tienen contenido.
-  Map<String, dynamic> _datosConsumidor(int clienteId, NuevoConsumidor c) {
-    bool hayTexto(String? v) => v != null && v.trim().isNotEmpty;
+  /// Cuerpo del consumidor (sirve para crear y para actualizar).
+  ///
+  /// Al CREAR, los campos opcionales solo se envían si tienen contenido y se
+  /// incluye el clienteId. Al ACTUALIZAR (PATCH) no va el clienteId (ya está en
+  /// el query) y un campo opcional vacío se envía como null para limpiarlo,
+  /// porque omitirlo lo dejaría con su valor anterior.
+  Map<String, dynamic> _datosConsumidor(
+    int clienteId,
+    NuevoConsumidor c, {
+    bool esActualizacion = false,
+  }) {
+    final data = <String, dynamic>{};
 
-    return <String, dynamic>{
-      'clienteId': clienteId,
-      'tipoIdentificacion': c.tipoIdentificacion,
-      'numeroIdentificacion': c.numeroIdentificacion.trim(),
-      if (hayTexto(c.digitoVerificacion))
-        'digitoVerificacion': c.digitoVerificacion!.trim(),
-      'nombreRazonSocial': c.nombreRazonSocial.trim(),
-      if (hayTexto(c.direccion)) 'direccion': c.direccion!.trim(),
-      if (hayTexto(c.email)) 'email': c.email!.trim(),
-      if (hayTexto(c.telefono)) 'telefono': c.telefono!.trim(),
-      'ciudadId': c.ciudadId,
-      'activo': c.activo,
-    };
+    void opcional(String clave, String? valor) {
+      final texto = valor?.trim() ?? '';
+      if (texto.isNotEmpty) {
+        data[clave] = texto;
+      } else if (esActualizacion) {
+        data[clave] = null;
+      }
+    }
+
+    if (!esActualizacion) data['clienteId'] = clienteId;
+    data['tipoIdentificacion'] = c.tipoIdentificacion;
+    data['numeroIdentificacion'] = c.numeroIdentificacion.trim();
+    opcional('digitoVerificacion', c.digitoVerificacion);
+    data['nombreRazonSocial'] = c.nombreRazonSocial.trim();
+    opcional('direccion', c.direccion);
+    opcional('email', c.email);
+    opcional('telefono', c.telefono);
+    data['ciudadId'] = c.ciudadId;
+    data['activo'] = c.activo;
+
+    return data;
   }
 }

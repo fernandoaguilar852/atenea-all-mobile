@@ -47,6 +47,27 @@ class ConsumidorDatasource {
     }
   }
 
+  /// GET /consumidores/:id - Obtiene un consumidor por su id
+  Future<Consumidor> getConsumidorById({
+    required int clienteId,
+    required int consumidorId,
+  }) async {
+    final response = await _dio.get(
+      ApiConstants.buildUrl('${ApiConstants.consumidores}/$consumidorId'),
+      queryParameters: {'clienteId': clienteId},
+    );
+
+    if (response.statusCode == 200 && response.data['data'] != null) {
+      return Consumidor.fromJson(response.data['data']);
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al obtener el consumidor',
+      );
+    }
+  }
+
   /// POST /consumidores - Crea un consumidor
   Future<Consumidor> createConsumidor({
     required int clienteId,
@@ -65,6 +86,29 @@ class ConsumidorDatasource {
         requestOptions: response.requestOptions,
         response: response,
         message: 'Error al crear el consumidor',
+      );
+    }
+  }
+
+  /// PATCH /consumidores/:id - Actualiza un consumidor
+  Future<Consumidor> updateConsumidor({
+    required int clienteId,
+    required int consumidorId,
+    required Map<String, dynamic> data,
+  }) async {
+    final response = await _dio.patch(
+      ApiConstants.buildUrl('${ApiConstants.consumidores}/$consumidorId'),
+      queryParameters: {'clienteId': clienteId},
+      data: data,
+    );
+
+    if (response.statusCode == 200 && response.data['data'] != null) {
+      return Consumidor.fromJson(response.data['data']);
+    } else {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al actualizar el consumidor',
       );
     }
   }

@@ -281,6 +281,14 @@ final ciudadesProvider = FutureProvider.family<List<Ciudad>, int>(
   },
 );
 
+/// Provider para obtener una ciudad por su id (incluye su departamentoId)
+final ciudadPorIdProvider = FutureProvider.family<Ciudad, int>(
+  (ref, ciudadId) async {
+    final datasource = ref.watch(ubicacionDatasourceProvider);
+    return await datasource.getCiudadById(ciudadId);
+  },
+);
+
 /// Provider para obtener lista de IVAs
 final ivasProvider = FutureProvider<List<Iva>>((ref) async {
   final datasource = ref.watch(ivaDatasourceProvider);

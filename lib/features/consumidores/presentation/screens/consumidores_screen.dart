@@ -8,6 +8,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/consumidor_entity.dart';
 import '../providers/consumidores_provider.dart';
 import '../widgets/consumidor_form_dialog.dart';
+import 'consumidor_detalle_screen.dart';
 
 /// Listado de consumidores (en el menú se llama "Clientes")
 class ConsumidoresScreen extends ConsumerStatefulWidget {
@@ -141,11 +142,37 @@ class _ConsumidoresScreenState extends ConsumerState<ConsumidoresScreen> {
     }
   }
 
-  void _editarConsumidor(ConsumidorEntity consumidor) {
-    // TODO: implementar edición de clientes (siguiente iteración)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edición de clientes próximamente')),
+  /// Abre el diálogo en modo edición. Si se guarda, recarga el listado
+  /// conservando la página y los filtros actuales.
+  Future<void> _editarConsumidor(ConsumidorEntity consumidor) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    final actualizado = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => ConsumidorFormDialog(
+        consumidor: consumidor,
+        onGuardar: (nuevo) =>
+            ref.read(consumidoresProvider.notifier).actualizarConsumidor(
+                  clienteId: user.clienteId,
+                  consumidorId: consumidor.consumidorId,
+                  consumidor: nuevo,
+                ),
+      ),
     );
+
+    if (actualizado == true && mounted) {
+      _loadData();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Cliente actualizado exitosamente'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
   }
 
   /// Modal de confirmación antes de eliminar
@@ -625,7 +652,18 @@ class _ConsumidorCard extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: Padding(
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ConsumidorDetalleScreen(
+                consumidorId: consumidor.consumidorId,
+              ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
         padding: EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -712,6 +750,7 @@ class _ConsumidorCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -7,17 +7,27 @@ import '../../../../core/models/ciudad.dart';
 import '../../../../core/models/departamento.dart';
 import '../../../../core/providers/catalogs_providers.dart';
 import '../../../../shared/widgets/selector_busqueda_dialog.dart';
+import '../../domain/entities/consumidor_entity.dart';
 import '../../domain/entities/nuevo_consumidor_entity.dart';
 
-/// Diálogo con el formulario de un consumidor (cliente).
+/// Diálogo con el formulario de un consumidor (cliente), para crear o editar.
 ///
-/// No llama al API por sí mismo: al guardar invoca [onGuardar], que devuelve
-/// null si salió bien (el diálogo se cierra con `true`) o el mensaje de error
-/// (se muestra dentro del diálogo y se puede corregir y reintentar).
+/// Si recibe [consumidor], funciona en modo edición: precarga sus datos,
+/// incluida su ciudad y departamento. No llama al API por sí mismo: al guardar
+/// invoca [onGuardar], que devuelve null si salió bien (el diálogo se cierra
+/// con `true`) o el mensaje de error (se muestra dentro del diálogo y se puede
+/// corregir y reintentar).
 class ConsumidorFormDialog extends ConsumerStatefulWidget {
   final Future<String?> Function(NuevoConsumidor consumidor) onGuardar;
 
-  const ConsumidorFormDialog({super.key, required this.onGuardar});
+  /// Consumidor a editar (null = crear uno nuevo)
+  final ConsumidorEntity? consumidor;
+
+  const ConsumidorFormDialog({
+    super.key,
+    required this.onGuardar,
+    this.consumidor,
+  });
 
   @override
   ConsumerState<ConsumidorFormDialog> createState() =>
@@ -47,6 +57,70 @@ class _ConsumidorFormDialogState extends ConsumerState<ConsumidorFormDialog> {
   bool _cargandoCatalogo = false;
   String? _error;
   String? _errorCiudad;
+
+  bool get _esEdicion => widget.consumidor != null;
+
+  /// Ciudad que ya tenía el cliente guardado. Si el usuario no la cambia, se
+  /// conserva (aunque no se haya podido cargar su nombre).
+  int? _ciudadIdOriginal;
+
+  /// Tipos de identificación; en edición se añade el actual si no está en la lista
+  List<String> get _tiposDisponibles {
+    final actual = widget.consumidor?.tipoIdentificacion;
+    return (actual != null && !_tipos.contains(actual))
+        ? [..._tipos, actual]
+        : _tipos;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    final c = widget.consumidor;
+    if (c == null) return;
+
+    // Modo edición: precargar los datos del cliente
+    _tipo = c.tipoIdentificacion;
+    _numeroController.text = c.numeroIdentificacion;
+    _digito = _digitos.contains(c.digitoVerificacion) ? c.digitoVerificacion : null;
+    _nombreController.text = c.nombreRazonSocial;
+    _direccionController.text = c.direccion ?? '';
+    _emailController.text = c.email ?? '';
+    _telefonoController.text = c.telefono ?? '';
+    _activo = c.activo;
+    _ciudadIdOriginal = c.ciudadId;
+
+    final ciudadId = c.ciudadId;
+    if (ciudadId != null) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _cargarUbicacionActual(ciudadId));
+    }
+  }
+
+  /// Carga la ciudad guardada del cliente y su departamento, para mostrarlos.
+  /// Si falla, el campo muestra el código de la ciudad y se conserva igual.
+  Future<void> _cargarUbicacionActual(int ciudadId) async {
+    setState(() => _cargandoCatalogo = true);
+
+    try {
+      final ciudad = await ref.read(ciudadPorIdProvider(ciudadId).future);
+      if (!mounted) return;
+      setState(() => _ciudad = ciudad);
+
+      final departamentos = await ref.read(departamentosProvider.future);
+      if (!mounted) return;
+      for (final d in departamentos) {
+        if (d.departamentoId == ciudad.departamentoId) {
+          setState(() => _departamento = d);
+          break;
+        }
+      }
+    } catch (e) {
+      debugPrint('No se pudo cargar la ciudad del cliente: $e');
+    } finally {
+      if (mounted) setState(() => _cargandoCatalogo = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -102,6 +176,7 @@ class _ConsumidorFormDialogState extends ConsumerState<ConsumidorFormDialog> {
         setState(() {
           _departamento = elegido;
           _ciudad = null; // La ciudad anterior era de otro departamento
+          _ciudadIdOriginal = null; // Hay que elegir una ciudad nueva
           _errorCiudad = null;
         });
       }
@@ -198,15 +273,16 @@ class _ConsumidorFormDialogState extends ConsumerState<ConsumidorFormDialog> {
 
     final formularioValido = _formKey.currentState!.validate();
 
-    // La ciudad es obligatoria (del cliente solo se guarda su id)
-    final ciudad = _ciudad;
-    if (ciudad == null) {
+    // La ciudad es obligatoria (del cliente solo se guarda su id). En edición,
+    // si no se cambió, se conserva la que ya tenía.
+    final ciudadId = _ciudad?.ciudadId ?? _ciudadIdOriginal;
+    if (ciudadId == null) {
       setState(() => _errorCiudad = _departamento == null
           ? 'Selecciona el departamento y la ciudad'
           : 'La ciudad es obligatoria');
     }
 
-    if (!formularioValido || ciudad == null) return;
+    if (!formularioValido || ciudadId == null) return;
 
     setState(() => _guardando = true);
 
@@ -218,7 +294,7 @@ class _ConsumidorFormDialogState extends ConsumerState<ConsumidorFormDialog> {
       direccion: _direccionController.text.trim(),
       email: _emailController.text.trim(),
       telefono: _telefonoController.text.trim(),
-      ciudadId: ciudad.ciudadId,
+      ciudadId: ciudadId,
       activo: _activo,
     );
 
@@ -245,7 +321,7 @@ class _ConsumidorFormDialogState extends ConsumerState<ConsumidorFormDialog> {
     final soloNumeros = _tipo != 'PAS';
 
     return AlertDialog(
-      title: const Text('Nuevo Cliente'),
+      title: Text(_esEdicion ? 'Editar Cliente' : 'Nuevo Cliente'),
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -259,7 +335,7 @@ class _ConsumidorFormDialogState extends ConsumerState<ConsumidorFormDialog> {
                 DropdownButtonFormField<String>(
                   value: _tipo,
                   decoration: _decoration('Tipo de identificación *', icon: Icons.badge_outlined),
-                  items: _tipos
+                  items: _tiposDisponibles
                       .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                       .toList(),
                   onChanged: _guardando
@@ -374,7 +450,11 @@ class _ConsumidorFormDialogState extends ConsumerState<ConsumidorFormDialog> {
                 _campoSelector(
                   label: 'Ciudad *',
                   icon: Icons.location_city_outlined,
-                  valor: _ciudad?.nombre,
+                  // Si no se pudo cargar el nombre, se muestra el código guardado
+                  valor: _ciudad?.nombre ??
+                      (_ciudadIdOriginal != null
+                          ? 'Ciudad actual (código $_ciudadIdOriginal)'
+                          : null),
                   onTap: _elegirCiudad,
                   errorText: _errorCiudad,
                 ),

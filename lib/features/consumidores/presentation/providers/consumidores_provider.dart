@@ -206,6 +206,27 @@ class ConsumidoresNotifier extends StateNotifier<ConsumidoresState> {
     }
   }
 
+  /// Actualiza un consumidor y limpia el cache del listado.
+  /// Devuelve null si salió bien, o el mensaje del error si falló.
+  Future<String?> actualizarConsumidor({
+    required int clienteId,
+    required int consumidorId,
+    required NuevoConsumidor consumidor,
+  }) async {
+    try {
+      await _repository.actualizarConsumidor(
+        clienteId: clienteId,
+        consumidorId: consumidorId,
+        consumidor: consumidor,
+      );
+      await clearCache(clienteId);
+      return null;
+    } catch (e) {
+      debugPrint('Error actualizando consumidor: $e');
+      return _mensajeError(e);
+    }
+  }
+
   /// Elimina un consumidor y limpia el cache del listado.
   /// Devuelve null si salió bien, o el mensaje del error si falló.
   Future<String?> eliminarConsumidor({

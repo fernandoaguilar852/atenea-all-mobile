@@ -50,6 +50,24 @@ class UbicacionDatasource {
     return todos;
   }
 
+  /// GET /ciudades/:id - Una ciudad por su id (trae su departamentoId)
+  Future<Ciudad> getCiudadById(int ciudadId) async {
+    final response = await _dio.get(
+      ApiConstants.buildUrl('${ApiConstants.ciudades}/$ciudadId'),
+    );
+
+    final data = response.data['data'];
+    if (response.statusCode == 200 && data is Map<String, dynamic>) {
+      return Ciudad.fromJson(data);
+    }
+
+    throw DioException(
+      requestOptions: response.requestOptions,
+      response: response,
+      message: 'Error al obtener la ciudad',
+    );
+  }
+
   /// GET /ciudades?departamentoId= - Lista completa del departamento,
   /// ordenada alfabéticamente
   Future<List<Ciudad>> getCiudades({required int departamentoId}) async {

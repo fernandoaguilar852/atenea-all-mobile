@@ -12,9 +12,22 @@ abstract class ConsumidoresRepository {
     bool? activo,
   });
 
+  /// Obtiene un consumidor por su id (detalle)
+  Future<ConsumidorEntity> getConsumidor({
+    required int clienteId,
+    required int consumidorId,
+  });
+
   /// Crea un consumidor y devuelve el creado
   Future<ConsumidorEntity> crearConsumidor({
     required int clienteId,
+    required NuevoConsumidor consumidor,
+  });
+
+  /// Actualiza un consumidor existente y devuelve el actualizado
+  Future<ConsumidorEntity> actualizarConsumidor({
+    required int clienteId,
+    required int consumidorId,
     required NuevoConsumidor consumidor,
   });
 
