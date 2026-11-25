@@ -1,0 +1,27 @@
+import '../../domain/entities/cotizacion_entity.dart';
+import '../../domain/repositories/cotizaciones_repository.dart';
+import '../datasources/cotizaciones_remote_datasource.dart';
+import '../mappers/cotizacion_mapper.dart';
+
+/// Implementación concreta del repositorio de Cotizaciones
+/// Usa el datasource y los mappers para convertir DTOs a Entities
+class CotizacionesRepositoryImpl implements CotizacionesRepository {
+  final CotizacionesRemoteDatasource _datasource;
+
+  CotizacionesRepositoryImpl(this._datasource);
+
+  @override
+  Future<CotizacionesListEntity> getCotizaciones({
+    required int clienteId,
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    final response = await _datasource.getCotizaciones(
+      clienteId: clienteId,
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+    );
+
+    return CotizacionMapper.toListEntity(response);
+  }
+}

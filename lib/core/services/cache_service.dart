@@ -214,6 +214,16 @@ class CacheKeys {
 
   static String resolucionesPrefix(int clienteId) => '${prefix}resoluciones_$clienteId';
 
+  // Cotizaciones
+  static String cotizaciones({
+    required int clienteId,
+    required int pageNumber,
+    required int pageSize,
+  }) =>
+      '${prefix}cotizaciones_${clienteId}_p${pageNumber}_ps$pageSize';
+
+  static String cotizacionesPrefix(int clienteId) => '${prefix}cotizaciones_$clienteId';
+
   // Reportes
   static String reportes(int clienteId, String type) => '${prefix}reportes_${clienteId}_$type';
 

@@ -117,6 +117,16 @@ class AppDrawer extends ConsumerWidget {
                     context.go('/');
                   },
                 ),
+                _DrawerItem(
+                  icon: Icons.request_quote,
+                  title: 'Cotizaciones',
+                  isSelected: currentIndex == 7,
+                  onTap: () {
+                    Navigator.pop(context); // Cerrar drawer
+                    ref.read(mainScreenIndexProvider.notifier).state = 7;
+                    context.go('/');
+                  },
+                ),
                 Divider(height: 1.h, color: AppColors.grey300),
 
                 // Sección Administración

@@ -12,6 +12,7 @@ import '../../features/notificaciones/presentation/providers/notificaciones_prov
 import '../../features/alertas_stock/presentation/screens/alertas_stock_screen.dart';
 import '../../features/resoluciones/presentation/screens/resoluciones_screen.dart';
 import '../../features/productos/presentation/screens/productos_screen.dart';
+import '../../features/cotizaciones/presentation/screens/cotizaciones_screen.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../core/events/auth_events.dart';
 import '../../shared/widgets/app_drawer.dart';
@@ -35,6 +36,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   final resolucionesKey = GlobalKey<ConsumerState<ResolucionesScreen>>();
   final alertasStockKey = GlobalKey<ConsumerState<AlertasStockScreen>>();
   final productosKey = GlobalKey<ConsumerState<ProductosScreen>>();
+  final cotizacionesKey = GlobalKey<ConsumerState<CotizacionesScreen>>();
   StreamSubscription<void>? _unauthorizedSubscription;
 
   @override
@@ -137,6 +139,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             (productosState as dynamic).reloadData();
           }
           break;
+        case 7: // Cotizaciones
+          final cotizacionesState = cotizacionesKey.currentState;
+          if (cotizacionesState != null && cotizacionesState.mounted) {
+            (cotizacionesState as dynamic).reloadData();
+          }
+          break;
       }
     });
 
@@ -148,6 +156,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       AlertasStockScreen(key: alertasStockKey),
       ResolucionesScreen(key: resolucionesKey, showScaffold: false),
       ProductosScreen(key: productosKey, showScaffold: false),
+      CotizacionesScreen(key: cotizacionesKey, showScaffold: false),
     ];
 
     final titles = const [
@@ -158,6 +167,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       'Alertas de Stock',
       'Resoluciones',
       'Productos',
+      'Cotizaciones',
     ];
 
     return Scaffold(
