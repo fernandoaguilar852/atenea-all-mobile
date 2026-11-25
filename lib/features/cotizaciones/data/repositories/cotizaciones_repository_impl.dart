@@ -119,4 +119,15 @@ class CotizacionesRepositoryImpl implements CotizacionesRepository {
 
     return response.data.cotizacionDetalleId;
   }
+
+  @override
+  Future<void> eliminarCotizacion({
+    required int clienteId,
+    required int cotizacionId,
+  }) async {
+    await _datasource.deleteCotizacion(
+      clienteId: clienteId,
+      cotizacionId: cotizacionId,
+    );
+  }
 }

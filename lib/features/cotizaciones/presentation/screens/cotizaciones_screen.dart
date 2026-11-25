@@ -135,6 +135,83 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
     }
   }
 
+  void _editarCotizacion(CotizacionEntity cotizacion) {
+    // TODO: implementar edición de cotizaciones (siguiente iteración)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Edición de cotizaciones próximamente')),
+    );
+  }
+
+  /// Modal de confirmación antes de eliminar
+  void _showDeleteDialog(CotizacionEntity cotizacion) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar Cotización'),
+        content: Text(
+          '¿Está seguro de eliminar la cotización ${cotizacion.numeroCotizacion} '
+          'de ${cotizacion.consumidorNombre}? Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _eliminarCotizacion(cotizacion);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _eliminarCotizacion(CotizacionEntity cotizacion) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final unicaEnPagina =
+        (ref.read(cotizacionesProvider).data?.cotizaciones.length ?? 0) == 1;
+
+    final error =
+        await ref.read(cotizacionesProvider.notifier).eliminarCotizacion(
+              clienteId: user.clienteId,
+              cotizacionId: cotizacion.cotizacionId,
+            );
+
+    if (!mounted) return;
+
+    if (error != null) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('No se pudo eliminar: $error'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
+    // Si era la única de la página (y no es la primera), retrocede una página
+    if (unicaEnPagina && _currentPage > 1) {
+      setState(() => _currentPage--);
+    }
+    _loadData();
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('Cotización ${cotizacion.numeroCotizacion} eliminada'),
+        backgroundColor: AppColors.success,
+      ),
+    );
+  }
+
   // ===========================================================================
   // FILTROS
   // ===========================================================================
@@ -438,7 +515,11 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
                                       children: data.cotizaciones.map((cotizacion) {
                                         return Padding(
                                           padding: EdgeInsets.only(bottom: AppSpacing.md),
-                                          child: _CotizacionCard(cotizacion: cotizacion),
+                                          child: _CotizacionCard(
+                                            cotizacion: cotizacion,
+                                            onEdit: () => _editarCotizacion(cotizacion),
+                                            onDelete: () => _showDeleteDialog(cotizacion),
+                                          ),
                                         );
                                       }).toList(),
                                     ),
@@ -613,8 +694,14 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
 /// Card individual para cada cotización
 class _CotizacionCard extends StatelessWidget {
   final CotizacionEntity cotizacion;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const _CotizacionCard({required this.cotizacion});
+  const _CotizacionCard({
+    required this.cotizacion,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   String _formatDate(DateTime date) {
     return DateFormat('dd/MM/yyyy').format(date.toLocal());
@@ -782,6 +869,26 @@ class _CotizacionCard extends StatelessWidget {
                     color: AppColors.textPrimary,
                     fontFamily: 'Inter',
                   ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  icon: Icon(Icons.edit, size: 16.sp),
+                  label: const Text('Editar'),
+                  onPressed: onEdit,
+                ),
+                SizedBox(width: 8.w),
+                TextButton.icon(
+                  icon: Icon(Icons.delete, size: 16.sp),
+                  label: const Text('Eliminar'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                  ),
+                  onPressed: onDelete,
                 ),
               ],
             ),

@@ -152,4 +152,33 @@ class CotizacionesRemoteDatasource {
       );
     }
   }
+
+  /// DELETE /cotizaciones/:id - Elimina una cotización
+  Future<void> deleteCotizacion({
+    required int clienteId,
+    required int cotizacionId,
+  }) async {
+    final response = await _dio.delete(
+      ApiConstants.buildUrl('${ApiConstants.cotizaciones}/$cotizacionId'),
+      queryParameters: {'clienteId': clienteId},
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'Error al eliminar la cotización',
+      );
+    }
+
+    // La API responde data.deleted = true cuando se eliminó
+    final body = response.data;
+    if (body is Map && body['data'] is Map && body['data']['deleted'] == false) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: 'No se pudo eliminar la cotización',
+      );
+    }
+  }
 }

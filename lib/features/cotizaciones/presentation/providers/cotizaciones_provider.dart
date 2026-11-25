@@ -284,6 +284,25 @@ class CotizacionesNotifier extends StateNotifier<CotizacionesState> {
     return resultado;
   }
 
+  /// Elimina una cotización y limpia el cache.
+  /// Devuelve null si salió bien, o el mensaje del error si falló.
+  Future<String?> eliminarCotizacion({
+    required int clienteId,
+    required int cotizacionId,
+  }) async {
+    try {
+      await _repository.eliminarCotizacion(
+        clienteId: clienteId,
+        cotizacionId: cotizacionId,
+      );
+      await clearCache(clienteId);
+      return null;
+    } catch (e) {
+      debugPrint('Error eliminando cotización: $e');
+      return _mensajeError(e);
+    }
+  }
+
   /// Crea las líneas en orden; se detiene en el primer error
   Future<CrearCotizacionResultado> _crearLineas({
     required int clienteId,

@@ -40,4 +40,10 @@ abstract class CotizacionesRepository {
     required int cotizacionId,
     required NuevaLineaCotizacion linea,
   });
+
+  /// Elimina una cotización
+  Future<void> eliminarCotizacion({
+    required int clienteId,
+    required int cotizacionId,
+  });
 }
