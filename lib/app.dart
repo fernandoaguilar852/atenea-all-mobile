@@ -4,6 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'core/config/env_config.dart';
 import 'core/config/router_config.dart';
 import 'core/config/theme_config.dart';
+import 'features/auth/presentation/providers/auth_providers.dart'
+    show AuthState, authProvider;
+import 'shared/providers/session_reset.dart';
 
 class AteneaApp extends ConsumerWidget {
   const AteneaApp({super.key});
@@ -11,6 +14,14 @@ class AteneaApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+
+    // Multi-tenant: cuando cambia el negocio de la sesión (cierre de sesión o
+    // entrada con otro negocio) se descartan los datos en memoria del anterior.
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (previous?.user?.clienteId != next.user?.clienteId) {
+        limpiarDatosDeSesion(ref);
+      }
+    });
 
     return ScreenUtilInit(
       designSize: const Size(375, 812), // iPhone 13 Pro size

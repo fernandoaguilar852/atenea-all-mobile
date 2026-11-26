@@ -157,11 +157,20 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
   final authState = ref.watch(authProvider);
   if (!authState.isAuthenticated) return false;
 
+  // Multi-tenant: sin un clienteId válido no se puede operar. Se trata como
+  // sin sesión (evita consultas con clienteId = 0 si el dato guardado falta).
+  if ((authState.user?.clienteId ?? 0) <= 0) return false;
+
   // Validar que el rol sea ADMIN o SUPERADMIN
   final nombreRol = authState.user?.nombreRol.toUpperCase() ?? '';
   return nombreRol == 'ADMIN' || nombreRol == 'SUPERADMIN';
 });
 
+/// Usuario autenticado. Es null si no hay sesión o si el usuario no tiene un
+/// clienteId válido (multi-tenant): así ninguna pantalla consulta con un
+/// clienteId inválido, porque todas ya salen cuando el usuario es null.
 final currentUserProvider = Provider<User?>((ref) {
-  return ref.watch(authProvider).user;
+  final user = ref.watch(authProvider).user;
+  if (user == null || user.clienteId <= 0) return null;
+  return user;
 });
