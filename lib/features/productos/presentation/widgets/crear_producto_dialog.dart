@@ -242,7 +242,7 @@ class _CrearProductoDialogState extends ConsumerState<CrearProductoDialog> {
                       // Tipo de Producto
                       tiposProductoAsync.when(
                         data: (tipos) => DropdownButtonFormField<TipoProducto>(
-                          value: _tipoProductoSelected,
+                          initialValue: _tipoProductoSelected,
                           decoration: InputDecoration(
                             labelText: 'Tipo de Producto *',
                             prefixIcon: const Icon(Icons.category_outlined),
@@ -335,7 +335,7 @@ class _CrearProductoDialogState extends ConsumerState<CrearProductoDialog> {
                       // IVA
                       ivasAsync.when(
                         data: (ivas) => DropdownButtonFormField<Iva>(
-                          value: _ivaSelected,
+                          initialValue: _ivaSelected,
                           decoration: InputDecoration(
                             labelText: 'IVA *',
                             prefixIcon: const Icon(Icons.calculate_outlined),
@@ -364,7 +364,7 @@ class _CrearProductoDialogState extends ConsumerState<CrearProductoDialog> {
 
                       // Unidad de Medida
                       DropdownButtonFormField<String>(
-                        value: _unidadMedida,
+                        initialValue: _unidadMedida,
                         decoration: InputDecoration(
                           labelText: 'Unidad de Medida *',
                           prefixIcon: const Icon(Icons.straighten_outlined),
@@ -464,7 +464,7 @@ class _CrearProductoDialogState extends ConsumerState<CrearProductoDialog> {
                         onChanged: (value) {
                           setState(() => _manejaStock = value);
                         },
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           side: BorderSide(color: AppColors.borderColor),

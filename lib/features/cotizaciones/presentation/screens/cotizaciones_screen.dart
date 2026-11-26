@@ -405,7 +405,10 @@ class _CotizacionesScreenState extends ConsumerState<CotizacionesScreen> {
 
           // Filtro por origen (uno u otro)
           DropdownButtonFormField<String>(
-            value: _origenFilter,
+            // La key reconstruye el campo cuando el filtro cambia por fuera
+            // (ej. "Limpiar filtros"), porque initialValue solo se lee al crearlo
+            key: ValueKey(_origenFilter),
+            initialValue: _origenFilter,
             decoration: InputDecoration(
               labelText: 'Origen',
               border: OutlineInputBorder(

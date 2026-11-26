@@ -354,7 +354,8 @@ class _StockReporteTabState extends ConsumerState<StockReporteTab> {
 
                     return tiposProductoAsync.when(
                       data: (tiposProducto) => DropdownButtonFormField<TipoProducto>(
-                        value: _tipoProductoSelected,
+                        key: ValueKey(_tipoProductoSelected),
+                        initialValue: _tipoProductoSelected,
                         decoration: InputDecoration(
                           labelText: 'Tipo de Producto',
                           hintText: 'Seleccionar tipo',

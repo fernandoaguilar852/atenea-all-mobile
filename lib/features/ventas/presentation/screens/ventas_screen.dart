@@ -250,7 +250,10 @@ class _VentasScreenState extends ConsumerState<VentasScreen> {
             children: [
               // Filtro por estado
               DropdownButtonFormField<String>(
-                value: _estadoFilter,
+                // La key reconstruye el campo cuando el filtro cambia por fuera
+                // (ej. "Limpiar filtros"), porque initialValue solo se lee al crearlo
+                key: ValueKey(_estadoFilter),
+                initialValue: _estadoFilter,
                 decoration: InputDecoration(
                   labelText: 'Estado',
                   border: OutlineInputBorder(

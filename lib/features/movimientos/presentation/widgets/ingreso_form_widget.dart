@@ -186,7 +186,7 @@ class _IngresoFormWidgetState extends ConsumerState<IngresoFormWidget> {
 
                         return cajasAsync.when(
                           data: (cajas) => DropdownButtonFormField<Caja>(
-                            value: _cajaSelected,
+                            initialValue: _cajaSelected,
                             decoration: InputDecoration(
                               hintText: 'Seleccionar caja',
                               prefixIcon: Icon(Icons.point_of_sale, color: primaryColor),

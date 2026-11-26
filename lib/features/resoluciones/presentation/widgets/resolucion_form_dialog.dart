@@ -289,7 +289,7 @@ class _ResolucionFormDialogState extends State<ResolucionFormDialog> {
                     _activo = value;
                   });
                 },
-                activeColor: AppColors.success,
+                activeThumbColor: AppColors.success,
               ),
             ],
           ),

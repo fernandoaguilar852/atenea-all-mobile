@@ -542,7 +542,10 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
               children: [
                 // Filtro por tipo
                 DropdownButtonFormField<TipoMovimiento>(
-                  value: _tipoFilter,
+                  // La key reconstruye el campo si el filtro cambia por fuera,
+                  // porque initialValue solo se lee al crearlo
+                  key: ValueKey(_tipoFilter),
+                  initialValue: _tipoFilter,
                   decoration: InputDecoration(
                     labelText: 'Tipo de Movimiento',
                     border: OutlineInputBorder(

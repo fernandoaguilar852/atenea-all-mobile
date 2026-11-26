@@ -401,7 +401,8 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
 
                     return tiposProductoAsync.when(
                       data: (tiposProducto) => DropdownButtonFormField<TipoProducto>(
-                        value: _categoriaSelected,
+                        key: ValueKey(_categoriaSelected),
+                        initialValue: _categoriaSelected,
                         decoration: InputDecoration(
                           labelText: 'Categoría',
                           hintText: 'Seleccionar categoría',
@@ -471,7 +472,8 @@ class _VentasReporteTabState extends ConsumerState<VentasReporteTab> {
 
                     return cajasAsync.when(
                       data: (cajas) => DropdownButtonFormField<Caja>(
-                        value: _cajaSelected,
+                        key: ValueKey(_cajaSelected),
+                        initialValue: _cajaSelected,
                         decoration: InputDecoration(
                           labelText: 'Caja',
                           hintText: 'Seleccionar caja',

@@ -255,7 +255,8 @@ class _VentaDetalleReporteTabState
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _selectedEstado,
+                        key: ValueKey(_selectedEstado),
+                        initialValue: _selectedEstado,
                         items: [
                           DropdownMenuItem(
                             value: null,

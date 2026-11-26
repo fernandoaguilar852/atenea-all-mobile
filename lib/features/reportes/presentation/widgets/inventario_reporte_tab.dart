@@ -379,7 +379,8 @@ class _InventarioReporteTabState extends ConsumerState<InventarioReporteTab> {
                 ),
                 SizedBox(height: 8.h),
                 DropdownButtonFormField<String>(
-                  value: _tipoMovimientoSelected,
+                  key: ValueKey(_tipoMovimientoSelected),
+                  initialValue: _tipoMovimientoSelected,
                   decoration: InputDecoration(
                     labelText: 'Tipo de Movimiento',
                     hintText: 'Seleccionar tipo',

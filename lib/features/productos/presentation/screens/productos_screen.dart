@@ -574,7 +574,10 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                 child: tiposProductoAsync.when(
                   data: (tipos) {
                     return DropdownButtonFormField<int?>(
-                      value: _selectedTipoProductoId,
+                      // La key reconstruye el campo cuando el filtro cambia por fuera
+                      // (ej. al limpiar filtros), porque initialValue solo se lee al crearlo
+                      key: ValueKey(_selectedTipoProductoId),
+                      initialValue: _selectedTipoProductoId,
                       decoration: InputDecoration(
                         labelText: 'Categoría',
                         prefixIcon: const Icon(Icons.category_outlined),

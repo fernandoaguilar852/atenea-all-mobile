@@ -194,7 +194,8 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
               if (_showAdvancedFilters) ...[
                 SizedBox(height: 12.h),
                 DropdownButtonFormField<String>(
-                  value: _tipoPagoFilter,
+                  key: ValueKey(_tipoPagoFilter),
+                  initialValue: _tipoPagoFilter,
                   decoration: InputDecoration(
                     labelText: 'Tipo de Pago',
                     hintText: 'Seleccionar tipo de pago',
@@ -236,7 +237,8 @@ class _ArqueoReporteTabState extends ConsumerState<ArqueoReporteTab> {
 
                     return cajasAsync.when(
                       data: (cajas) => DropdownButtonFormField<Caja>(
-                        value: _cajaSelected,
+                        key: ValueKey(_cajaSelected),
+                        initialValue: _cajaSelected,
                         decoration: InputDecoration(
                           labelText: 'Caja',
                           hintText: 'Seleccionar caja',

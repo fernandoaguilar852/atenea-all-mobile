@@ -241,7 +241,8 @@ class _CostoBeneficioReporteTabState
 
                     return tiposProductoAsync.when(
                       data: (tiposProducto) => DropdownButtonFormField<TipoProducto>(
-                        value: _categoriaSelected,
+                        key: ValueKey(_categoriaSelected),
+                        initialValue: _categoriaSelected,
                         decoration: InputDecoration(
                           labelText: 'Categoría',
                           hintText: 'Seleccionar categoría',
@@ -473,7 +474,8 @@ class _CostoBeneficioReporteTabState
                 ),
                 SizedBox(height: 8.h),
                 DropdownButtonFormField<bool?>(
-                  value: _activoSelected,
+                  key: ValueKey(_activoSelected),
+                  initialValue: _activoSelected,
                   decoration: InputDecoration(
                     labelText: 'Estado',
                     hintText: 'Seleccionar estado',

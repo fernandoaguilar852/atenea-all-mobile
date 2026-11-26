@@ -106,7 +106,7 @@ class AppTheme {
     ),
 
     // Card - Flat style (sin elevation)
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 0, // Sin sombra
       shadowColor: Colors.transparent,
       shape: RoundedRectangleBorder(
@@ -248,7 +248,7 @@ class AppTheme {
     ),
 
     // Dialog - Sombra muy sutil
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       elevation: 4, // Sombra reducida
       backgroundColor: AppColors.white,
       shape: RoundedRectangleBorder(

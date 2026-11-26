@@ -333,7 +333,7 @@ class _ConsumidorFormDialogState extends ConsumerState<ConsumidorFormDialog> {
               children: [
                 // Tipo de identificación
                 DropdownButtonFormField<String>(
-                  value: _tipo,
+                  initialValue: _tipo,
                   decoration: _decoration('Tipo de identificación *', icon: Icons.badge_outlined),
                   items: _tiposDisponibles
                       .map((t) => DropdownMenuItem(value: t, child: Text(t)))
@@ -379,7 +379,7 @@ class _ConsumidorFormDialogState extends ConsumerState<ConsumidorFormDialog> {
                       SizedBox(
                         width: 92.w,
                         child: DropdownButtonFormField<String>(
-                          value: _digito,
+                          initialValue: _digito,
                           decoration: _decoration('DV *'),
                           items: _digitos
                               .map((d) => DropdownMenuItem(value: d, child: Text(d)))
@@ -468,7 +468,7 @@ class _ConsumidorFormDialogState extends ConsumerState<ConsumidorFormDialog> {
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Activo'),
                   value: _activo,
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   onChanged: _guardando ? null : (valor) => setState(() => _activo = valor),
                 ),
 

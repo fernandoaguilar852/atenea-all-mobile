@@ -324,7 +324,10 @@ class _ConsumidoresScreenState extends ConsumerState<ConsumidoresScreen> {
 
           // Filtro por estado (todos / activos / inactivos)
           DropdownButtonFormField<bool?>(
-            value: _activoFilter,
+            // La key reconstruye el campo cuando el filtro cambia por fuera
+            // (ej. "Limpiar filtros"), porque initialValue solo se lee al crearlo
+            key: ValueKey(_activoFilter),
+            initialValue: _activoFilter,
             decoration: InputDecoration(
               labelText: 'Estado',
               border: OutlineInputBorder(
