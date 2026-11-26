@@ -83,7 +83,7 @@ SPEC CHECKSUMS:
   CwlCatchException: 7acc161b299a6de7f0a46a6ed741eae2c8b4d75a
   CwlCatchExceptionSupport: 54ccab8d8c78907b57f99717fb19d4cc3bce02dc
   device_info_plus: 71ffc6ab7634ade6267c7a93088ed7e4f74e5896
-  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_secure_storage_darwin: acdb3f316ed05a3e68f856e0353b133eec373a23
   local_auth_darwin: d2e8c53ef0c4f43c646462e3415432c4dab3ae19
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
