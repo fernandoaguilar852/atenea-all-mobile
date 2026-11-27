@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.hidrasoft.atenea.atenea_all_mobile"
     compileSdk = 36 // Requerido por flutter_secure_storage
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -24,7 +24,7 @@ android {
         applicationId = "com.hidrasoft.atenea.atenea_all_mobile"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23 // Requerido por flutter_secure_storage (Android 6.0+)
+        minSdk = flutter.minSdkVersion // Requerido por flutter_secure_storage (Android 6.0+)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
