@@ -1,4 +1,4 @@
-package com.hidrasoft.atenea.atenea_all_mobile
+package com.hidrasoft.atenea.pos
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

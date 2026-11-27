@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.hidrasoft.atenea.atenea_all_mobile"
+    namespace = "com.hidrasoft.atenea.pos"
     compileSdk = 36 // Requerido por flutter_secure_storage
     ndkVersion = "28.2.13676358"
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.hidrasoft.atenea.atenea_all_mobile"
+        applicationId = "com.hidrasoft.atenea.pos"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion // Requerido por flutter_secure_storage (Android 6.0+)
