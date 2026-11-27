@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/theme_config.dart';
 import '../../../../shared/widgets/app_drawer.dart';
@@ -365,9 +364,9 @@ class _KPICard extends StatelessWidget {
   }
 }
 
-class _QuickActionsGrid extends StatelessWidget {
+class _QuickActionsGrid extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final actions = [
       _QuickAction(
         title: 'Punto de Venta',
@@ -382,7 +381,8 @@ class _QuickActionsGrid extends StatelessWidget {
         icon: Icons.inventory_2_outlined,
         color: AppColors.success,
         onTap: () {
-          // TODO: Navigate to Products
+          // Cambiar al index 6 (ProductosScreen) en el MainScreen
+          ref.read(mainScreenIndexProvider.notifier).state = 6;
         },
       ),
       _QuickAction(
@@ -390,7 +390,8 @@ class _QuickActionsGrid extends StatelessWidget {
         icon: Icons.people_outline,
         color: AppColors.info,
         onTap: () {
-          // TODO: Navigate to Clients
+          // Cambiar al index 8 (ConsumidoresScreen) en el MainScreen
+          ref.read(mainScreenIndexProvider.notifier).state = 8;
         },
       ),
       _QuickAction(
@@ -398,7 +399,8 @@ class _QuickActionsGrid extends StatelessWidget {
         icon: Icons.bar_chart,
         color: AppColors.warning,
         onTap: () {
-          context.push('/reportes');
+          // Cambiar al index 3 (ReportesScreen) en el MainScreen
+          ref.read(mainScreenIndexProvider.notifier).state = 3;
         },
       ),
     ];
