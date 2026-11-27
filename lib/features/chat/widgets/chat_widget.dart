@@ -66,15 +66,22 @@ class _ChatDialogState extends ConsumerState<ChatDialog> {
     _speechAvailable = await _speech!.initialize(
       onError: (error) {
         debugPrint('Speech Error: $error');
-        if (mounted) {
-          setState(() => _isListening = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error de voz: ${error.errorMsg}'),
-              backgroundColor: AppColors.danger,
-            ),
-          );
+        if (!mounted) return;
+        setState(() => _isListening = false);
+
+        // Errores normales (no se oyó nada a tiempo): solo se apaga el
+        // micrófono, sin mostrar un aviso técnico al usuario.
+        if (error.errorMsg == 'error_no_match' ||
+            error.errorMsg == 'error_speech_timeout') {
+          return;
         }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo usar el micrófono. Inténtalo de nuevo.'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       },
       onStatus: (status) {
         debugPrint('Speech Status: $status');
